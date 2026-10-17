@@ -398,7 +398,7 @@ main{flex:1;overflow:hidden;position:relative}
     <p id="loginSub">Sign in with your Blue Iris account.</p>
     <label class="field"><span>Username</span><input id="user" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" required></label>
     <label class="field"><span>Password</span><input id="pass" name="password" type="password" autocomplete="current-password" required></label>
-    <label class="check"><input type="checkbox" id="remember" checked> Stay signed in on this device</label>
+    <label class="check"><input type="checkbox" id="remember"> Stay signed in on this device</label>
     <button class="primary" id="loginBtn">Sign in</button>
     <div class="err" id="loginErr"></div>
   </form>
@@ -542,7 +542,7 @@ main{flex:1;overflow:hidden;position:relative}
 'use strict';
 /* Values filled in by the Blue Iris web server when it serves this .htm file */
 const INJECTED_SESSION = "%%SESSION%%";
-const APP = { name: 'Sightline', version: '0.11.2' };   // bump the version with every change you copy to the www folder
+const APP = { name: 'Sightline', version: '0.11.3' };   // bump the version with every change you copy to the www folder
 const INJECTED_SYSNAME = "%%SYSNAME%%";
 /* Note: never write two percent signs together anywhere else in this file \u2014 Blue Iris treats the
    text between them as a placeholder and blanks it out when serving the page. */
@@ -647,7 +647,8 @@ async function checkSession(s){
   return r.result === 'success' ? r : null;
 }
 // Saved login (only kept when "Stay signed in" is on). Stored obfuscated, not encrypted.
-const staySignedIn = () => store.get('bis_stay') !== '0';
+// Off unless chosen. Older versions had it on by default without storing a choice: keep those users signed in.
+const staySignedIn = () => { const v = store.get('bis_stay'); return v === '1' || (v == null && !!store.get('bis_p')); };
 const pwEnc = p => btoa(unescape(encodeURIComponent(p)));
 const pwDec = p => { try{ return decodeURIComponent(escape(atob(p || ''))); }catch(e){ return ''; } };
 function saveLogin(u, p){ store.set('bis_u', u); store.set('bis_p', pwEnc(p)); }

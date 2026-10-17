@@ -2,6 +2,10 @@
 
 All notable changes to Sightline for Blue Iris. The version shown in **Settings → About** matches the newest entry here.
 
+## 0.11.3 — 2026-10-17
+
+- **"Stay signed in" is now off by default.** New users choose it with the checkbox on the sign-in screen, or later in Settings. Anyone who already has it turned on keeps it.
+
 ## 0.11.2 — 2026-10-17
 
 Pre-release review fixes.

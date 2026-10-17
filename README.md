@@ -58,7 +58,8 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - Keyboard shortcuts on desktop: space to play / pause, ← → to skip 10 s, ↑ ↓ to switch camera, `+` `−` `0` to zoom, Esc to close.
 
 ### Everyday comfort
-- **Stays signed in** through Blue Iris session timeouts and network drops instead of dropping you back to a login screen.
+- **Handles dropped connections:** a network blip shows a banner instead of a login screen.
+- **Optional "Stay signed in"** keeps you signed in through Blue Iris session timeouts. It's off by default; tick it when signing in or turn it on in Settings.
 - **Settings for each device and browser,** so everyone who uses it can set it up their own way.
 - **Add to your home screen** and it opens full-screen like an app.
 - A built-in **color legend** and an **About** screen showing the Sightline and Blue Iris versions.
@@ -143,7 +144,7 @@ The safest options are a **VPN** or **[Tailscale](https://tailscale.com/)**. Avo
 
 - **Sightline talks only to your Blue Iris server.** There are no accounts, cloud services, analytics, tracking or third-party requests. The video library is served from your own `www` folder.
 - **Sign-in uses Blue Iris's own login.** The password is never sent in plain text; Blue Iris's challenge / response login is used.
-- **"Stay signed in" stores your Blue Iris username and password in the browser's local storage** so the page can sign back in by itself. The password is **obfuscated, not encrypted**: anyone with access to that browser profile could recover it. Turn it off in Settings on shared devices. Use a **dedicated, non-admin Blue Iris user** for Sightline either way.
+- **"Stay signed in" is off by default.** When you turn it on, it stores your Blue Iris username and password in the browser's local storage so the page can sign back in by itself. The password is **obfuscated, not encrypted**: anyone with access to that browser profile could recover it. Only turn it on for devices you trust, never on shared ones. Use a **dedicated, non-admin Blue Iris user** for Sightline either way.
 - **Settings are stored per browser** (in local storage, under keys that start with `bis_`). Clearing the site's data resets them.
 
 ## How it works
