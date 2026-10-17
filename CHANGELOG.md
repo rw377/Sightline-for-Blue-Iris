@@ -1,0 +1,18 @@
+# Changelog
+
+All notable changes to Sightline for Blue Iris. The version shown in **Settings → About** matches the newest entry here.
+
+## 0.10.0 — 2026-10-17
+
+- Renamed to **Sightline for Blue Iris**. Files are now `sightline.htm`, `sightline-jmuxer.min.js`, `sightline.json` and `sightline-icon-*.png`. Open the page at `/sightline.htm`.
+- Settings carry over from earlier versions served by the same Blue Iris server.
+
+## 0.9.0 — 2026-10-17
+
+First versioned build (previously "Cameras", served as `simple.htm`).
+
+- **Live view:** auto-fitting camera grid with tile sizes, Blue Iris groups as buttons, drag-to-reorder, motion and trigger highlights colored by AI result, AI labels on tiles, optional motion boxes on tiles.
+- **Alerts:** People / Vehicles / Animals filters plus any AI label, built from a 14-day scan of your alerts or typed in; date and time ranges; camera and group filter.
+- **Player:** live and recorded H.264 video with audio, scrubbable timeline with alert markers, timeline zoom from 2 minutes to 24 hours, previous / next alert, speed control, swipe between cameras, digital zoom up to 8x with pan, quality picker, volume slider, motion boxes with 1-10 sensitivity.
+- **Settings:** grouped into Live view, Interface and Account; choose which groups and alert filters appear; color legend; About screen with version info.
+- **Sign-in:** stays signed in through Blue Iris session timeouts and network drops.

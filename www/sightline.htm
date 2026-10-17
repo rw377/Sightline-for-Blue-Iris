@@ -1,0 +1,2647 @@
+<!doctype html>
+<!-- Sightline for Blue Iris - https://github.com/rw377/Sightline-for-Blue-Iris
+     Keep this file ASCII-only, and never put two percent signs next to each other anywhere in it:
+     Blue Iris serves .htm files as Latin-1 and treats percent-pairs as template placeholders.
+     See README, section Development. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0d10">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sightline">
+<link rel="manifest" href="sightline.json">
+<link rel="icon" href="sightline-icon-192.png">
+<link rel="apple-touch-icon" href="sightline-icon-192.png">
+<title>Sightline</title>
+<style>
+:root{
+  --bg:#0b0d10; --surface:#14181d; --surface2:#1c2229; --line:#262e38;
+  --text:#e8edf2; --muted:#8b97a5; --faint:#5d6875;
+  --accent:#4cc2ff; --live:#ff4d4d;
+  --person:#ffb547; --vehicle:#5aa9ff; --animal:#7bd88f; --delivery:#c792ea; --motion:#9aa5b1;
+  --cover:#2f6f8f;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+svg{display:block}
+[hidden]{display:none!important}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- shell ---------- */
+#app{display:flex;flex-direction:column;height:100%}
+.top{display:flex;align-items:center;gap:8px;padding:calc(10px + var(--safe-t)) calc(12px + var(--safe-r)) 10px calc(16px + var(--safe-l));
+  background:var(--bg);border-bottom:1px solid var(--line)}
+.top h1{flex:1;margin:0;font-size:19px;font-weight:650;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--muted)}
+.iconbtn:active{background:var(--surface2)}
+main{flex:1;overflow:hidden;position:relative}
+.view{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:16px}
+.tabs{display:flex;border-top:1px solid var(--line);background:var(--surface);padding-bottom:var(--safe-b)}
+.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 8px;color:var(--faint);font-size:12px;font-weight:600}
+.tabs button[aria-selected=true]{color:var(--text)}
+.tabs button[aria-selected=true] svg{color:var(--accent)}
+
+/* ---------- live grid ---------- */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:0 calc(6px + var(--safe-r)) 0 calc(6px + var(--safe-l))}
+#groupBar{padding-top:8px;padding-bottom:8px}
+.sizebtn{margin-left:auto;flex:none;height:32px;padding:0 10px 0 9px;border-radius:16px;border:1px solid var(--line);display:flex;align-items:center;gap:6px;
+  color:var(--muted);font-size:13px;font-weight:600}
+.sizebtn:active{background:var(--surface2)}
+.tile{position:relative;display:block;width:100%;border-radius:10px;overflow:hidden;background:var(--surface);aspect-ratio:16/9}
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;-webkit-user-drag:none}
+.tile{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.tile::after{content:"";position:absolute;inset:0;border-radius:inherit;border:3px solid transparent;pointer-events:none;z-index:3;transition:border-color .25s,box-shadow .25s}
+.tile.motion::after{border-color:rgba(255,255,255,.55)}
+.tile.trig::after{border-color:var(--live);box-shadow:inset 0 0 22px rgba(255,77,77,.35)}
+.tile.trig.k-person::after{border-color:var(--person);box-shadow:inset 0 0 22px rgba(255,181,71,.35)}
+.tile.trig.k-vehicle::after{border-color:var(--vehicle);box-shadow:inset 0 0 22px rgba(90,169,255,.35)}
+.tile.trig.k-animal::after{border-color:var(--animal);box-shadow:inset 0 0 22px rgba(123,216,143,.4)}
+.tile.trig.k-delivery::after{border-color:var(--delivery);box-shadow:inset 0 0 22px rgba(199,146,234,.35)}
+.tile canvas.tbox{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.tile .tname{z-index:2}
+.tile .tlabel{position:absolute;top:7px;left:7px;z-index:4;padding:3px 8px;border-radius:7px;background:rgba(0,0,0,.7)}
+.tile .tlabel .tag{font-size:12px}
+#tileMotionBtn{margin-left:0}
+#tileMotionBtn[aria-pressed=true]{background:rgba(76,194,255,.14);border-color:var(--accent);color:var(--accent)}
+.tile.placeholder{opacity:.25;outline:2px dashed var(--muted);outline-offset:-2px}
+.tile.ghost{position:fixed;z-index:50;margin:0;pointer-events:none;transform:scale(1.04);box-shadow:0 14px 40px rgba(0,0,0,.6);transition:transform .12s;outline:2px solid var(--accent)}
+.grid.dragging .tile:not(.ghost){transition:transform .18s ease}
+.toast{position:fixed;left:50%;bottom:calc(80px + var(--safe-b));transform:translateX(-50%);z-index:60;padding:10px 16px;border-radius:12px;background:var(--surface2);color:var(--text);font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.5);white-space:nowrap}
+.tile.portrait{background:#000}
+.tile.portrait img{object-fit:contain}
+.tile .tname{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:6px;padding:16px 8px 6px;
+  font-size:13px;font-weight:600;text-align:left;background:linear-gradient(transparent,rgba(0,0,0,.72));text-shadow:0 1px 2px #000}
+.tile .tname span:last-child{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.dot{width:7px;height:7px;border-radius:50%;background:#6fdc8c;flex:none}
+.tile.trig .dot{background:var(--live);box-shadow:0 0 0 3px rgba(255,77,77,.25)}
+.tile.off .dot{background:var(--faint)}
+.tile.off img{opacity:.35}
+.tile .offmsg{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:12px}
+
+/* ---------- alerts ---------- */
+.filters{position:sticky;top:0;z-index:3;display:flex;gap:6px;align-items:center;overflow-x:auto;scrollbar-width:none;
+  padding:10px calc(12px + var(--safe-r)) 10px calc(12px + var(--safe-l));background:var(--bg)}
+.filters::-webkit-scrollbar{display:none}
+.chip{flex:none;height:32px;padding:0 13px;border-radius:16px;border:1px solid var(--line);color:var(--muted);font-size:13px;font-weight:600;white-space:nowrap}
+.chip[aria-pressed=true]{background:var(--text);border-color:var(--text);color:var(--bg)}
+.selectwrap{position:relative;flex:none}
+.selectwrap select{appearance:none;-webkit-appearance:none;height:32px;padding:0 30px 0 13px;border-radius:16px;border:1px solid var(--line);
+  background:var(--bg);color:var(--muted);font:600 13px system-ui,sans-serif}
+.selectwrap svg{position:absolute;right:10px;top:9px;pointer-events:none;color:var(--muted)}
+.day{position:sticky;top:52px;z-index:2;padding:8px calc(16px + var(--safe-r)) 6px calc(16px + var(--safe-l));background:var(--bg);
+  font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.alert{display:flex;gap:12px;width:100%;text-align:left;padding:6px calc(12px + var(--safe-r)) 6px calc(12px + var(--safe-l))}
+.alert:active{background:var(--surface)}
+.thumb{position:relative;flex:none;width:44%;max-width:220px;aspect-ratio:16/9;border-radius:9px;overflow:hidden;background:var(--surface)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.dur{position:absolute;right:5px;bottom:5px;padding:1px 5px;border-radius:5px;background:rgba(0,0,0,.65);font-size:11px;font-weight:600}
+.ainfo{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.tags{display:flex;gap:5px;flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--motion)}
+.tag::before{content:"";width:8px;height:8px;border-radius:2px;background:currentColor}
+.tag.person{color:var(--person)} .tag.vehicle{color:var(--vehicle)} .tag.animal{color:var(--animal)} .tag.delivery{color:var(--delivery)}
+.selectwrap.active select{background:var(--text);border-color:var(--text);color:var(--bg)}
+.selectwrap.active svg{color:var(--bg)}
+.acam{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.atime{color:var(--muted);font-size:13px}
+.more{padding:22px 16px;text-align:center;color:var(--muted);font-size:13px}
+.more button{padding:9px 16px;border-radius:10px;background:var(--surface2);color:var(--text);font-weight:600}
+.empty{padding:60px 24px;text-align:center;color:var(--muted)}
+
+/* ---------- viewer ---------- */
+#viewer{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;background:#000;touch-action:manipulation}
+.vtop{display:flex;align-items:center;gap:6px;padding:calc(6px + var(--safe-t)) calc(8px + var(--safe-r)) 6px calc(4px + var(--safe-l));background:#000;z-index:2}
+.vtitle{flex:1;min-width:0}
+.vtitle #vCam{font-weight:650;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vtitle #vTime{font-size:13px;color:var(--muted)}
+.vtitle #vTime{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:480px){
+  #viewer .vtop{gap:2px}
+  #viewer .vtop .iconbtn{width:36px}
+  #viewer .vtop #vUi3{display:none}
+  #viewer .vtop .badge{padding:0 7px;letter-spacing:.3px}
+}
+.badge{flex:none;height:24px;padding:0 9px;border-radius:12px;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.7px}
+.badge.live{background:rgba(255,77,77,.16);color:var(--live)}
+.badge.live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--live);animation:pulse 1.6s infinite}
+.badge.rec{background:var(--surface2);color:var(--muted)}
+.badge.ui3{background:var(--surface2);color:var(--text);font-weight:700;letter-spacing:.3px}
+@keyframes pulse{50%{opacity:.35}}
+.stage{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:none}
+.stage img.frame,.stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;background:#000}
+.stage.fill img.frame,.stage.fill video{object-fit:cover}
+.stage video{z-index:0}
+.stage img.frame{z-index:1}
+.stage canvas#motionCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+.stage img.frame,.stage video,.stage canvas#motionCanvas{transform:var(--zt,none);transform-origin:0 0}
+.stage.zoomed{cursor:grab}
+.stage.zoomed.panning{cursor:grabbing}
+.zbadge{position:absolute;top:10px;right:10px;z-index:3;display:flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:16px;
+  background:rgba(0,0,0,.62);color:#fff;font-size:13px;font-weight:700;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.zbadge span{color:var(--accent);font-weight:700}
+.stage .spin,.stage .vmsg,.stage .camnav{z-index:3}
+#vMotion svg{stroke:#fff}
+#vMotion[aria-pressed=true] svg{stroke:var(--accent)}
+#vMotion[aria-pressed=true]{background:rgba(76,194,255,.14)}
+.volpop{position:absolute;right:calc(10px + var(--safe-r));top:calc(54px + var(--safe-t));z-index:6;display:flex;align-items:center;gap:8px;
+  padding:6px 14px 6px 4px;border-radius:14px;background:rgba(20,24,29,.96);box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.volpop input[type=range]{width:min(170px,42vw);accent-color:var(--accent)}
+.volpop .num{min-width:42px;text-align:right;font-size:13px;font-weight:700;color:var(--muted)}
+.badge.q{background:var(--surface2);color:var(--text);border:0;font-family:inherit;cursor:pointer}
+.sheet .opt{justify-content:space-between}
+.about-head{display:flex;align-items:center;gap:14px;padding:10px 14px 4px}
+.about-head img{width:56px;height:56px;border-radius:14px}
+.about-head b{display:block;font-size:20px}
+.about-head small{display:block;margin-top:2px;color:var(--muted);font-size:14px}
+.about-rows{margin:12px 14px 0;border-radius:12px;background:var(--surface2);overflow:hidden}
+.about-rows div{display:flex;justify-content:space-between;gap:12px;padding:11px 14px;font-size:14px}
+.about-rows div + div{border-top:1px solid var(--line)}
+.about-rows span:first-child{color:var(--muted)}
+.about-rows span:last-child{text-align:right}
+.about-text{margin:14px 14px 0;color:var(--muted);font-size:13px;line-height:1.45}
+.about-text p{margin:0 0 10px}
+.about-text b{color:var(--text);font-weight:650}
+.sens10{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;padding:14px 14px 4px}
+.sheet .sens10 button{width:auto;height:44px;padding:0;justify-content:center;border-radius:10px;background:var(--surface2);font-size:16px;font-weight:700;color:var(--muted)}
+.sheet .sens10 button.in{background:rgba(76,194,255,.16);color:var(--text)}
+.sheet .sens10 button[aria-checked=true]{background:var(--accent);color:#04131c}
+.sensends{display:flex;justify-content:space-between;padding:4px 16px 0;color:var(--faint);font-size:12px}
+.sensdesc{min-height:44px;margin:14px 14px 0;padding:10px 12px;border-radius:10px;background:var(--surface2);font-size:14px;color:var(--text)}
+.sensdesc b{color:var(--accent)}
+.sheet.scroll{max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sheet .sect{margin:16px 14px 2px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.sheet .tgl{justify-content:space-between;text-align:left}
+.sheet .lbl{display:block;min-width:0}
+.sheet .lbl small{display:block;margin-top:2px;color:var(--faint);font-size:13px;font-weight:400}
+.tog{flex:none;position:relative;width:44px;height:26px;border-radius:13px;background:var(--surface2);border:1px solid var(--line);transition:background .2s}
+.tog::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+[aria-checked=true] > .tog{background:var(--accent);border-color:var(--accent)}
+[aria-checked=true] > .tog::after{transform:translateX(18px)}
+.afrow{display:flex;align-items:center}
+.afrow .tgl{flex:1;min-width:0}
+.sheet .afrow .afdel{flex:none;width:auto;padding:10px 12px;color:var(--faint);font-size:13px}
+.afadd{display:flex;gap:8px;padding:10px 14px 0}
+.afadd input{flex:1;min-width:0;height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:16px}
+.sheet .afadd button{flex:none;width:auto;height:42px;padding:0 16px;justify-content:center;background:var(--surface2);font-weight:700}
+.sheet .afnote{padding:6px 14px 0;color:var(--faint);font-size:12px;min-height:16px}
+#grid.nohl .tile::after{border-color:transparent!important;box-shadow:none!important}
+.legend{max-height:min(78vh,640px);overflow-y:auto;padding:0 6px 4px}
+.legend h4{margin:14px 8px 6px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.legend .li{display:flex;align-items:center;gap:12px;padding:7px 8px}
+.legend .li b{display:block;font-size:15px;font-weight:650}
+.legend .li small{display:block;color:var(--muted);font-size:13px;margin-top:1px}
+.legend .sw{flex:none;width:26px;height:16px;border-radius:4px}
+.legend .sw.dot{width:10px;height:10px;border-radius:50%;margin:0 8px}
+.legend .sw.head{width:3px;height:22px;border-radius:2px;margin:0 11px;position:relative}
+.legend .sw.head::before{content:"";position:absolute;left:50%;top:-4px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:inherit}
+.legend .sw.mark{height:10px;border-radius:2px;margin:3px 0}
+.sheet .opt .sub{color:var(--faint);font-size:13px;font-weight:400;text-align:left}
+.sheet .opt[aria-checked=true]{color:var(--accent);font-weight:700}
+.sheet .opt:disabled{opacity:.4}
+.sheet h3{margin:6px 14px 2px;font-size:17px}
+.sheet .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:4px 14px 0}
+.sheet .fields .field{margin:0}
+.sheet .fields .full{grid-column:1 / -1}
+.sheet .quick{display:flex;gap:6px;padding:8px 14px 4px;flex-wrap:wrap}
+.sheet .quick .chip{display:inline-flex;align-items:center;width:auto;height:34px;padding:0 14px;border-radius:17px;font-size:13px;font-weight:600;color:var(--text)}
+.sheet .btnrow{display:flex;gap:10px;padding:14px 14px 4px}
+.sheet .btnrow button{flex:1;justify-content:center;height:46px;padding:0;border-radius:12px;font-weight:700}
+.sheet .btnrow .secondary{background:var(--surface2)}
+.sheet .btnrow .primary{background:var(--accent);color:#04121b}
+.field input[type=date],.field input[type=time]{color-scheme:dark}
+.chip svg{display:inline-block;vertical-align:-2px;margin-right:5px}
+#vSound.off svg .wave,#volMute.off svg .wave{display:none}
+#vSound.off svg .mute,#volMute.off svg .mute{display:inline}
+#vSound svg .mute,#volMute svg .mute{display:none}
+.spin{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px;border-radius:50%;border:3px solid rgba(255,255,255,.18);border-top-color:#fff;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(1turn)}}
+.vmsg{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);padding:6px 12px;border-radius:9px;background:rgba(20,24,29,.88);font-size:13px;color:var(--text);white-space:nowrap}
+.camnav{position:absolute;top:50%;width:44px;height:64px;margin-top:-32px;display:grid;place-items:center;color:rgba(255,255,255,.75);opacity:.0;transition:opacity .2s}
+.stage:hover .camnav{opacity:1}
+.camnav.l{left:0}.camnav.r{right:0}
+@media (hover:none){.camnav{display:none}}
+
+.vctl{background:var(--bg);padding:10px calc(12px + var(--safe-r)) calc(12px + var(--safe-b)) calc(12px + var(--safe-l));z-index:2}
+.scrub{position:relative;height:58px;touch-action:none;cursor:pointer}
+.scrub canvas{position:absolute;inset:0;width:100%;height:100%}
+.head{position:absolute;top:2px;bottom:18px;width:2px;margin-left:-1px;background:#fff;border-radius:1px;pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+.head::before{content:"";position:absolute;left:50%;top:-3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.head.live{background:var(--live)}.head.live::before{background:var(--live)}
+.bubble{position:absolute;bottom:62px;transform:translateX(-50%);padding:5px 9px;border-radius:8px;background:#fff;color:#000;font-size:13px;font-weight:700;white-space:nowrap;pointer-events:none}
+.row{display:flex;align-items:center;justify-content:space-between;gap:4px;margin-top:6px}
+.zoom{display:flex;gap:2px;background:var(--surface);border-radius:10px;padding:2px}
+.zoom button{height:28px;padding:0 9px;border-radius:8px;font-size:12px;font-weight:700;color:var(--muted)}
+.zoom button[aria-pressed=true]{background:var(--surface2);color:var(--text)}
+.pill{height:32px;padding:0 12px;border-radius:16px;background:var(--surface2);font-size:12px;font-weight:800;letter-spacing:.4px}
+.pill.golive{color:var(--live);background:rgba(255,77,77,.14)}
+.pill:disabled{opacity:.35}
+.transport{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px}
+.tbtn{width:52px;height:48px;border-radius:14px;display:grid;place-items:center;color:var(--text)}
+.tbtn:active{background:var(--surface2)}
+.tbtn:disabled{opacity:.28}
+.tbtn.big{width:64px;height:56px;background:var(--surface2);border-radius:18px}
+.tbtn .lbl{font-size:10px;font-weight:800;margin-top:-2px}
+
+@media (orientation:landscape) and (max-height:540px){
+  #viewer .stage{position:absolute;inset:0}
+  #viewer .vtop{position:absolute;left:0;right:0;top:0;background:linear-gradient(rgba(0,0,0,.75),transparent);padding-bottom:22px}
+  #viewer .vctl{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.85) 38%);padding-top:34px}
+  #viewer .lower{display:flex;align-items:center;gap:12px;flex-direction:row-reverse;justify-content:space-between}
+  #viewer .lower .row{margin-top:0;gap:8px}
+  #viewer .transport{margin-top:0}
+  #viewer .tbtn{width:44px;height:40px}
+  #viewer .tbtn.big{width:54px;height:44px}
+  #viewer .vctl{padding-top:28px;padding-bottom:calc(6px + var(--safe-b))}
+  #viewer .scrub{height:52px}
+  #viewer.hideui .vtop,#viewer.hideui .vctl{opacity:0;pointer-events:none}
+  #viewer .vtop,#viewer .vctl{transition:opacity .2s}
+  #viewer .zbadge{top:calc(62px + var(--safe-t))}
+  #viewer.hideui .zbadge{top:calc(10px + var(--safe-t))}
+}
+
+/* ---------- login / sheet ---------- */
+.overlay{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:24px;background:var(--bg)}
+.card{width:100%;max-width:340px}
+.card h2{margin:0 0 4px;font-size:24px}
+.card p{margin:0 0 22px;color:var(--muted)}
+.field{display:block;margin-bottom:12px}
+.field span{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px}
+.field input{width:100%;height:46px;padding:0 13px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-size:16px}
+.field input:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+.check{display:flex;align-items:center;gap:9px;margin:4px 0 20px;color:var(--muted);font-size:14px}
+.check input{width:18px;height:18px;accent-color:var(--accent)}
+.primary{width:100%;height:48px;border-radius:12px;background:var(--accent);color:#04121b;font-weight:750;font-size:16px}
+.primary:disabled{opacity:.5}
+.err{min-height:20px;margin-top:12px;color:var(--live);font-size:14px}
+.netbanner{position:fixed;left:50%;top:calc(8px + var(--safe-t));transform:translateX(-50%);z-index:45;padding:7px 14px;border-radius:10px;
+  background:#3a2a10;color:#ffcf7a;font-size:13px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.5);white-space:nowrap}
+.bigspin{width:38px;height:38px;margin:0 auto 18px;border-radius:50%;border:3px solid var(--surface2);border-top-color:var(--accent);animation:spin .8s linear infinite}
+.linkbtn{display:block;width:100%;margin-top:14px;padding:10px;color:var(--muted);font-size:14px}
+.sheet .pw{padding:6px 14px 0}
+.sheetbg{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:8px 8px calc(10px + var(--safe-b))}
+.sheet button,.sheet a{display:flex;align-items:center;gap:12px;width:100%;padding:14px 14px;border-radius:12px;color:var(--text);text-decoration:none;font-size:16px}
+.sheet button:active,.sheet a:active{background:var(--surface2)}
+.sheet .meta{padding:10px 14px 6px;color:var(--faint);font-size:12px}
+</style>
+</head>
+<body>
+<div id="app" hidden>
+  <header class="top">
+    <h1 id="title">Sightline</h1>
+    <button class="iconbtn" id="refreshBtn" aria-label="Refresh"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+    <button class="iconbtn" id="menuBtn" aria-label="Menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+  </header>
+  <main>
+    <section id="liveView" class="view">
+      <div class="filters" id="groupBar">
+        <div id="groupChips" style="display:flex;gap:6px"></div>
+        <button class="sizebtn" id="sizeBtn" aria-label="Tile size"></button>
+        <button class="sizebtn" id="tileMotionBtn" aria-pressed="false" aria-label="Motion boxes on tiles"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><rect x="9" y="9" width="6" height="6" rx="1" stroke-dasharray="2 2"/></svg>Motion</button>
+      </div>
+      <div id="grid" class="grid"></div>
+    </section>
+    <section id="alertsView" class="view" hidden>
+      <div class="filters" id="filters">
+        <button class="chip" id="rangeBtn" aria-pressed="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span id="rangeLbl">Any time</span></button>
+        <span id="afChips" style="display:contents"></span>
+        <div class="selectwrap"><select id="camFilter" aria-label="Camera"><option value="index">All cameras</option></select>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg></div>
+      </div>
+      <div id="alertList"></div>
+      <div id="alertMore" class="more"></div>
+    </section>
+  </main>
+  <nav class="tabs">
+    <button data-tab="live" aria-selected="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>Live</button>
+    <button data-tab="alerts" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/></svg>Alerts</button>
+  </nav>
+</div>
+
+<div id="viewer" hidden>
+  <div class="vtop">
+    <button class="iconbtn" id="vBack" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg></button>
+    <div class="vtitle"><div id="vCam"></div><div id="vTime" class="num"></div></div>
+    <button class="iconbtn" id="vSound" aria-label="Sound"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z" fill="#fff"/><path class="wave" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/><path class="mute" d="m16 9 6 6m0-6-6 6"/></svg></button>
+    <button class="iconbtn" id="vMotion" aria-label="Motion boxes" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><rect x="9" y="9" width="6" height="6" rx="1" stroke-dasharray="2 2"/></svg></button>
+    <button id="vQual" class="badge q" aria-label="Video quality">AUTO</button>
+    <a id="vUi3" class="badge ui3" target="_blank" rel="noopener" hidden>UI3</a>
+    <span id="vBadge" class="badge live">LIVE</span>
+  </div>
+  <div id="volPop" class="volpop" hidden>
+    <button class="iconbtn" id="volMute" aria-label="Mute"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z" fill="#fff"/><path class="wave" d="M15.5 8.5a5 5 0 0 1 0 7"/><path class="mute" d="m16 9 6 6m0-6-6 6"/></svg></button>
+    <input type="range" id="volSlider" min="0" max="200" step="5" value="100" aria-label="Volume">
+    <span id="volPct" class="num">100%</span>
+  </div>
+  <div class="stage" id="stage">
+    <video id="vVideo" muted playsinline hidden></video>
+    <canvas id="motionCanvas"></canvas>
+    <div class="spin" id="vSpin"></div>
+    <button class="camnav l" id="camPrev" aria-label="Previous camera"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m15 5-7 7 7 7"/></svg></button>
+    <button class="camnav r" id="camNext" aria-label="Next camera"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 5 7 7-7 7"/></svg></button>
+    <div class="vmsg" id="vMsg" hidden></div>
+    <button class="zbadge num" id="zoomBadge" hidden aria-label="Reset zoom"><b id="zoomPct">1.0&#215;</b><span>Reset</span></button>
+  </div>
+  <div class="vctl">
+    <div class="scrub" id="scrub"><canvas id="scrubCanvas"></canvas><div class="head" id="head"></div><div class="bubble num" id="bubble" hidden></div></div>
+    <div class="lower">
+    <div class="row">
+      <div class="zoom" id="zoom">
+        <button data-w="120000">2m</button><button data-w="900000">15m</button><button data-w="3600000">1h</button><button data-w="21600000">6h</button><button data-w="86400000">24h</button>
+      </div>
+      <button class="pill" id="speedBtn">1&#215;</button>
+      <button class="pill golive" id="liveBtn">LIVE</button>
+    </div>
+    <div class="transport">
+      <button class="tbtn" id="prevAlert" aria-label="Previous alert"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9.5 12z"/></svg></button>
+      <button class="tbtn" id="back10" aria-label="Back 10 seconds"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><text x="12.3" y="15.6" font-size="7.5" font-weight="800" fill="currentColor" stroke="none" text-anchor="middle" font-family="system-ui">10</text></svg></button>
+      <button class="tbtn big" id="playBtn" aria-label="Play"></button>
+      <button class="tbtn" id="fwd10" aria-label="Forward 10 seconds"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/><text x="11.7" y="15.6" font-size="7.5" font-weight="800" fill="currentColor" stroke="none" text-anchor="middle" font-family="system-ui">10</text></svg></button>
+      <button class="tbtn" id="nextAlert" aria-label="Next alert"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l10.5-7z"/></svg></button>
+    </div>
+    </div>
+  </div>
+</div>
+
+<div id="offline" class="overlay" hidden>
+  <div class="card" style="text-align:center">
+    <div class="bigspin"></div>
+    <h2 id="offTitle">Reconnecting&#8230;</h2>
+    <p id="offMsg">Can&#8217;t reach Blue Iris right now. Retrying automatically.</p>
+    <button class="primary" id="offRetry">Try now</button>
+    <button class="linkbtn" id="offLogin">Sign in again instead</button>
+  </div>
+</div>
+<div id="netBanner" class="netbanner" hidden>Reconnecting to Blue Iris&#8230;</div>
+
+<div id="login" class="overlay" hidden>
+  <form class="card" id="loginForm" autocomplete="on">
+    <h2 id="loginTitle">Sightline</h2>
+    <p id="loginSub">Sign in with your Blue Iris account.</p>
+    <label class="field"><span>Username</span><input id="user" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" required></label>
+    <label class="field"><span>Password</span><input id="pass" name="password" type="password" autocomplete="current-password" required></label>
+    <label class="check"><input type="checkbox" id="remember" checked> Stay signed in on this device</label>
+    <button class="primary" id="loginBtn">Sign in</button>
+    <div class="err" id="loginErr"></div>
+  </form>
+</div>
+
+<div id="qualSheet" class="sheetbg" hidden>
+  <div class="sheet">
+    <div class="meta" id="qualNow"></div>
+    <div id="qualOpts"></div>
+  </div>
+</div>
+
+<div id="rangeSheet" class="sheetbg" hidden>
+  <div class="sheet">
+    <h3>Show alerts from</h3>
+    <div class="quick">
+      <button class="chip" data-q="hour">Last hour</button>
+      <button class="chip" data-q="today">Today</button>
+      <button class="chip" data-q="yesterday">Yesterday</button>
+      <button class="chip" data-q="night">Last night</button>
+    </div>
+    <div class="fields">
+      <label class="field full"><span>Date</span><input type="date" id="rDate"></label>
+      <label class="field"><span>From</span><input type="time" id="rFrom" value="00:00"></label>
+      <label class="field"><span>To</span><input type="time" id="rTo" value="23:59"></label>
+    </div>
+    <div class="btnrow"><button class="secondary" id="rClear">Any time</button><button class="primary" id="rApply">Show alerts</button></div>
+  </div>
+</div>
+
+<div id="staySheet" class="sheetbg" hidden>
+  <form class="sheet" id="stayForm">
+    <h3>Stay signed in</h3>
+    <div class="meta">Enter your Blue Iris password once and this device will sign back in by itself whenever Blue Iris ends the session.</div>
+    <div class="pw">
+      <label class="field"><span>Username</span><input id="stayUser" autocomplete="username" autocapitalize="off" spellcheck="false" required></label>
+      <label class="field"><span>Password</span><input id="stayPass" type="password" autocomplete="current-password" required></label>
+      <div class="err" id="stayErr"></div>
+    </div>
+    <div class="btnrow"><button type="button" class="secondary" id="stayCancel">Cancel</button><button class="primary" id="staySave">Turn on</button></div>
+  </form>
+</div>
+
+<div id="sensSheet" class="sheetbg" hidden>
+  <div class="sheet">
+    <h3>Motion box sensitivity</h3>
+    <div class="meta">Applies to the blue motion boxes in the player and on the camera tiles. Changes take effect right away.</div>
+    <div class="sens10" id="sensOpts" role="radiogroup" aria-label="Sensitivity 1 to 10"></div>
+    <div class="sensends"><span>&#8592; Fewer boxes</span><span>More boxes &#8594;</span></div>
+    <div class="sensdesc" id="sensDesc"></div>
+    <div class="btnrow"><button class="primary" id="sensDone">Done</button></div>
+  </div>
+</div>
+
+<div id="legendSheet" class="sheetbg" hidden>
+  <div class="sheet">
+    <h3>Color legend</h3>
+    <div class="legend">
+      <h4>Alerts (labels &amp; timeline marks)</h4>
+      <div class="li"><span class="sw mark" style="background:var(--person)"></span><div><b>Person</b><small>AI found a person</small></div></div>
+      <div class="li"><span class="sw mark" style="background:var(--vehicle)"></span><div><b>Vehicle</b><small>Car, truck, bus, motorcycle, bicycle, boat</small></div></div>
+      <div class="li"><span class="sw mark" style="background:var(--animal)"></span><div><b>Animal</b><small>Dog, cat, bear, bird, deer and other wildlife</small></div></div>
+      <div class="li"><span class="sw mark" style="background:var(--delivery)"></span><div><b>Delivery</b><small>Amazon, UPS, USPS, FedEx, DHL</small></div></div>
+      <div class="li"><span class="sw mark" style="background:var(--motion)"></span><div><b>Motion only</b><small>Triggered without an AI label</small></div></div>
+      <div class="li"><span class="sw" style="background:transparent;outline:2px solid var(--accent);outline-offset:-2px"></span><div><b>Motion box</b><small>Something moved here (player, when boxes are on)</small></div></div>
+      <h4>Player timeline</h4>
+      <div class="li"><span class="sw" style="background:#2b4d61"></span><div><b>Recorded video</b><small>Footage exists for this time</small></div></div>
+      <div class="li"><span class="sw" style="background:#1c2229;outline:1px solid var(--line)"></span><div><b>No recording</b><small>Gap, or nothing saved for this time</small></div></div>
+      <div class="li"><span class="sw head" style="background:#fff"></span><div><b>Playhead</b><small>The moment on screen (recorded)</small></div></div>
+      <div class="li"><span class="sw head" style="background:var(--live)"></span><div><b>Live playhead</b><small>Watching live</small></div></div>
+      <h4>Cameras</h4>
+      <div class="li"><span class="sw dot" style="background:#6fdc8c"></span><div><b>Online</b><small>Camera is connected</small></div></div>
+      <div class="li"><span class="sw dot" style="background:var(--live);box-shadow:0 0 0 3px rgba(255,77,77,.25)"></span><div><b>Triggered</b><small>Motion or an alert is happening now</small></div></div>
+      <div class="li"><span class="sw dot" style="background:var(--faint)"></span><div><b>Offline</b><small>No signal from the camera</small></div></div>
+      <h4>Camera tiles</h4>
+      <div class="li"><span class="sw" style="background:transparent;outline:3px solid rgba(255,255,255,.55);outline-offset:-3px"></span><div><b>White border</b><small>Blue Iris sees motion</small></div></div>
+      <div class="li"><span class="sw" style="background:transparent;outline:3px solid var(--live);outline-offset:-3px"></span><div><b>Red border</b><small>Camera triggered (no AI label yet)</small></div></div>
+      <div class="li"><span class="sw" style="background:transparent;outline:3px solid var(--animal);outline-offset:-3px"></span><div><b>Colored border + label</b><small>Triggered, colored by what the AI saw (e.g. green &#8220;Dog 82%&#8221;)</small></div></div>
+    </div>
+  </div>
+</div>
+
+<div id="sheet" class="sheetbg" hidden>
+  <div class="sheet scroll">
+    <h3>Settings</h3>
+    <div class="meta" id="sheetMeta"></div>
+    <div class="sect">Live view</div>
+    <button id="hlBtn" class="tgl" role="switch" aria-checked="true"><span class="lbl">Highlight active cameras<small>Colored border on tiles with motion or a detection</small></span><span class="tog"></span></button>
+    <button id="tlBtn" class="tgl" role="switch" aria-checked="true"><span class="lbl">AI labels on cameras<small>Show what the AI saw on the tile, e.g. &#8220;Dog 82%&#8221;</small></span><span class="tog"></span></button>
+    <button id="resetOrderBtn">Reset camera order for this view</button>
+    <div class="sect">Interface</div>
+    <button id="groupsBtn" class="opt"><span>Groups on Live screen</span><span class="sub" id="groupsCur"></span></button>
+    <button id="afBtn" class="opt"><span>Alert filters</span><span class="sub" id="afCur"></span></button>
+    <button id="sensBtn" class="opt"><span>Motion box sensitivity</span><span class="sub" id="sensCur">Medium</span></button>
+    <button id="legendBtn">Color legend</button>
+    <div class="sect">Account</div>
+    <button id="stayBtn" class="opt"><span>Stay signed in</span><span class="sub" id="stayCur">On</span></button>
+    <a href="ui3.htm" target="_blank" rel="noopener">Open full Blue Iris UI (UI3)</a>
+    <button id="logoutBtn">Sign out</button>
+    <button id="aboutBtn" class="opt"><span>About</span><span class="sub" id="aboutCur"></span></button>
+  </div>
+</div>
+
+<div id="aboutSheet" class="sheetbg" hidden>
+  <div class="sheet scroll">
+    <div class="about-head"><img src="sightline-icon-192.png" alt=""><div><b id="aboutName"></b><small id="aboutVer"></small></div></div>
+    <div class="about-rows" id="aboutRows"></div>
+    <div class="about-text">
+      <p><b>Unofficial.</b> An independent viewer for Blue Iris. It is not affiliated with, endorsed by or supported by Perspective Software, the maker of Blue Iris. Blue Iris is a trademark of its owner. Please don&#8217;t contact Blue Iris support about problems with this page.</p>
+      <p><b>Private.</b> This page talks only to your own Blue Iris server. No accounts, cloud services, tracking or analytics. Settings are saved in this browser on this device.</p>
+      <p><b>View-only.</b> Recording, motion detection, AI and camera settings all stay in Blue Iris. Use Blue Iris or UI3 to change them.</p>
+      <p><b>Credits.</b> Video playback uses jmuxer (MIT License).</p>
+    </div>
+    <div class="btnrow"><button class="primary" id="aboutDone">Done</button></div>
+  </div>
+</div>
+
+<div id="groupsSheet" class="sheetbg" hidden>
+  <div class="sheet scroll">
+    <h3>Groups on Live screen</h3>
+    <div class="meta">Choose which group buttons appear above the cameras. These come from the camera groups set up in Blue Iris. With only one shown, the button row is hidden.</div>
+    <div id="groupsList"></div>
+    <div class="btnrow"><button class="primary" id="groupsDone">Done</button></div>
+  </div>
+</div>
+
+<div id="afSheet" class="sheetbg" hidden>
+  <div class="sheet scroll">
+    <h3>Alert filters</h3>
+    <div class="meta">Choose the filter buttons on the Alerts tab. Labels match the AI label Blue Iris saved with each alert. Capitalization and plurals don&#8217;t matter: &#8220;Dog&#8221;, &#8220;dog&#8221; and &#8220;dogs&#8221; are the same.</div>
+    <div id="afList"></div>
+    <form class="afadd" id="afAdd" autocomplete="off"><input id="afInput" placeholder="Add a label, e.g. cat" maxlength="30" autocapitalize="off" spellcheck="false" enterkeyhint="done"><button>Add</button></form>
+    <div class="afnote" id="afNote"></div>
+    <div class="btnrow"><button class="primary" id="afDone">Done</button></div>
+  </div>
+</div>
+
+<script src="sightline-jmuxer.min.js"></script>
+<script>
+'use strict';
+/* Values filled in by the Blue Iris web server when it serves this .htm file */
+const INJECTED_SESSION = "%%SESSION%%";
+const APP = { name: 'Sightline', version: '0.10.0' };   // bump the version with every change you copy to the www folder
+const INJECTED_SYSNAME = "%%SYSNAME%%";
+/* Note: never write two percent signs together anywhere else in this file \u2014 Blue Iris treats the
+   text between them as a placeholder and blanks it out when serving the page. */
+const isInjected = v => !!v && v.charAt(0) !== '%';
+
+const KEEP_OUT = 15000;      // Blue Iris won't serve the most recent ~15 s from the timeline
+const TILE_REFRESH = 1500;   // ms between live grid snapshots per camera
+const BIDB = { PERSON: 1 << 26, VEHICLE: 1 << 27, CANCELLED: 1 << 23, FLAGGED: 1 << 1 };
+// Bit test that also works above bit 30 (Blue Iris puts "wildlife" in bit 31, beyond JS's 32-bit & operator)
+const hasBit = (n, bit) => Math.floor(Number(n || 0) / Math.pow(2, bit)) % 2 === 1;
+function flagClass(flags){
+  if(hasBit(flags, 26)) return 'person';
+  if(hasBit(flags, 27)) return 'vehicle';
+  if(hasBit(flags, 31)) return 'animal';
+  return 'motion';
+}
+
+const $ = s => document.querySelector(s);
+const store = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); }catch(e){} }
+};
+const S = { session:'', cams:[], camMap:{}, groups:[], group: store.get('bis_group') || 'index', tab:'live', sys:'' };
+
+/* ======================= MD5 (for the Blue Iris login challenge) ======================= */
+function md5(str){
+  const s = unescape(encodeURIComponent(str));
+  const K = [], R = [7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,5,9,14,20,5,9,14,20,5,9,14,20,5,9,14,20,
+    4,11,16,23,4,11,16,23,4,11,16,23,4,11,16,23,6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21];
+  for(let i=0;i<64;i++) K[i] = Math.floor(Math.abs(Math.sin(i+1)) * 4294967296) | 0;
+  const n = s.length, words = [];
+  for(let i=0;i<n;i++) words[i>>2] |= s.charCodeAt(i) << ((i%4)*8);
+  words[n>>2] |= 0x80 << ((n%4)*8);
+  const total = (((n + 8) >> 6) + 1) * 16;
+  for(let i=0;i<total;i++) words[i] |= 0;
+  words[total-2] = n * 8;
+  let a0 = 0x67452301, b0 = 0xefcdab89|0, c0 = 0x98badcfe|0, d0 = 0x10325476;
+  for(let off=0; off<total; off+=16){
+    let a=a0, b=b0, c=c0, d=d0;
+    for(let i=0;i<64;i++){
+      let f, g;
+      if(i<16){ f=(b&c)|(~b&d); g=i; }
+      else if(i<32){ f=(d&b)|(~d&c); g=(5*i+1)%16; }
+      else if(i<48){ f=b^c^d; g=(3*i+5)%16; }
+      else { f=c^(b|~d); g=(7*i)%16; }
+      const t = d; d = c; c = b;
+      const x = (a + f + K[i] + words[off+g]) | 0;
+      b = (b + ((x << R[i]) | (x >>> (32 - R[i])))) | 0;
+      a = t;
+    }
+    a0=(a0+a)|0; b0=(b0+b)|0; c0=(c0+c)|0; d0=(d0+d)|0;
+  }
+  let out = '';
+  for(const v of [a0,b0,c0,d0]) for(let j=0;j<4;j++) out += ((v >>> (j*8)) & 255).toString(16).padStart(2,'0');
+  return out;
+}
+
+/* ======================= Blue Iris API ======================= */
+async function api(args, retry = true){
+  if(args.cmd !== 'login') args.session = S.session;
+  let r;
+  try{
+    const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 15000);
+    const res = await fetch('json?_=' + encodeURIComponent(args.cmd), {
+      method:'POST', body: JSON.stringify(args), headers:{'Content-Type':'text/plain'}, cache:'no-store', signal: ctrl.signal });
+    clearTimeout(timer);
+    r = await res.json();
+  }catch(e){ netState(false); throw new Error("Can't reach Blue Iris"); }
+  netState(true);
+  if(args.cmd !== 'login' && r.result !== 'success' && retry && isSessionFail(r)){
+    const st = await reauth();
+    if(st === 'ok') return api(args, false);
+    if(st === 'offline'){ netState(false); throw new Error("Can't reach Blue Iris"); }
+    showLogin(st === 'denied' ? 'Your saved login was not accepted. Please sign in again.' : 'Your session expired. Please sign in again.');
+    throw new Error('session');
+  }
+  return r;
+}
+// Network status banner: shown while Blue Iris can't be reached, hidden on the next good answer
+let netDownSince = 0;
+function netState(ok){
+  if(ok){ netDownSince = 0; $('#netBanner').hidden = true; return; }
+  if(!netDownSince) netDownSince = Date.now();
+  if(!$('#app').hidden) $('#netBanner').hidden = false;
+}
+function isSessionFail(r){
+  const reason = (r && r.data && r.data.reason) || '';
+  return /session/i.test(reason) || reason === 'missing response';
+}
+async function loginWithPassword(user, pass){
+  const c = await api({cmd:'login'});
+  if(!c || !c.session) return { ok:false, reason:'Unexpected response from Blue Iris' };
+  if(c.result === 'success') return { ok:true, r:c };          // no auth required
+  const r = await api({cmd:'login', session:c.session, response: md5(user + ':' + c.session + ':' + pass)});
+  if(r.result === 'success') return { ok:true, r };
+  return { ok:false, reason: (r.data && r.data.reason) || 'Sign-in failed' };
+}
+// Network errors propagate (so a blip is never mistaken for "logged out")
+async function checkSession(s){
+  if(!s) return null;
+  const r = await api({cmd:'login', session:s});
+  return r.result === 'success' ? r : null;
+}
+// Saved login (only kept when "Stay signed in" is on). Stored obfuscated, not encrypted.
+const staySignedIn = () => store.get('bis_stay') !== '0';
+const pwEnc = p => btoa(unescape(encodeURIComponent(p)));
+const pwDec = p => { try{ return decodeURIComponent(escape(atob(p || ''))); }catch(e){ return ''; } };
+function saveLogin(u, p){ store.set('bis_u', u); store.set('bis_p', pwEnc(p)); }
+function forgetLogin(){ store.set('bis_p', null); }
+const hasSavedLogin = () => !!(store.get('bis_u') && store.get('bis_p'));
+// One re-login at a time, however many requests notice the expired session. Result: ok | nocreds | denied | offline
+let reauthPending = null;
+function reauth(){
+  if(reauthPending) return reauthPending;
+  reauthPending = (async () => {
+    if(!staySignedIn() || !hasSavedLogin()) return 'nocreds';
+    try{
+      const res = await loginWithPassword(store.get('bis_u'), pwDec(store.get('bis_p')));
+      if(res.ok){ setSession(res.r); return 'ok'; }
+      return 'denied';
+    }catch(e){ return 'offline'; }
+  })();
+  reauthPending.finally(() => { setTimeout(() => { reauthPending = null; }, 0); });
+  return reauthPending;
+}
+function setSession(r){
+  S.session = r.session || S.session;
+  store.set('bis_session', S.session);
+  try{ document.cookie = 'session=' + S.session + '; path=/; SameSite=Lax'; }catch(e){}
+  const name = r.data && r.data['system name'];
+  if(name) S.sys = name;
+  if(r.data && r.data.version) S.biVersion = String(r.data.version);
+}
+const sq = () => 'session=' + encodeURIComponent(S.session);
+const camEnc = c => encodeURIComponent(c);
+
+/* ======================= boot / login ======================= */
+async function boot(){
+  if(isInjected(INJECTED_SYSNAME)) S.sys = INJECTED_SYSNAME;
+  const candidates = [];
+  if(isInjected(INJECTED_SESSION)) candidates.push(INJECTED_SESSION);
+  const saved = store.get('bis_session'); if(saved) candidates.push(saved);
+  try{
+    for(const s of candidates){
+      const r = await checkSession(s);
+      if(r){ S.session = s; setSession(r); return start(); }
+    }
+  }catch(e){ return showOffline(); }            // couldn't reach Blue Iris at all: wait and retry, don't ask to log in
+  const st = await reauth();
+  if(st === 'ok') return start();
+  if(st === 'offline') return showOffline();
+  showLogin(st === 'denied' ? 'Your saved login was not accepted. Please sign in again.' : '');
+}
+let offlineTimer = null;
+function showOffline(){
+  $('#offline').hidden = false; $('#login').hidden = true;
+  clearTimeout(offlineTimer);
+  offlineTimer = setTimeout(retryOffline, 3000);
+}
+function retryOffline(){
+  clearTimeout(offlineTimer);
+  if($('#offline').hidden) return;
+  $('#offline').hidden = true;
+  if(started) resumeSession(true); else boot().catch(() => showOffline());
+}
+$('#offRetry').addEventListener('click', retryOffline);
+$('#offLogin').addEventListener('click', () => { clearTimeout(offlineTimer); $('#offline').hidden = true; showLogin(''); });
+addEventListener('online', () => { if(!$('#offline').hidden) retryOffline(); });
+function showLogin(msg){
+  $('#offline').hidden = true; clearTimeout(offlineTimer);
+  $('#remember').checked = staySignedIn();
+  $('#login').hidden = false;
+  $('#loginTitle').textContent = S.sys || APP.name;
+  $('#loginErr').textContent = msg || '';
+  $('#user').value = store.get('bis_u') || $('#user').value;
+}
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = $('#loginBtn'); btn.disabled = true; $('#loginErr').textContent = '';
+  const u = $('#user').value.trim(), p = $('#pass').value;
+  try{
+    const res = await loginWithPassword(u, p);
+    if(!res.ok){ $('#loginErr').textContent = res.reason; return; }
+    setSession(res.r);
+    store.set('bis_stay', $('#remember').checked ? '1' : '0');
+    if($('#remember').checked) saveLogin(u, p); else { store.set('bis_u', u); forgetLogin(); }
+    updateStayUi();
+    $('#pass').value = '';
+    $('#login').hidden = true;
+    start();
+  }catch(err){ $('#loginErr').textContent = err.message; }
+  finally{ btn.disabled = false; }
+});
+
+let started = false;
+async function start(){
+  $('#login').hidden = true;
+  $('#app').hidden = false;
+  $('#title').textContent = S.sys || APP.name;
+  document.title = (S.sys ? S.sys + ' - ' : '') + APP.name;
+  await loadCams();
+  if(!started){ started = true; setTab(store.get('bis_tab') || 'live'); }
+  else pumpAllTiles();
+}
+
+/* ======================= cameras / live grid ======================= */
+async function loadCams(){
+  let r;
+  try{ r = await api({cmd:'camlist'}); }
+  catch(e){ if(e.message !== 'session') $('#grid').innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+  const list = (r.data || []).filter(c => !c.group && c.isEnabled !== false && c.webcast !== false && !/^[@+]/.test(c.optionValue || ''));
+  const camIds = new Set(list.map(c => c.optionValue));
+  S.groups = (r.data || [])
+    .filter(g => Array.isArray(g.group) && g.group.length && String(g.optionValue).toLowerCase() !== 'index' && !String(g.optionValue).startsWith('@'))
+    .map(g => ({ id: g.optionValue, name: String(g.optionDisplay || g.optionValue).replace(/^\++/, ''), cams: g.group.filter(id => camIds.has(id)) }))
+    .filter(g => g.cams.length);
+  S.cams = list.map(c => ({
+    id: c.optionValue, name: c.optionDisplay || c.optionValue,
+    w: c.width > 100 ? c.width : 1920, h: c.height > 100 ? c.height : 1080,
+    online: c.isOnline !== false && !c.isNoSignal, trig: !!(c.isTriggered || c.isAlerting)
+  }));
+  S.camMap = Object.fromEntries(S.cams.map(c => [c.id, c]));
+  if(S.group !== 'index' && !S.groups.some(g => g.id === S.group)) S.group = 'index';
+  buildGroupBar();
+  buildGrid();
+  const sel = $('#camFilter'), cur = sel.value;
+  sel.innerHTML = '<option value="index">All cameras</option>' +
+    (S.groups.length ? '<optgroup label="Groups">' + S.groups.map(g => `<option value="${esc(g.id)}">${esc(g.name)}</option>`).join('') + '</optgroup><optgroup label="Cameras">' : '') +
+    S.cams.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('') + (S.groups.length ? '</optgroup>' : '');
+  sel.value = (S.camMap[cur] || S.groups.some(g => g.id === cur)) ? cur : 'index';
+}
+
+/* ---- groups + tile size ---- */
+function visibleCams(){
+  let base = S.cams;
+  if(S.group !== 'index'){ const g = S.groups.find(g => g.id === S.group); if(g) base = g.cams.map(id => S.camMap[id]).filter(Boolean); }
+  const ord = loadOrder()[S.group];
+  if(!ord || !ord.length) return base;
+  const at = new Map(ord.map((id, i) => [id, i]));
+  const rank = (c, i) => at.has(c.id) ? at.get(c.id) : 10000 + i;   // cameras not yet placed keep their Blue Iris order, at the end
+  return base.map((c, i) => [c, rank(c, i)]).sort((a, b) => a[1] - b[1]).map(x => x[0]);
+}
+function loadOrder(){ try{ return JSON.parse(store.get('bis_order') || '{}') || {}; }catch(e){ return {}; } }
+function saveOrder(ids){ const m = loadOrder(); if(ids) m[S.group] = ids; else delete m[S.group]; store.set('bis_order', JSON.stringify(m)); }
+function toast(msg, ms = 2500){
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+  setTimeout(() => t.remove(), ms);
+}
+// Which group buttons show on the Live screen. Stored as the HIDDEN ids so groups added in Blue Iris later show up by default.
+function hiddenGroups(){ try{ const v = JSON.parse(store.get('bis_groups_hidden') || '[]'); return Array.isArray(v) ? v : []; }catch(e){ return []; } }
+function allGroupChoices(){ return [{id:'index', name:'All'}, ...S.groups]; }
+function shownGroups(){
+  const hid = new Set(hiddenGroups());
+  const v = allGroupChoices().filter(g => !hid.has(g.id));
+  return v.length ? v : allGroupChoices();
+}
+function buildGroupBar(){
+  const box = $('#groupChips');
+  if(!S.groups.length){ box.innerHTML = ''; updateSizeBtn(); return; }
+  const shown = shownGroups();
+  if(!shown.some(g => g.id === S.group)){ S.group = shown[0].id; store.set('bis_group', S.group); }
+  box.innerHTML = shown.length < 2 ? '' : shown
+    .map(g => `<button class="chip" data-group="${esc(g.id)}" aria-pressed="${g.id === S.group}">${esc(g.name)}</button>`).join('');
+  updateSizeBtn();
+}
+$('#groupChips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if(!b) return;
+  S.group = b.dataset.group; store.set('bis_group', S.group);
+  document.querySelectorAll('#groupChips .chip').forEach(c => c.setAttribute('aria-pressed', c === b));
+  updateSizeBtn();
+  buildGrid();
+  $('#liveView').scrollTop = 0;
+});
+// Tile size is remembered per group: 'auto' or a fixed column count
+function getCols(){ try{ return (JSON.parse(store.get('bis_cols') || '{}'))[S.group] || 'auto'; }catch(e){ return 'auto'; } }
+function setCols(v){ let m = {}; try{ m = JSON.parse(store.get('bis_cols') || '{}'); }catch(e){} m[S.group] = v; store.set('bis_cols', JSON.stringify(m)); }
+const SIZE_ICON = n => {
+  const r = n === 1 ? '<rect x="3" y="5" width="18" height="14" rx="2"/>'
+    : n === 2 ? '<rect x="3" y="4" width="8" height="7" rx="1.5"/><rect x="13" y="4" width="8" height="7" rx="1.5"/><rect x="3" y="13" width="8" height="7" rx="1.5"/><rect x="13" y="13" width="8" height="7" rx="1.5"/>'
+    : '<rect x="2.5" y="4" width="5" height="5" rx="1"/><rect x="9.5" y="4" width="5" height="5" rx="1"/><rect x="16.5" y="4" width="5" height="5" rx="1"/><rect x="2.5" y="11" width="5" height="5" rx="1"/><rect x="9.5" y="11" width="5" height="5" rx="1"/><rect x="16.5" y="11" width="5" height="5" rx="1"/>';
+  return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${r}</svg>`;
+};
+function updateSizeBtn(){
+  const c = getCols(), n = c === 'auto' ? autoCols(visibleCams().length) : +c;
+  $('#sizeBtn').innerHTML = SIZE_ICON(Math.min(n, 3)) + (c === 'auto' ? 'Auto' : (n === 1 ? 'Large' : n === 2 ? 'Medium' : 'Small'));
+}
+$('#sizeBtn').addEventListener('click', () => {
+  const order = ['auto', '1', '2', '3'];
+  setCols(order[(order.indexOf(getCols()) + 1) % order.length]);
+  updateSizeBtn(); layoutGrid();
+});
+// Auto: the largest tiles that still fit the whole group on screen; if nothing fits, ~2 per row on phones
+/* Auto: try every column count, size tiles so the whole group fits on screen, keep the biggest tiles.
+   Among layouts within ~12% of the biggest, prefer evenly filled rows (4 -> 2+2, 5 -> 3+2, 7 -> 4+3).
+   If even the best fit would make tiles tiny, fall back to a scrolling grid. */
+function autoLayout(n){
+  const view = $('#liveView');
+  const W = (view.clientWidth || innerWidth) - 12, H = (view.clientHeight || innerHeight) - $('#groupBar').offsetHeight - 18;
+  if(!n) return { cols: 2 };
+  const opts = [];
+  for(let c = 1; c <= Math.min(n, 8); c++){
+    const rows = Math.ceil(n / c);
+    const tw = Math.min((W - 6 * (c - 1)) / c, ((H - 6 * (rows - 1)) / rows) * 16 / 9);
+    opts.push({ cols: c, tw, empty: rows * c - n });
+  }
+  const best = Math.max(...opts.map(o => o.tw));
+  if(best < 150) return { cols: Math.max(2, Math.round(W / 300)) };
+  // near-best layouts with the fewest empty slots; among near-equal tile sizes prefer more columns (fewer, fuller rows)
+  const near = opts.filter(o => o.tw >= best * 0.88), minEmpty = Math.min(...near.map(o => o.empty));
+  const even = near.filter(o => o.empty === minEmpty), top = Math.max(...even.map(o => o.tw));
+  const pick = even.filter(o => o.tw >= top * 0.95).sort((a, b) => b.cols - a.cols)[0];
+  return { cols: pick.cols, tw: Math.floor(pick.tw) };
+}
+function autoCols(n){ return autoLayout(n).cols; }
+function layoutGrid(){
+  const g = $('#grid'), c = getCols();
+  if(c === 'auto'){
+    const L = autoLayout(visibleCams().length);
+    g.style.gridTemplateColumns = L.tw ? `repeat(${L.cols}, ${L.tw}px)` : `repeat(${L.cols}, minmax(0, 1fr))`;
+    g.style.justifyContent = L.tw ? 'center' : '';
+  } else {
+    g.style.gridTemplateColumns = `repeat(${+c}, minmax(0, 1fr))`;
+    g.style.justifyContent = '';
+  }
+}
+addEventListener('resize', () => { if(S.tab === 'live'){ layoutGrid(); updateSizeBtn(); } });
+function camName(id){ return (S.camMap[id] && S.camMap[id].name) || id; }
+
+const tiles = new Map();
+let tileObserver;
+function buildGrid(){
+  const grid = $('#grid');
+  tiles.forEach(t => clearTimeout(t.timer));
+  tiles.clear(); grid.innerHTML = '';
+  if(tileObserver) tileObserver.disconnect();
+  tileObserver = new IntersectionObserver(entries => {
+    for(const en of entries){ const t = tiles.get(en.target.dataset.cam); if(!t) continue; t.visible = en.isIntersecting; if(t.visible) pumpTile(t); }
+  }, { rootMargin:'120px' });
+  const cams = visibleCams();
+  layoutGrid();
+  if(!cams.length){ grid.innerHTML = '<div class="empty">No cameras available to this account.</div>'; return; }
+  for(const c of cams){
+    const el = document.createElement('button');
+    el.className = 'tile' + (c.online ? '' : ' off') + (c.trig ? ' trig' : '');
+    el.dataset.cam = c.id;
+    if(c.h > c.w) el.classList.add('portrait');
+    el.innerHTML = `<img alt=""><canvas class="tbox"></canvas><span class="tlabel" hidden></span><div class="tname"><span class="dot"></span><span>${esc(c.name)}</span></div>`;
+    el.addEventListener('click', () => { if(performance.now() - DR.endedAt > 350) openViewer(c.id); });
+    grid.appendChild(el);
+    const t = { cam:c.id, el, visible:false, busy:false, timer:null, fails:0, det:{ prev:null, boxes:[] } };
+    tiles.set(c.id, t);
+    tileObserver.observe(el);
+  }
+}
+/* ---- drag to reorder: mouse = just drag; touch = press and hold, then drag ---- */
+const DR = { el:null, pid:null, sx:0, sy:0, x:0, y:0, type:'', active:false, timer:null, ghost:null, offX:0, offY:0, endedAt:-1e9, scrollTimer:null };
+const gridEl = $('#grid');
+gridEl.addEventListener('contextmenu', e => { if(e.target.closest('.tile')) e.preventDefault(); });
+gridEl.addEventListener('pointerdown', e => {
+  const el = e.target.closest('.tile'); if(!el || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  Object.assign(DR, { el, pid: e.pointerId, sx: e.clientX, sy: e.clientY, x: e.clientX, y: e.clientY, type: e.pointerType, active: false });
+  clearTimeout(DR.timer);
+  if(e.pointerType !== 'mouse') DR.timer = setTimeout(() => { if(DR.el === el) dragStart(); }, 380);
+});
+addEventListener('pointermove', e => {
+  if(!DR.el || e.pointerId !== DR.pid) return;
+  DR.x = e.clientX; DR.y = e.clientY;
+  if(!DR.active){
+    const d = Math.hypot(e.clientX - DR.sx, e.clientY - DR.sy);
+    if(DR.type === 'mouse'){ if(d > 8) dragStart(); }
+    else if(d > 10){ clearTimeout(DR.timer); DR.el = null; }        // finger moved before the hold: it's a scroll
+    if(!DR.active) return;
+  }
+  dragMove();
+});
+addEventListener('pointerup', e => { if(e.pointerId === DR.pid) dragEnd(); });
+addEventListener('pointercancel', e => { if(e.pointerId === DR.pid) dragEnd(); });
+// while dragging with a finger, stop the page from scrolling instead
+addEventListener('touchmove', e => { if(DR.active) e.preventDefault(); }, { passive: false });
+
+function dragStart(){
+  const el = DR.el; if(!el) return;
+  DR.active = true;
+  try{ navigator.vibrate && navigator.vibrate(12); }catch(e){}
+  const r = el.getBoundingClientRect();
+  DR.offX = DR.x - r.left; DR.offY = DR.y - r.top;
+  const g = el.cloneNode(true);
+  g.classList.add('ghost'); g.style.width = r.width + 'px'; g.style.height = r.height + 'px';
+  g.style.left = r.left + 'px'; g.style.top = r.top + 'px';
+  document.body.appendChild(g); DR.ghost = g;
+  el.classList.add('placeholder');
+  gridEl.classList.add('dragging');
+  clearInterval(DR.scrollTimer);
+  DR.scrollTimer = setInterval(dragAutoScroll, 16);
+}
+function dragMove(){
+  const g = DR.ghost; if(!g) return;
+  g.style.left = (DR.x - DR.offX) + 'px'; g.style.top = (DR.y - DR.offY) + 'px';
+  const tilesNow = [...gridEl.querySelectorAll('.tile')];
+  // hit-test against layout positions (offsetLeft/Top ignore the in-flight slide animations)
+  const host = gridEl.offsetParent || document.body, hr = host.getBoundingClientRect();
+  const px = DR.x - hr.left + host.scrollLeft, py = DR.y - hr.top + host.scrollTop;
+  const box = t => ({ l: t.offsetLeft, t: t.offsetTop, r: t.offsetLeft + t.offsetWidth, b: t.offsetTop + t.offsetHeight });
+  const over = tilesNow.find(t => { if(t === DR.el) return false; const b = box(t); return px >= b.l && px <= b.r && py >= b.t && py <= b.b; });
+  if(!over) return;
+  const from = tilesNow.indexOf(DR.el), to = tilesNow.indexOf(over);
+  // FLIP: remember positions, move in the DOM, then animate the other tiles into place
+  const before = new Map(tilesNow.map(t => [t, box(t)]));
+  gridEl.insertBefore(DR.el, to > from ? over.nextSibling : over);
+  for(const t of tilesNow){
+    if(t === DR.el) continue;
+    const a = before.get(t), b = box(t);
+    const dx = a.l - b.l, dy = a.t - b.t;
+    if(!dx && !dy) continue;
+    t.style.transition = 'none'; t.style.transform = `translate(${dx}px, ${dy}px)`;
+    requestAnimationFrame(() => { t.style.transition = ''; t.style.transform = ''; });
+  }
+}
+function dragAutoScroll(){
+  if(!DR.active) return;
+  const v = $('#liveView'), r = v.getBoundingClientRect(), edge = 70;
+  let dy = 0;
+  if(DR.y < r.top + edge) dy = -Math.ceil((r.top + edge - DR.y) / 6);
+  else if(DR.y > r.bottom - edge) dy = Math.ceil((DR.y - (r.bottom - edge)) / 6);
+  if(dy){ v.scrollTop += dy; dragMove(); }
+}
+function dragEnd(){
+  clearTimeout(DR.timer); clearInterval(DR.scrollTimer);
+  const el = DR.el, wasActive = DR.active;
+  DR.el = null; DR.pid = null; DR.active = false;
+  if(!wasActive || !el) return;
+  DR.endedAt = performance.now();
+  const g = DR.ghost; DR.ghost = null;
+  const r = el.getBoundingClientRect();
+  if(g){
+    g.style.transition = 'left .15s, top .15s, transform .15s';
+    g.style.left = r.left + 'px'; g.style.top = r.top + 'px'; g.style.transform = 'scale(1)';
+    setTimeout(() => { g.remove(); el.classList.remove('placeholder'); }, 160);
+  } else el.classList.remove('placeholder');
+  gridEl.classList.remove('dragging');
+  const ids = [...gridEl.querySelectorAll('.tile')].map(t => t.dataset.cam);
+  const prev = visibleCams().map(c => c.id);
+  if(ids.join('|') !== prev.join('|')) saveOrder(ids);
+}
+$('#legendBtn').addEventListener('click', () => { $('#sheet').hidden = true; $('#legendSheet').hidden = false; });
+/* ---- About ---- */
+$('#aboutBtn').addEventListener('click', () => {
+  $('#sheet').hidden = true;
+  $('#aboutName').textContent = APP.name;
+  $('#aboutVer').textContent = 'Version ' + APP.version + ' \u00b7 for Blue Iris';
+  const rows = [
+    ['Blue Iris server', S.sys || 'Unknown'],
+    ['Blue Iris version', S.biVersion || 'Not reported'],
+    ['Cameras', String(S.cams.length)],
+    ['Signed in as', store.get('bis_u') || 'This session'],
+    ['Stay signed in', staySignedIn() && hasSavedLogin() ? 'On' : 'Off']
+  ];
+  $('#aboutRows').innerHTML = rows.map(([k, v]) => `<div><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join('');
+  $('#aboutSheet').hidden = false;
+});
+$('#aboutSheet').addEventListener('click', e => { if(e.target.id === 'aboutSheet' || e.target.id === 'aboutDone') $('#aboutSheet').hidden = true; });
+/* ---- Live view switches: tile highlight borders and AI labels ---- */
+const LV = { hl: store.get('bis_hl') !== '0', labels: store.get('bis_tlabels') !== '0' };
+function applyLiveOpts(){
+  $('#hlBtn').setAttribute('aria-checked', LV.hl);
+  $('#tlBtn').setAttribute('aria-checked', LV.labels);
+  $('#grid').classList.toggle('nohl', !LV.hl);
+  tileLabels();
+}
+$('#hlBtn').addEventListener('click', () => {
+  LV.hl = !LV.hl; store.set('bis_hl', LV.hl ? '1' : '0'); applyLiveOpts();
+  if(LV.hl){ refreshStatus(); pollRecentAlerts(); }
+});
+$('#tlBtn').addEventListener('click', () => {
+  LV.labels = !LV.labels; store.set('bis_tlabels', LV.labels ? '1' : '0'); applyLiveOpts();
+  if(LV.labels){ refreshStatus(); pollRecentAlerts(); }
+});
+/* ---- Groups on Live screen ---- */
+function updateGroupsUi(){
+  if(!S.groups.length){ $('#groupsCur').textContent = 'None set up'; return; }
+  const shown = shownGroups();
+  $('#groupsCur').textContent = shown.length === allGroupChoices().length ? 'All shown' : shown.map(g => g.name).join(', ');
+}
+function renderGroupsList(){
+  const hid = new Set(hiddenGroups());
+  $('#groupsList').innerHTML = !S.groups.length
+    ? '<div class="meta">Blue Iris has no camera groups yet, so the Live screen shows every camera. Groups you add in Blue Iris (camera settings &#8594; General &#8594; Groups) will appear here.</div>'
+    : allGroupChoices().map(g => `<button class="tgl" role="switch" data-g="${esc(g.id)}" aria-checked="${!hid.has(g.id)}"><span class="lbl">${esc(g.name)}<small>${g.id === 'index' ? 'Every camera' : g.cams.length + ' camera' + (g.cams.length === 1 ? '' : 's')}</small></span><span class="tog"></span></button>`).join('');
+}
+$('#groupsBtn').addEventListener('click', () => { $('#sheet').hidden = true; renderGroupsList(); $('#groupsSheet').hidden = false; });
+$('#groupsSheet').addEventListener('click', e => {
+  if(e.target.id === 'groupsSheet' || e.target.id === 'groupsDone'){ $('#groupsSheet').hidden = true; return; }
+  const b = e.target.closest('[data-g]'); if(!b) return;
+  const id = b.dataset.g, hid = new Set(hiddenGroups());
+  if(hid.has(id)) hid.delete(id);
+  else {
+    if(allGroupChoices().filter(g => !hid.has(g.id)).length <= 1){ toast('Keep at least one group', 1600); return; }
+    hid.add(id);
+  }
+  store.set('bis_groups_hidden', JSON.stringify([...hid]));
+  renderGroupsList(); updateGroupsUi();
+  const before = S.group;
+  buildGroupBar();
+  if(S.group !== before) buildGrid(); else layoutGrid();
+});
+function updateStayUi(){ $('#stayCur').textContent = staySignedIn() && hasSavedLogin() ? 'On' : 'Off'; }
+$('#stayBtn').addEventListener('click', () => {
+  $('#sheet').hidden = true;
+  if(staySignedIn() && hasSavedLogin()){
+    store.set('bis_stay', '0'); forgetLogin(); updateStayUi();
+    toast('Stay signed in is off. You\u2019ll sign in again when Blue Iris ends the session.', 3500);
+  } else {
+    $('#stayUser').value = store.get('bis_u') || ''; $('#stayPass').value = ''; $('#stayErr').textContent = '';
+    $('#staySheet').hidden = false;
+    setTimeout(() => ($('#stayUser').value ? $('#stayPass') : $('#stayUser')).focus(), 50);
+  }
+});
+$('#stayCancel').addEventListener('click', () => { $('#staySheet').hidden = true; });
+$('#staySheet').addEventListener('click', e => { if(e.target.id === 'staySheet') $('#staySheet').hidden = true; });
+$('#stayForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const u = $('#stayUser').value.trim(), p = $('#stayPass').value, btn = $('#staySave');
+  btn.disabled = true; $('#stayErr').textContent = '';
+  try{
+    const res = await loginWithPassword(u, p);          // check it really works before saving
+    if(!res.ok){ $('#stayErr').textContent = res.reason; return; }
+    setSession(res.r);
+    store.set('bis_stay', '1'); saveLogin(u, p); updateStayUi();
+    $('#staySheet').hidden = true; $('#stayPass').value = '';
+    toast('Stay signed in is on', 1800);
+  }catch(err){ $('#stayErr').textContent = err.message; }
+  finally{ btn.disabled = false; }
+});
+updateStayUi();
+function updateSensUi(){
+  const L = MB.sens;
+  $('#sensCur').textContent = L + (L === 5 ? ' (default)' : '');
+  $('#sensOpts').innerHTML = Array.from({ length: 10 }, (_, i) => i + 1).map(n =>
+    `<button data-s="${n}" role="radio" aria-checked="${n === L}" class="${n < L ? 'in' : ''}" aria-label="Sensitivity ${n}">${n}</button>`).join('');
+  $('#sensDesc').innerHTML = `<b>${L}</b> &#183; ${esc(sensDesc(L))}`;
+}
+function setSens(L){
+  L = Math.max(1, Math.min(10, L));
+  if(L === MB.sens) return;
+  MB.sens = L; MB.P = sensParams(L); store.set('bis_msens', String(L));
+  MB.boxes = []; tiles.forEach(t => { t.det.boxes = []; tileDrawBoxes(t); });
+  updateSensUi();
+}
+$('#sensBtn').addEventListener('click', () => { $('#sheet').hidden = true; updateSensUi(); $('#sensSheet').hidden = false; });
+$('#sensSheet').addEventListener('click', e => {
+  if(e.target.id === 'sensSheet' || e.target.id === 'sensDone'){ $('#sensSheet').hidden = true; return; }
+  const b = e.target.closest('[data-s]'); if(b) setSens(+b.dataset.s);
+});
+// arrow keys on the number row
+$('#sensOpts').addEventListener('keydown', e => {
+  if(e.key === 'ArrowLeft' || e.key === 'ArrowDown'){ e.preventDefault(); setSens(MB.sens - 1); $(`#sensOpts [data-s="${MB.sens}"]`).focus(); }
+  if(e.key === 'ArrowRight' || e.key === 'ArrowUp'){ e.preventDefault(); setSens(MB.sens + 1); $(`#sensOpts [data-s="${MB.sens}"]`).focus(); }
+});
+setTimeout(updateSensUi, 0);
+setTimeout(applyLiveOpts, 0);   // SENS/MB are defined further down this script
+$('#legendSheet').addEventListener('click', e => { if(e.target.id === 'legendSheet') $('#legendSheet').hidden = true; });
+$('#resetOrderBtn').addEventListener('click', () => {
+  $('#sheet').hidden = true;
+  saveOrder(null); buildGrid();
+  toast('Camera order reset to Blue Iris order');
+});
+
+const canRefreshTiles = () => S.tab === 'live' && !V.open && document.visibilityState === 'visible';
+function pumpTile(t){
+  if(t.busy || t.timer || !t.visible || !canRefreshTiles()) return;
+  t.busy = true;
+  const w = Math.min(1280, Math.round(t.el.clientWidth * Math.min(2, devicePixelRatio || 1)) || 320);
+  const im = new Image();
+  im.alt = '';
+  const done = ok => {
+    t.busy = false;
+    if(ok){ t.fails = 0; const old = t.el.querySelector('img'); old.replaceWith(im); t.el.classList.remove('off'); if(MB.on) tileDetect(t, im); }
+    else if(++t.fails > 1) t.el.classList.add('off');
+    t.timer = setTimeout(() => { t.timer = null; pumpTile(t); }, ok ? tileRefreshMs() : 5000);
+  };
+  im.onload = () => done(true);
+  im.onerror = () => done(false);
+  im.src = `image/${camEnc(t.cam)}?w=${w}&q=55&${sq()}&t=${Date.now()}`;
+}
+function pumpAllTiles(){ tiles.forEach(pumpTile); }
+let hiddenAt = 0;
+// Coming back to the app: make sure the session is good (silently signing back in if needed) before restarting video
+async function resumeSession(force){
+  if(!started) return;
+  if(force || Date.now() - hiddenAt > 45000){
+    try{ await api({cmd:'status'}); }
+    catch(e){ if(e.message !== 'session'){ netState(false); setTimeout(() => resumeSession(true), 3000); } return; }
+  }
+  pumpAllTiles(); refreshStatus();
+  if(V.open && V.mode === 'live') goLive();
+  else if(V.open && V.playing) startPlayback();
+}
+// Keep the Blue Iris session from idling out while the page is open
+setInterval(() => { if(started && S.session && document.visibilityState === 'visible') api({cmd:'status'}).catch(() => {}); }, 40000);
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible'){
+    resumeSession(false);
+  } else if((hiddenAt = Date.now()) && V.open && VS.ctrl){
+    const t = vsShownUtc(); if(t && V.mode === 'rec') V.pos = t;
+    vsStop(true);
+  }
+});
+async function refreshStatus(){
+  if(!S.session) return;
+  try{
+    const r = await api({cmd:'camlist'});
+    for(const c of (r.data || [])){
+      const t = tiles.get(c.optionValue); if(!t) continue;
+      const trig = !!(c.isTriggered || c.isAlerting);
+      t.el.classList.toggle('trig', trig);
+      t.el.classList.toggle('motion', !trig && !!c.isMotion);
+      if(trig) t.trigSince = t.trigSince || Date.now(); else t.trigSince = 0;
+    }
+    tileLabels();
+  }catch(e){}
+}
+// Blue Iris's own motion/trigger state, every 2 s while the grid is on screen
+setInterval(() => { if(canRefreshTiles() && (LV.hl || LV.labels)) refreshStatus(); }, 2000);
+// Latest AI label per camera (from alerts in the last ~2 minutes), every 4 s
+const TA = {};
+async function pollRecentAlerts(){
+  if(!S.session) return;
+  try{
+    const now = Math.floor(Date.now() / 1000);
+    const r = await api({cmd:'alertlist', camera:'index', startdate: now - 120, enddate: now + 60, view:'alerts'});
+    for(const it of (r.data || [])){
+      const tag = alertTags(it)[0];
+      if(!tag || tag.cls === 'motion') continue;
+      const prev = TA[it.camera];
+      if(!prev || it.date * 1000 > prev.at) TA[it.camera] = { tag, at: it.date * 1000 };
+    }
+    tileLabels();
+  }catch(e){}
+}
+setInterval(() => { if(canRefreshTiles() && (LV.hl || LV.labels)) pollRecentAlerts(); }, 4000);
+// Show what the AI saw on each tile while it's still happening (triggered, or confirmed in the last 45 s)
+function tileLabels(){
+  const now = Date.now();
+  tiles.forEach(t => {
+    const a = TA[t.cam], lab = t.el.querySelector('.tlabel');
+    const trig = t.el.classList.contains('trig');
+    const fresh = a && (now - a.at < 45000 || (trig && now - a.at < 180000));
+    ['person','vehicle','animal','delivery'].forEach(k => t.el.classList.toggle('k-' + k, !!fresh && a.tag.cls === k));
+    if(!lab) return;
+    if(fresh && LV.labels){ lab.hidden = false; lab.innerHTML = `<span class="tag ${a.tag.cls}">${esc(a.tag.text)}</span>`; }
+    else lab.hidden = true;
+  });
+}
+
+/* ======================= tabs / header ======================= */
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+function setTab(tab){
+  S.tab = tab; store.set('bis_tab', tab);
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
+  $('#liveView').hidden = tab !== 'live';
+  $('#alertsView').hidden = tab !== 'alerts';
+  if(tab === 'live'){ layoutGrid(); updateSizeBtn(); pumpAllTiles(); }
+  if(tab === 'alerts' && (!A.loadedAt || Date.now() - A.loadedAt > 60000)) loadAlerts(true);
+}
+$('#refreshBtn').addEventListener('click', async () => {
+  if(S.tab === 'alerts') loadAlerts(true);
+  else { await loadCams(); }
+});
+$('#menuBtn').addEventListener('click', () => {
+  $('#sheetMeta').textContent = (S.sys ? S.sys + ' \u00b7 ' : '') + S.cams.length + ' cameras';
+  applyLiveOpts(); updateGroupsUi(); updateAfUi();
+  $('#aboutCur').textContent = 'v' + APP.version;
+  $('#sheet').hidden = false;
+});
+$('#sheet').addEventListener('click', e => { if(e.target.id === 'sheet') $('#sheet').hidden = true; });
+$('#logoutBtn').addEventListener('click', async () => {
+  $('#sheet').hidden = true;
+  try{ await api({cmd:'logout'}, false); }catch(e){}
+  store.set('bis_session', null); store.set('bis_u', null); store.set('bis_p', null);
+  S.session = '';
+  $('#app').hidden = true;
+  showLogin('Signed out.');
+});
+
+/* ======================= alerts ======================= */
+const A = { view:'alerts', match:'', range:null, cam:'index', end:0, seen:new Set(), loading:false, lastDay:'', loadedAt:0, count:0, gen:0 };
+const alertMoreObs = new IntersectionObserver(en => { if(en[0].isIntersecting && !A.loading && !A.exhausted) loadAlerts(false); }, { root: $('#alertsView'), rootMargin:'400px' });
+alertMoreObs.observe($('#alertMore'));
+
+// Alert filters. People/Vehicles use Blue Iris's own alert views; Animals and labels match the AI label
+// Blue Iris stores with each alert (its "memo", e.g. "dog:94%"), ignoring capitalization and plurals.
+const ANIMALS = /\b(dog|cat|bear|bird|deer|horse|sheep|cow|fox|coyote|raccoon|squirrel|rabbit|skunk|possum|opossum|animal|elephant|zebra|giraffe)s?\b/;
+const memoOf = it => String(it.memo || '').toLowerCase();
+const FILTER_BUILTIN = {
+  all:      { name:'All',      sub:'Every alert',                         view:'alerts' },
+  people:   { name:'People',   sub:'Blue Iris person alerts',             view:'people',   noun:'person' },
+  vehicles: { name:'Vehicles', sub:'Blue Iris vehicle alerts',            view:'vehicles', noun:'vehicle' },
+  animals:  { name:'Animals',  sub:'Any animal: dog, cat, bear, bird\u2026', view:'alerts', match:'animal', noun:'animal' }
+};
+const BUILTIN_ORDER = ['all', 'people', 'vehicles', 'animals'];
+// "Dog", "dogs", "DOGS" -> "dog"; "Fed Ex"/"FedEx" -> "fedex"
+function normLabel(x){
+  let k = String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  if(k.length > 4 && /(ches|shes|xes|sses)$/.test(k)) k = k.slice(0, -2);
+  else if(k.length > 3 && /[^aeiou]ies$/.test(k)) k = k.slice(0, -3) + 'y';
+  else if(k.length > 2 && /[^s]s$/.test(k)) k = k.slice(0, -1);
+  return k;
+}
+// The AI labels on one alert, as raw lowercase names: "person:91%,car:55%" -> ["person","car"]
+function memoNames(it){
+  return memoOf(it).split(/[,;]+/).map(p => p.replace(/[:]?\s*\d+(\.\d+)?\s*%?/g, '').replace(/[^a-z0-9 _-]+/g, ' ').trim()).filter(p => /[a-z]/.test(p));
+}
+function memoKeys(it){
+  if(it._k) return it._k;
+  const k = new Set();
+  for(const n of memoNames(it)){ k.add(normLabel(n)); n.split(/[\s_-]+/).forEach(w => w && k.add(normLabel(w))); }
+  return (it._k = k);
+}
+const IRREG = { person:'People', deer:'Deer', sheep:'Sheep', fish:'Fish', mouse:'Mice', goose:'Geese' };
+function labelTitle(l){ l = String(l); return LABEL_NAMES[l] || l.replace(/\b[a-z]/g, c => c.toUpperCase()); }
+function labelChip(l){
+  if(LABEL_NAMES[l]) return LABEL_NAMES[l];
+  if(IRREG[l]) return IRREG[l];
+  const t = labelTitle(l);
+  if(/s$/i.test(l) || /\s/.test(l)) return t;
+  if(/(ch|sh|x)$/i.test(l)) return t + 'es';
+  if(/[^aeiou]y$/i.test(l)) return t.slice(0, -1) + 'ies';
+  return t + 's';
+}
+function filterDef(id){
+  if(FILTER_BUILTIN[id]) return FILTER_BUILTIN[id];
+  if(String(id).startsWith('label:')){ const l = id.slice(6); return { get name(){ return labelChip(l); }, view:'alerts', match:id, get noun(){ return LABEL_NAMES[l] || l; } }; }
+  return null;
+}
+function matcherFor(match){
+  if(match === 'animal') return it => ANIMALS.test(memoOf(it)) || hasBit(it.flags, 31);
+  if(String(match).startsWith('label:')){ const k = normLabel(match.slice(6)); return it => memoKeys(it).has(k); }
+  return () => true;
+}
+// Which filter buttons are shown (in order). Existing users keep what they had; new visitors get the basics.
+function loadAf(){
+  try{ const v = JSON.parse(store.get('bis_afilters')); if(Array.isArray(v)) return v.filter(id => FILTER_BUILTIN[id] || String(id).startsWith('label:')); }catch(e){}
+  return store.get('bis_tab') !== null
+    ? ['all', 'people', 'vehicles', 'label:dog', 'animals', 'label:amazon', 'label:ups', 'label:usps', 'label:fedex']
+    : ['all', 'people', 'vehicles', 'animals'];
+}
+function saveAf(list){
+  // All / People / Vehicles stay up front in their usual order; everything else keeps the order it was turned on
+  const front = ['all', 'people', 'vehicles'].filter(x => list.includes(x));
+  store.set('bis_afilters', JSON.stringify([...front, ...list.filter(x => !front.includes(x))]));
+}
+function customLabels(){ try{ const v = JSON.parse(store.get('bis_alabels') || '[]'); return Array.isArray(v) ? v : []; }catch(e){ return []; } }
+A.filter = loadAf()[0] || 'all';
+function renderFilterChips(){
+  const list = loadAf();
+  if(!list.includes(A.filter) && A.filter !== 'all'){ A.filter = list[0] || 'all'; applyFilterState(); }
+  $('#afChips').innerHTML = list.length < 2 ? '' : list.map(id =>
+    `<button class="chip" data-f="${esc(id)}" aria-pressed="${id === A.filter}">${esc(filterDef(id).name)}</button>`).join('');
+}
+function applyFilterState(){ const d = filterDef(A.filter) || FILTER_BUILTIN.all; A.view = d.view; A.match = d.match || ''; }
+function setAlertFilter(id){
+  A.filter = filterDef(id) ? id : 'all'; applyFilterState();
+  document.querySelectorAll('#afChips .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.f === A.filter));
+  loadAlerts(true);
+}
+applyFilterState();
+$('#afChips').addEventListener('click', e => {
+  const b = e.target.closest('[data-f]'); if(!b) return;
+  setAlertFilter(b.dataset.f);
+});
+setTimeout(renderFilterChips, 0);
+/* ---- Alert filters settings: built-ins, labels seen on your cameras, and your own labels ---- */
+const AFS = { scan:null, scanAt:0, scanning:false };
+function updateAfUi(){ const n = loadAf().length; $('#afCur').textContent = n < 2 ? 'Hidden' : n + ' shown'; }
+async function scanLabels(){
+  if(AFS.scanning || (AFS.scan && Date.now() - AFS.scanAt < 600000)) return;
+  AFS.scanning = true; renderAfList();
+  const counts = new Map(), now = Math.floor(Date.now() / 1000);
+  try{
+    const days = [...Array(14).keys()];
+    for(let i = 0; i < days.length; i += 4){
+      const res = await Promise.all(days.slice(i, i + 4).map(d =>
+        api({cmd:'alertlist', camera:'index', startdate: now - (d + 1) * 86400, enddate: now - d * 86400 + (d ? 0 : 60), view:'alerts'}).catch(() => null)));
+      for(const r of res) for(const it of ((r && r.data) || [])){
+        for(const n of new Set(memoNames(it))){
+          const k = normLabel(n); if(!k) continue;
+          const c = counts.get(k) || { name: n.replace(/[_-]+/g, ' '), n: 0 }; c.n++; counts.set(k, c);
+        }
+      }
+    }
+    AFS.scan = counts; AFS.scanAt = Date.now();
+  }finally{ AFS.scanning = false; renderAfList(); }
+}
+function afRow(id, title, sub, on, delKey){
+  return `<div class="afrow"><button class="tgl" role="switch" data-af="${esc(id)}" aria-checked="${on}"><span class="lbl">${esc(title)}<small>${esc(sub)}</small></span><span class="tog"></span></button>` +
+    (delKey ? `<button class="afdel" data-del="${esc(delKey)}" aria-label="Remove ${esc(title)}">Remove</button>` : '') + '</div>';
+}
+function renderAfList(){
+  const on = new Set(loadAf()), scan = AFS.scan;
+  let h = '<div class="sect">Built in</div>' + BUILTIN_ORDER.map(id => afRow(id, FILTER_BUILTIN[id].name, FILTER_BUILTIN[id].sub, on.has(id))).join('');
+  // labels: ones that are on, your own, then everything the AI has reported recently (most common first)
+  const rows = new Map();
+  const add = (l, src) => { const k = normLabel(l); if(!k) return; const r = rows.get(k) || { label: l, custom:false }; if(src === 'custom') r.custom = true; rows.set(k, r); };
+  [...on].filter(id => id.startsWith('label:')).forEach(id => add(id.slice(6)));
+  customLabels().forEach(l => add(l, 'custom'));
+  if(scan) [...scan.entries()].sort((a, b) => b[1].n - a[1].n).forEach(([k, c]) => { if(!rows.has(k) && k !== 'person') add(c.name); });   // person = the built-in People filter
+  h += '<div class="sect">Labels</div>';
+  if(!rows.size) h += `<div class="meta">${AFS.scanning ? 'Looking at the last 14 days of alerts\u2026' : 'No AI labels found in the last 14 days. Add one below.'}</div>`;
+  for(const [k, r] of rows){
+    const c = scan && scan.get(k);
+    const sub = c ? `${c.n.toLocaleString()} alert${c.n === 1 ? '' : 's'} in the last 14 days` : (AFS.scanning ? 'Checking\u2026' : (scan ? 'Not seen in the last 14 days' : ''));
+    h += afRow('label:' + r.label, labelChip(r.label), sub, on.has('label:' + r.label) || [...on].some(id => id.startsWith('label:') && normLabel(id.slice(6)) === k), r.custom && !c && !on.has('label:' + r.label) ? r.label : '');
+  }
+  if(AFS.scanning && rows.size) h += '<div class="meta">Looking at the last 14 days of alerts for more labels\u2026</div>';
+  $('#afList').innerHTML = h;
+}
+function afToggle(id){
+  let list = loadAf();
+  const isLabel = id.startsWith('label:'), k = isLabel ? normLabel(id.slice(6)) : '';
+  const cur = list.find(x => x === id || (isLabel && x.startsWith('label:') && normLabel(x.slice(6)) === k));
+  if(cur) list = list.filter(x => x !== cur); else list.push(id);
+  saveAf(list);
+  renderAfList(); updateAfUi(); renderFilterChips();
+  if(!loadAf().includes(A.filter) && A.filter !== 'all') setAlertFilter(loadAf()[0] || 'all');
+  else if(!loadAf().length && A.filter !== 'all') setAlertFilter('all');
+}
+$('#afBtn').addEventListener('click', () => {
+  $('#sheet').hidden = true; $('#afNote').textContent = ''; $('#afInput').value = '';
+  renderAfList(); $('#afSheet').hidden = false; scanLabels();
+});
+$('#afSheet').addEventListener('click', e => {
+  if(e.target.id === 'afSheet' || e.target.id === 'afDone'){ $('#afSheet').hidden = true; return; }
+  const d = e.target.closest('[data-del]');
+  if(d){ const k = normLabel(d.dataset.del); store.set('bis_alabels', JSON.stringify(customLabels().filter(l => normLabel(l) !== k))); renderAfList(); return; }
+  const b = e.target.closest('[data-af]'); if(b) afToggle(b.dataset.af);
+});
+$('#afAdd').addEventListener('submit', e => {
+  e.preventDefault();
+  const raw = $('#afInput').value.trim().toLowerCase().replace(/\s+/g, ' ');
+  if(!raw) return;
+  if(!/^[a-z0-9][a-z0-9 _-]{0,29}$/.test(raw)){ $('#afNote').textContent = 'Use letters, numbers, spaces or dashes.'; return; }
+  const k = normLabel(raw);
+  if(!customLabels().some(l => normLabel(l) === k)) store.set('bis_alabels', JSON.stringify([...customLabels(), raw]));
+  if(!loadAf().some(x => x.startsWith('label:') && normLabel(x.slice(6)) === k)) afToggle('label:' + raw); else renderAfList();
+  const seen = AFS.scan && AFS.scan.get(k);
+  $('#afNote').textContent = seen ? `Added. \u201c${labelChip(raw)}\u201d matched ${seen.n.toLocaleString()} alerts in the last 14 days.`
+    : AFS.scan ? `Added. Nothing labeled \u201c${raw}\u201d in the last 14 days yet. It has to match the label your AI model reports.` : 'Added.';
+  $('#afInput').value = '';
+});
+// ---- date / time range ----
+const pad2 = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const hm = d => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+function rangeText(r){
+  const a = new Date(r.start * 1000), b = new Date(r.end * 1000);
+  const fullDay = hm(a) === '00:00' && hm(b) === '23:59' && ymd(a) === ymd(b);
+  const t = d => d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' }).replace(':00', '');
+  if(fullDay) return dayLabel(a);
+  const sameDay = ymd(a) === ymd(b);
+  return `${dayLabel(a)} ${t(a)}\u2013${sameDay ? '' : dayLabel(b) + ' '}${t(b)}`;
+}
+function setRange(r){
+  A.range = r;
+  $('#rangeLbl').textContent = r ? rangeText(r) : 'Any time';
+  $('#rangeBtn').setAttribute('aria-pressed', !!r);
+  $('#rangeSheet').hidden = true;
+  loadAlerts(true);
+}
+function rangeFromInputs(){
+  const date = $('#rDate').value; if(!date) return null;
+  const from = $('#rFrom').value || '00:00', to = $('#rTo').value || '23:59';
+  const a = new Date(`${date}T${from}:00`); let b = new Date(`${date}T${to}:59`);
+  if(b <= a) b = new Date(b.getTime() + 86400000);          // e.g. 10 PM - 2 AM runs past midnight
+  return { start: Math.floor(a / 1000), end: Math.floor(b / 1000) };
+}
+$('#rangeBtn').addEventListener('click', () => {
+  const r = A.range, base = r ? new Date(r.start * 1000) : new Date();
+  $('#rDate').value = ymd(base);
+  $('#rFrom').value = r ? hm(new Date(r.start * 1000)) : '00:00';
+  $('#rTo').value = r ? hm(new Date(r.end * 1000)) : '23:59';
+  $('#rDate').max = ymd(new Date());
+  $('#rangeSheet').hidden = false;
+});
+$('#rangeSheet').addEventListener('click', e => {
+  if(e.target.id === 'rangeSheet'){ $('#rangeSheet').hidden = true; return; }
+  const q = e.target.closest('[data-q]'); if(!q) return;
+  const now = new Date(), day0 = new Date(now); day0.setHours(0, 0, 0, 0);
+  const sec = d => Math.floor(d / 1000);
+  if(q.dataset.q === 'hour') setRange({ start: sec(now) - 3600, end: sec(now) + 60 });
+  else if(q.dataset.q === 'today') setRange({ start: sec(day0), end: sec(day0) + 86399 });
+  else if(q.dataset.q === 'yesterday') setRange({ start: sec(day0) - 86400, end: sec(day0) - 1 });
+  else if(q.dataset.q === 'night') setRange({ start: sec(day0) - 4 * 3600, end: sec(day0) + 6 * 3600 });   // 8 PM - 6 AM
+});
+$('#rApply').addEventListener('click', () => { const r = rangeFromInputs(); if(r) setRange(r); });
+$('#rClear').addEventListener('click', () => setRange(null));
+$('#camFilter').addEventListener('change', e => { A.cam = e.target.value; loadAlerts(true); });
+
+async function loadAlerts(reset){
+  if(reset){
+    A.gen++; A.end = A.range ? A.range.end : Math.floor(Date.now()/1000) + 60; A.seen = new Set(); A.lastDay = ''; A.count = 0; A.exhausted = false; A.loading = false;
+    $('#alertList').innerHTML = ''; $('#alertsView').scrollTop = 0;
+  }
+  if(A.loading) return;
+  const gen = A.gen;
+  A.loading = true;
+  $('#alertMore').textContent = 'Loading\u2026';
+  let added = 0, emptyDays = 0;
+  try{
+    while(added === 0 && emptyDays < 7 && !(A.range && A.end <= A.range.start)){
+      const start = A.range ? Math.max(A.range.start, A.end - 86400) : A.end - 86400;
+      const r = await api({cmd:'alertlist', camera:A.cam, startdate:start, enddate:A.end, view:A.view});
+      if(gen !== A.gen) return;
+      if(r.result !== 'success') throw new Error((r.data && r.data.reason) || 'Could not load alerts');
+      const raw = (r.data || []).filter(x => !A.seen.has(x.path)).sort((a,b) => b.date - a.date);
+      // If Blue Iris capped the result size, continue from the oldest item; otherwise the whole day is covered
+      A.end = raw.length >= 100 ? Math.max(start, raw[raw.length-1].date) : start;
+      raw.forEach(it => A.seen.add(it.path));
+      let items = A.match ? raw.filter(matcherFor(A.match)) : raw;
+      if(A.range) items = items.filter(it => it.date >= A.range.start && it.date <= A.range.end);
+      for(const it of items){ renderAlert(it); added++; }
+      if(!items.length) emptyDays++;
+    }
+    A.loadedAt = Date.now();
+    A.count += added;
+    if(A.range && A.end <= A.range.start){
+      A.exhausted = true;
+      const what = (filterDef(A.filter) || {}).noun ? filterDef(A.filter).noun + ' alerts' : 'alerts';
+      $('#alertMore').innerHTML = A.count ? 'End of the selected time range.' : `No ${esc(what)} for ${esc(rangeText(A.range))}.`;
+    } else if(added === 0){
+      A.exhausted = true;
+      const what = (filterDef(A.filter) || {}).noun ? filterDef(A.filter).noun + ' alerts' : 'alerts';
+      $('#alertMore').innerHTML = (A.count ? 'Nothing in the week before this.' : `No ${esc(what)} in the last 7 days.`) +
+        '<div style="margin-top:12px"><button id="olderBtn">Look further back</button></div>';
+      $('#olderBtn').onclick = () => { A.exhausted = false; loadAlerts(false); };
+    } else {
+      $('#alertMore').textContent = '';
+    }
+  }catch(e){
+    if(gen !== A.gen) return;
+    $('#alertMore').innerHTML = esc(e.message === 'session' ? '' : e.message) + '<div style="margin-top:12px"><button id="retryBtn">Retry</button></div>';
+    $('#retryBtn').onclick = () => loadAlerts(false);
+    A.exhausted = true;
+  }finally{
+    if(gen === A.gen) A.loading = false;
+  }
+  // keep filling if the sentinel is still on screen
+  if(gen === A.gen && !A.exhausted && added){
+    const rect = $('#alertMore').getBoundingClientRect();
+    if(rect.top < innerHeight + 400) loadAlerts(false);
+  }
+}
+
+function recIdOf(path){ return String(path || '').replace(/@/g,'').replace(/\..*/,''); }
+function durMs(fs){
+  fs = String(fs || ''); const p = fs.indexOf('('); if(p > 1) fs = fs.slice(0, p - 1);
+  const h = /(\d+) ?h/.exec(fs), m = /(\d+) ?m/.exec(fs), s = /(\d+) ?s/.exec(fs);
+  const ms = ((h?+h[1]:0)*3600 + (m?+m[1]:0)*60 + (s?+s[1]:0)) * 1000;
+  return ms || 10000;
+}
+function fmtDur(ms){ const s = Math.round(ms/1000); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
+function classify(label){
+  label = label.toLowerCase();
+  if(/\b(amazon|ups|usps|fed ?ex|dhl|delivery)\b/.test(label)) return 'delivery';
+  if(/person|people|face/.test(label)) return 'person';
+  if(/car|truck|bus|vehicle|motorcycle|bicycle|boat/.test(label)) return 'vehicle';
+  if(/dog|cat|bear|bird|horse|deer|animal|sheep|cow|fox/.test(label)) return 'animal';
+  return 'motion';
+}
+const LABEL_NAMES = { ups:'UPS', usps:'USPS', fedex:'FedEx', 'fed ex':'FedEx', dhl:'DHL', amazon:'Amazon' };
+function alertTags(it){
+  const tags = [];
+  const memo = String(it.memo || '').trim();
+  if(memo){
+    for(const part of memo.split(/[,;]+/)){
+      const m = /([a-zA-Z_ ]+?)\s*:?\s*(\d+%)?\s*$/.exec(part.trim());
+      if(!m || !m[1]) continue;
+      const name = m[1].trim(); if(!name || /^nothing/i.test(name)) continue;
+      tags.push({ cls: classify(name), text: (LABEL_NAMES[name.toLowerCase()] || name[0].toUpperCase() + name.slice(1)) + (m[2] ? ' ' + m[2] : '') });
+      if(tags.length === 2) break;
+    }
+  }
+  if(!tags.length){
+    const cls = flagClass(it.flags);
+    tags.push({ cls, text: { person:'Person', vehicle:'Vehicle', animal:'Animal', motion:'Motion' }[cls] });
+  }
+  return tags;
+}
+function dayLabel(d){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const that = new Date(d); that.setHours(0,0,0,0);
+  const diff = Math.round((today - that) / 86400000);
+  if(diff === 0) return 'Today';
+  if(diff === 1) return 'Yesterday';
+  return d.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+}
+const fmtClock = (d, sec) => d.toLocaleTimeString(undefined, sec ? {hour:'numeric', minute:'2-digit', second:'2-digit'} : {hour:'numeric', minute:'2-digit'});
+
+function renderAlert(it){
+  const d = new Date(it.date * 1000);
+  const day = dayLabel(d);
+  const list = $('#alertList');
+  if(day !== A.lastDay){
+    A.lastDay = day;
+    const h = document.createElement('div'); h.className = 'day'; h.textContent = day; list.appendChild(h);
+  }
+  const b = document.createElement('button');
+  b.className = 'alert';
+  const tags = alertTags(it).map(t => `<span class="tag ${t.cls}">${esc(t.text)}</span>`).join('');
+  b.innerHTML = `<div class="thumb"><img loading="lazy" alt="" src="thumbs/@${recIdOf(it.path)}?${sq()}"><span class="dur num">${fmtDur(durMs(it.filesize))}</span></div>
+    <div class="ainfo"><div class="tags">${tags}</div><div class="acam">${esc(camName(it.camera))}</div><div class="atime num">${fmtClock(d)}</div></div>`;
+  b.addEventListener('click', () => openViewer(it.camera, { alert: it }));
+  list.appendChild(b);
+}
+
+/* ======================= viewer ======================= */
+const V = { open:false, cam:'', mode:'live', pos:0, playing:false, speed:1, W:120000, winStart:0, winEnd:0,
+  alert:null, clip:null, tl:{alerts:[], clips:[]}, tlKey:'', camAlerts:[], lastTick:0, dragging:false, errs:0, wake:null };
+const stage = $('#stage');
+/* ---- digital zoom on the open camera: mouse wheel / pinch to zoom, drag to pan, double-tap to reset ----
+   The picture, video and motion-box layer share one CSS transform: screen = point * s + (x, y). */
+const Z = { s:1, x:0, y:0, boost:1, ptrs:new Map(), pinch:null, pan:null, moved:false, settleTimer:0 };
+const Z_MAX = 8;
+function zContent(){
+  const im = stage.querySelector('img.frame');
+  const d = (!vEl.hidden && vEl.videoWidth) ? { w: vEl.videoWidth, h: vEl.videoHeight }
+          : (im && im.naturalWidth) ? { w: im.naturalWidth, h: im.naturalHeight } : camDims();
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const sc = stage.classList.contains('fill') ? Math.max(W / d.w, H / d.h) : Math.min(W / d.w, H / d.h);
+  return { x: (W - d.w * sc) / 2, y: (H - d.h * sc) / 2, w: d.w * sc, h: d.h * sc };
+}
+// keep the picture covering the screen (no panning off into the black bars)
+function zClamp(){
+  const r = zContent(), s = Z.s;
+  const ax = (lo, len, full, t) => { const a = lo * s, l = len * s; return l <= full ? (full - l) / 2 - a : Math.min(-a, Math.max(full - a - l, t)); };
+  Z.x = ax(r.x, r.w, stage.clientWidth, Z.x); Z.y = ax(r.y, r.h, stage.clientHeight, Z.y);
+}
+function zApply(){
+  if(Z.s <= 1.01){ Z.s = 1; Z.x = 0; Z.y = 0; } else zClamp();
+  if(Z.s === 1) stage.style.removeProperty('--zt');
+  else stage.style.setProperty('--zt', `translate(${Z.x.toFixed(1)}px,${Z.y.toFixed(1)}px) scale(${Z.s.toFixed(4)})`);
+  stage.classList.toggle('zoomed', Z.s > 1);
+  $('#zoomBadge').hidden = Z.s <= 1;
+  $('#zoomPct').textContent = Z.s.toFixed(1) + '\u00d7';
+  if(typeof mbDraw === 'function' && MB.on) mbDraw(mbSource());
+  zSettle();
+}
+function zoomAt(fx, fy, ns){                       // fx, fy: point in the stage (px) that stays put
+  ns = Math.max(1, Math.min(Z_MAX, ns));
+  Z.x = fx - (fx - Z.x) * ns / Z.s; Z.y = fy - (fy - Z.y) * ns / Z.s; Z.s = ns;
+  zApply();
+}
+function zReset(){ Z.s = 1; Z.pinch = Z.pan = null; zApply(); }
+// In Auto quality, ask Blue Iris for a sharper picture once you've zoomed in (and drop back when you zoom out)
+function zSettle(){
+  clearTimeout(Z.settleTimer);
+  Z.settleTimer = setTimeout(() => {
+    const want = Z.s >= 2.2 ? 2.5 : Z.s >= 1.4 ? 1.6 : 1;
+    if(want === Z.boost) return;
+    Z.boost = want;
+    if(S.quality !== 'auto' || !V.open) return;
+    const need = targetSize();
+    if(VS.started && VS.res && (need.w > VS.res.w * 1.25 || need.w * 1.25 < VS.res.w)) restartStream();
+    else if(!VS.started && V.mode !== 'live' && !V.playing) requestRecFrame();
+  }, 900);
+}
+const zLocal = p => { const r = stage.getBoundingClientRect(); return { x: p.x - r.left, y: p.y - r.top }; };
+const zDist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+stage.addEventListener('wheel', e => {
+  if(!V.open) return;
+  e.preventDefault();
+  const dy = e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1);
+  const p = zLocal({ x: e.clientX, y: e.clientY });
+  zoomAt(p.x, p.y, Z.s * Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0015)));   // trackpad pinch arrives as ctrl+wheel
+}, { passive: false });
+stage.addEventListener('pointerdown', e => {
+  if(e.target.closest('.camnav, .zbadge')) return;
+  if(e.isPrimary){ Z.ptrs.clear(); Z.pinch = null; }       // a new gesture: forget any pointer whose release we never saw
+  Z.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  try{ stage.setPointerCapture(e.pointerId); }catch(_){}
+  if(Z.ptrs.size === 1){ Z.moved = false; Z.pan = { x: e.clientX, y: e.clientY, zx: Z.x, zy: Z.y }; }
+  else if(Z.ptrs.size === 2){
+    const [a, b] = [...Z.ptrs.values()], m = zLocal({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+    Z.pinch = { d: Math.max(10, zDist(a, b)), s: Z.s, cx: (m.x - Z.x) / Z.s, cy: (m.y - Z.y) / Z.s };
+    Z.pan = null; Z.moved = true;
+  }
+});
+stage.addEventListener('pointermove', e => {
+  const p = Z.ptrs.get(e.pointerId); if(!p) return;
+  p.x = e.clientX; p.y = e.clientY;
+  if(Z.pinch && Z.ptrs.size >= 2){
+    const [a, b] = [...Z.ptrs.values()], m = zLocal({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+    Z.s = Math.max(1, Math.min(Z_MAX, Z.pinch.s * zDist(a, b) / Z.pinch.d));
+    Z.x = m.x - Z.pinch.cx * Z.s; Z.y = m.y - Z.pinch.cy * Z.s;   // the point under your fingers stays under them
+    zApply();
+  } else if(Z.pan && Z.s > 1){
+    const dx = e.clientX - Z.pan.x, dy = e.clientY - Z.pan.y;
+    if(!Z.moved && Math.hypot(dx, dy) > 6){ Z.moved = true; stage.classList.add('panning'); }
+    if(Z.moved){ Z.x = Z.pan.zx + dx; Z.y = Z.pan.zy + dy; zApply(); }
+  }
+});
+function zUp(e){
+  if(!Z.ptrs.delete(e.pointerId)) return;
+  if(Z.ptrs.size < 2) Z.pinch = null;
+  if(Z.ptrs.size === 1){ const q = [...Z.ptrs.values()][0]; Z.pan = { x: q.x, y: q.y, zx: Z.x, zy: Z.y }; }   // keep panning with the finger left down
+  if(!Z.ptrs.size){ Z.pan = null; stage.classList.remove('panning'); }
+}
+stage.addEventListener('pointerup', zUp);
+stage.addEventListener('pointercancel', zUp);
+stage.addEventListener('lostpointercapture', zUp);
+stage.addEventListener('gesturestart', e => e.preventDefault());   // iOS: don't zoom the whole page
+$('#zoomBadge').addEventListener('click', e => { e.stopPropagation(); zReset(); });
+addEventListener('resize', () => { if(Z.s > 1) zApply(); });
+
+function openViewer(cam, opts = {}){
+  V.open = true; V.cam = cam; V.alert = opts.alert || null; V.clip = null; V.speed = 1; V.errs = 0;
+  $('#speedBtn').textContent = '1\u00d7';
+  $('#viewer').hidden = false;
+  $('#viewer').classList.remove('hideui');
+  Z.boost = 1; zReset();
+  history.pushState({ viewer:true }, '');
+  requestWake();
+  ensureAudio();
+  VS.failed = {};
+  setCamTitle();
+  loadCamAlerts();
+  if(V.alert){
+    setZoom(120000, false);
+    const t = V.alert.date * 1000 - 2000;
+    V.clip = { path: V.alert.clip && !/^@-1\./.test(V.alert.clip) ? V.alert.clip : V.alert.path, start: V.alert.date * 1000 - (V.alert.offset || 0), useClip:false };
+    enterRec(t, true);
+  } else {
+    setZoom(900000, false);
+    goLive();
+  }
+}
+function closeViewer(fromPop){
+  if(!V.open) return;
+  V.open = false; V.playing = false;
+  resetFrames();
+  vsStop(false);
+  stage.querySelectorAll('img.frame').forEach(i => { i.src = ''; i.remove(); });
+  $('#viewer').hidden = true;
+  releaseWake();
+  if(!fromPop && history.state && history.state.viewer) history.back();
+  pumpAllTiles();
+}
+$('#vBack').addEventListener('click', () => closeViewer(false));
+addEventListener('popstate', () => { if(V.open) closeViewer(true); });
+
+function setCamTitle(){
+  $('#vCam').textContent = camName(V.cam);
+  const ui3 = $('#vUi3');
+  if(V.alert && V.alert.camera === V.cam){
+    ui3.hidden = false;
+    ui3.href = `ui3.htm?rec=@${recIdOf(V.alert.path)}-${V.alert.offset || 0}`;
+  } else ui3.hidden = true;
+}
+
+/* ---- frame pipeline: one request in flight, newest request wins ---- */
+const FL = { busy:false, want:null, gen:0 };
+function resetFrames(){ FL.gen++; FL.busy = false; FL.want = null; clearTimeout(FL.liveTimer); }
+function wantFrame(url, meta){ FL.want = { url, meta }; if(!FL.busy) pullFrame(); }
+function pullFrame(){
+  const w = FL.want; if(!w) return;
+  FL.want = null; FL.busy = true;
+  const gen = FL.gen, im = new Image();
+  im.className = 'frame'; im.alt = ''; im.draggable = false;
+  im.onload = () => {
+    if(gen !== FL.gen) return;
+    FL.busy = false;
+    if(VS.ctrl && VS.started) return;          // live video is on screen; ignore late stills
+    if(!VS.ctrl && VS.jm) vsTeardown();         // a paused video was showing; stills take over
+    const old = stage.querySelectorAll('img.frame');
+    stage.insertBefore(im, stage.firstChild);
+    old.forEach(o => o.remove());
+    $('#vSpin').hidden = true;
+    onFrame(true, w.meta);
+    pullFrame();
+  };
+  im.onerror = () => {
+    if(gen !== FL.gen) return;
+    FL.busy = false;
+    onFrame(false, w.meta);
+    pullFrame();
+  };
+  im.src = w.url;
+}
+function frameWidth(){ return targetSize().w; }
+
+function onFrame(ok, meta){
+  if(meta.live){
+    if(V.mode !== 'live') return;
+    if(ok){ hideMsg(); V.errs = 0; }
+    else if(++V.errs > 2) showMsg('Camera not responding');
+    clearTimeout(FL.liveTimer);
+    if(VS.ctrl) return;                          // video stream is handling live view
+    FL.liveTimer = setTimeout(requestLiveFrame, ok ? 60 : 1500);
+    return;
+  }
+  if(V.mode !== 'rec') return;
+  if(ok){
+    V.errs = 0; hideMsg();
+    if(V.playing && !V.dragging && !VS.ctrl) tick();
+  } else {
+    // First failure on an alert: fall back to reading frames straight from the clip file
+    if(V.alert && V.clip && !V.clip.useClip && V.pos >= V.clip.start){
+      V.clip.useClip = true; requestRecFrame(); return;
+    }
+    V.errs++;
+    showMsg('No recording at this moment');
+    $('#vSpin').hidden = true;
+    if(V.playing && !V.dragging && !VS.ctrl && V.errs < 40){ V.pos += 2000 * V.speed; updateUI(); setTimeout(requestRecFrame, 250); }
+  }
+}
+
+/* ---- live ---- */
+function requestLiveFrame(){
+  if(!V.open || V.mode !== 'live' || document.visibilityState !== 'visible') return;
+  wantFrame(`image/${camEnc(V.cam)}?w=${frameWidth()}&q=70&${sq()}&t=${Date.now()}`, { live:true });
+}
+function goLive(){
+  resetFrames();
+  vsStop(false);
+  V.mode = 'live'; V.playing = false; V.errs = 0;
+  $('#vSpin').hidden = false; hideMsg();
+  updateWindow(true);
+  updateUI();
+  requestLiveFrame();                           // instant still while the video stream connects
+  if(useVideo()) vsStart('live', liveVideoUrl(), 1);
+}
+
+/* ---- recorded ---- */
+function recUrl(){
+  const w = frameWidth(), pos = Math.floor(V.pos);
+  if(V.clip && V.clip.useClip){
+    const t = Math.max(0, pos - V.clip.start);
+    return `file/clips/${V.clip.path}?time=${t}&w=${w}&q=70&${sq()}`;
+  }
+  return `time/${camEnc(V.cam)}?jpeg&isolate&pos=${pos}&w=${w}&q=70&${sq()}`;
+}
+function requestRecFrame(){ if(V.open && V.mode === 'rec') wantFrame(recUrl(), { pos:V.pos }); }
+function enterRec(pos, play){
+  if(V.mode === 'live'){ resetFrames(); vsStop(!play); }
+  V.mode = 'rec';
+  V.pos = Math.min(pos, Date.now() - KEEP_OUT);
+  V.playing = !!play; V.lastTick = 0; V.errs = 0;
+  hideMsg();
+  centerWindow(V.pos);
+  updateUI();
+  if(V.playing) startPlayback(); else if(!VS.jm) requestRecFrame();
+}
+// Play recorded video from V.pos: real video stream when possible, otherwise fast stills
+function startPlayback(){
+  V.lastTick = 0;
+  if(useVideo()){
+    vsStart('rec', recVideoUrl(), V.speed);
+    requestRecFrame();                           // a still shows instantly while the stream connects
+  } else {
+    vsStop(false);
+    requestRecFrame();
+  }
+}
+function tick(){
+  if(!V.playing || V.mode !== 'rec') return;
+  const now = performance.now();
+  if(V.lastTick) V.pos += Math.min(now - V.lastTick, 3000) * V.speed;
+  V.lastTick = now;
+  if(V.pos > Date.now() - KEEP_OUT){ goLive(); return; }
+  if(V.pos > V.winStart + V.W * 0.88) centerWindow(V.pos + V.W * 0.3);
+  updateUI();
+  requestRecFrame();
+}
+function setPlaying(p){
+  if(V.mode === 'live'){
+    if(!p){ const t = vsShownUtc() || (Date.now() - KEEP_OUT); enterRec(t, false); }
+    return;
+  }
+  V.playing = p; V.lastTick = 0;
+  if(p){ ensureAudio(); startPlayback(); }
+  else { const t = vsShownUtc(); if(t) V.pos = t; vsStop(true); }
+  updateUI();
+}
+function seek(pos){
+  if(pos > Date.now() - KEEP_OUT){ goLive(); return; }
+  if(V.mode === 'live') return enterRec(pos, true);
+  V.pos = pos; V.lastTick = 0; V.errs = 0;
+  if(pos < V.winStart || pos > V.winEnd) centerWindow(pos);
+  updateUI();
+  if(V.playing) startPlayback(); else { vsStop(false); requestRecFrame(); }
+}
+
+/* ---- real video: Blue Iris /video/ (live) and /time/ (recorded) H.264 streams -> browser video via jmuxer ----
+   Stream format (same as UI3 uses):
+     stream header : "blue" | BYTE streams (1=video, 2=audio+video) | BYTE headerLen | BITMAPINFOHEADER [+ WAVEFORMATEX]
+     each block    : "Blue" | BYTE type
+       type 0 video: UINT16 pos | UINT32 time(ms, BE) | UINT64 utc(ms, LE) | UINT32 size(BE) | H.264 Annex-B frame
+       type 1 audio: INT32 size(BE) | mu-law samples
+       type 2 status: BYTE size | (size-6) bytes
+       type 4      : end of stream */
+const VS_OK = !!(window.MediaSource && window.JMuxer && window.ReadableStream && window.fetch && window.AbortController);
+const OPAQUE = 'sv' + Math.random().toString(36).slice(2, 10);
+const VS = { ctrl:null, jm:null, gen:0, kind:'', speed:1, started:false, last:null, frames:[], fedMs:0, t0:0,
+  gotKey:false, codec:'H264', aud:null, wrap:0, lastRaw:-1, failed:{}, retry:0 };
+const vEl = $('#vVideo');
+const useVideo = () => VS_OK && !VS.failed[V.cam];
+
+/* ---- video quality ----
+   Auto = just enough pixels for this screen (capped at 1080p). A fixed choice asks Blue Iris for that size,
+   measured on the short side (so 1080p on a portrait camera is 1080 wide), never above the camera's own size. */
+const QUALITIES = [ ['auto','Auto','Sized to this screen'], ['480','480p',''], ['720','720p','HD'], ['1080','1080p','Full HD'], ['1440','1440p','2K'], ['2160','2160p','4K'] ];
+S.quality = store.get('bis_quality') || 'auto';
+function camDims(){ const c = S.camMap[V.cam]; return c ? { w:c.w, h:c.h } : { w:1920, h:1080 }; }
+function targetSize(){
+  const cam = camDims(), even = n => Math.max(2, Math.round(n / 2) * 2);
+  let sc;
+  if(S.quality === 'auto'){
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    const zb = Z.boost || 1;
+    const maxW = Math.min(1920 * zb, (stage.clientWidth || 640) * dpr * zb), maxH = Math.min(1920 * zb, (stage.clientHeight || 360) * dpr * zb);
+    sc = Math.min(1, maxW / cam.w, maxH / cam.h);
+  } else {
+    sc = Math.min(1, +S.quality / Math.min(cam.w, cam.h));
+  }
+  return { w: even(cam.w * sc), h: even(cam.h * sc) };
+}
+function vsSize(){ return targetSize(); }
+function qualLabel(){ return S.quality === 'auto' ? 'AUTO' : S.quality === '2160' ? '4K' : S.quality + 'P'; }
+function updateQualBtn(){ $('#vQual').textContent = qualLabel(); }
+function openQualSheet(){
+  const cam = camDims(), camShort = Math.min(cam.w, cam.h);
+  const now = VS.started && VS.res ? `Streaming now: ${VS.res.w}\u00d7${VS.res.h} ${VS.codec === 'H265' ? 'H.265' : 'H.264'}`
+            : VS.ctrl ? 'Connecting video\u2026' : (VS.failed[V.cam] ? 'Showing still frames (video unavailable)' : 'Paused');
+  $('#qualNow').textContent = `${now} \u00b7 camera is ${cam.w}\u00d7${cam.h}`;
+  $('#qualOpts').innerHTML = QUALITIES.map(([v, name, sub]) => {
+    const tooBig = v !== 'auto' && +v > camShort && +v !== 480;
+    const note = tooBig ? 'above camera resolution' : sub;
+    return `<button class="opt" role="menuitemradio" data-q="${v}" aria-checked="${S.quality === v}" ${tooBig ? 'disabled' : ''}>` +
+      `<span>${name}${S.quality === v ? ' \u2713' : ''}</span><span class="sub">${note}</span></button>`;
+  }).join('');
+  $('#qualSheet').hidden = false;
+}
+$('#vQual').addEventListener('click', openQualSheet);
+$('#qualSheet').addEventListener('click', e => {
+  if(e.target.id === 'qualSheet'){ $('#qualSheet').hidden = true; return; }
+  const b = e.target.closest('.opt'); if(!b || b.disabled) return;
+  S.quality = b.dataset.q; store.set('bis_quality', S.quality);
+  $('#qualSheet').hidden = true; updateQualBtn();
+  restartStream();
+});
+// restart whatever is on screen at the current size
+function restartStream(){
+  if(V.mode === 'live') goLive();
+  else if(V.playing){ const t = vsShownUtc(); if(t) V.pos = t; startPlayback(); }
+  else { vsStop(false); requestRecFrame(); }
+}
+updateQualBtn();
+function liveVideoUrl(){
+  const z = vsSize();
+  return `video/${camEnc(V.cam)}/2.0?${sq()}&audio=${AU.on ? 1 : 0}&stream=0&w=${z.w}&h=${z.h}&extend=2`;
+}
+function recVideoUrl(){
+  const z = vsSize();
+  return `time/${camEnc(V.cam)}?${sq()}&opaque=${OPAQUE}&pos=${Math.floor(V.pos)}&speed=${Math.round(V.speed * 100)}` +
+    `&audio=${AU.on && V.speed === 1 ? 1 : 0}&stream=0&w=${z.w}&h=${z.h}&extend=2`;
+}
+
+function vsStop(keepPicture){
+  VS.gen++;
+  clearTimeout(VS.retryTimer); clearTimeout(VS.watchdog);
+  if(VS.ctrl){ try{ VS.ctrl.abort(); }catch(e){} VS.ctrl = null; }
+  if(keepPicture && VS.started){ try{ vEl.pause(); }catch(e){} }
+  else vsTeardown();
+  AU.next = 0;
+}
+function vsTeardown(){
+  if(VS.jm){ try{ VS.jm.destroy(); }catch(e){} VS.jm = null; }
+  VS.started = false;
+  vEl.hidden = true;
+  try{ vEl.removeAttribute('src'); vEl.load(); }catch(e){}
+}
+function vsStart(kind, url, speed){
+  vsStop(false);
+  const gen = VS.gen;
+  Object.assign(VS, { kind, speed, started:false, fed:false, last:null, frames:[], fedMs:0, t0:0, gotKey:false, aud:null, wrap:0, lastRaw:-1 });
+  const ctrl = new AbortController(); VS.ctrl = ctrl;
+  vEl.hidden = false;                          // underneath any still until real video is playing
+  VS.watchdog = setTimeout(() => { if(gen === VS.gen && !VS.started) vsFail('no video received', true); }, 8000);
+  fetch(url, { signal: ctrl.signal, cache:'no-store', credentials:'same-origin' })
+    .then(res => {
+      if(gen !== VS.gen) return;
+      if(res.status === 403) throw new Error('session');
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      if(/image\//i.test(res.headers.get('Content-Type') || '')) throw new Error('server sent a still image');
+      return vsPump(res.body.getReader(), gen);
+    })
+    .catch(err => {
+      if(gen !== VS.gen || (err && err.name === 'AbortError')) return;
+      const m = err && err.message || String(err);
+      vsFail(m, /Blue Iris video|out of sync|block type|frame size|still image/.test(m));
+    });
+}
+
+// Byte queue that hands out exact-size chunks across network reads
+function ByteQueue(){ this.parts = []; this.len = 0; }
+ByteQueue.prototype.push = function(u8){ if(u8 && u8.length){ this.parts.push(u8); this.len += u8.length; } };
+ByteQueue.prototype.take = function(n){
+  if(this.len < n) return null;
+  const out = new Uint8Array(n); let o = 0;
+  while(o < n){
+    const p = this.parts[0], k = Math.min(p.length, n - o);
+    out.set(k === p.length ? p : p.subarray(0, k), o); o += k;
+    if(k === p.length) this.parts.shift(); else this.parts[0] = p.subarray(k);
+  }
+  this.len -= n; return out;
+};
+
+async function vsPump(reader, gen){
+  const q = new ByteQueue();
+  let state = 0, hdrLen = 0, type = -1, need = 0, meta = null;
+  const isBlue = (b, upper) => b[0] === (upper ? 66 : 98) && b[1] === 108 && b[2] === 117 && b[3] === 101;
+  for(;;){
+    const r = await reader.read();
+    if(gen !== VS.gen){ try{ reader.cancel(); }catch(e){} return; }
+    if(r.done){ vsEnded(); return; }
+    q.push(r.value);
+    for(;;){
+      if(state === 0){
+        const b = q.take(6); if(!b) break;
+        if(!isBlue(b, false)) throw new Error('not a Blue Iris video stream');
+        hdrLen = b[5]; state = 1;
+      } else if(state === 1){
+        const b = q.take(hdrLen); if(!b) break;
+        const dv = new DataView(b.buffer, b.byteOffset, b.length);
+        const biSize = hdrLen >= 4 ? dv.getUint32(0, true) : 0;
+        if(biSize >= 20) VS.codec = String.fromCharCode(b[16], b[17], b[18], b[19]).toUpperCase() === 'H265' ? 'H265' : 'H264';
+        if(biSize >= 12) VS.res = { w: Math.abs(dv.getInt32(4, true)), h: Math.abs(dv.getInt32(8, true)) };
+        if(hdrLen - biSize >= 14){
+          VS.aud = { tag: dv.getUint16(biSize, true), ch: dv.getUint16(biSize + 2, true), rate: dv.getUint32(biSize + 4, true) };
+        }
+        state = 2;
+      } else if(state === 2){
+        const b = q.take(5); if(!b) break;
+        if(!isBlue(b, true)) throw new Error('stream out of sync');
+        type = b[4];
+        if(type === 4){ vsEnded(); return; }
+        state = 3;
+      } else if(state === 3){
+        if(type === 0){
+          const b = q.take(18); if(!b) break;
+          const dv = new DataView(b.buffer, b.byteOffset, 18);
+          meta = { raw: dv.getUint32(2, false), utc: dv.getUint32(6, true) + (dv.getUint32(10, true) & 0x1FFFFF) * 4294967296 };
+          need = dv.getUint32(14, false);
+          if(need > 10000000) throw new Error('bad video frame size');
+        } else if(type === 1){
+          const b = q.take(4); if(!b) break;
+          need = new DataView(b.buffer, b.byteOffset, 4).getInt32(0, false);
+          if(need < 0 || need > 2000000) throw new Error('bad audio frame size');
+        } else if(type === 2){
+          const b = q.take(1); if(!b) break;
+          need = Math.max(0, b[0] - 6);
+        } else throw new Error('unknown block type ' + type);
+        state = 4;
+      } else {
+        const b = q.take(need); if(!b) break;
+        if(type === 0) vsVideoFrame(b, meta);
+        else if(type === 1) vsAudioFrame(b);
+        state = 2;
+      }
+    }
+  }
+}
+
+function isKeyframe(buf, h265){
+  for(let i = 0; i + 4 < buf.length && i < 2000; i++){
+    if(buf[i] === 0 && buf[i+1] === 0 && buf[i+2] === 1){
+      const nal = buf[i+3];
+      if(h265){ const t = (nal >> 1) & 0x3f; if(t >= 16 && t <= 21) return true; if(t <= 9) return false; }
+      else { const t = nal & 0x1f; if(t === 5) return true; if(t === 1) return false; }
+      i += 2;
+    }
+  }
+  return false;
+}
+
+function vsVideoFrame(data, m){
+  if(!VS.gotKey){ if(!isKeyframe(data, VS.codec === 'H265')) return; VS.gotKey = true; }
+  if(!VS.jm){
+    const gen = VS.gen;
+    VS.jm = new JMuxer({
+      node: vEl, mode: 'video', videoCodec: VS.codec, flushingTime: 0, clearBuffer: true, fps: 30,
+      maxDelay: VS.kind === 'live' ? 1500 : 5000,
+      onError: msg => { if(gen === VS.gen) vsFail('player error: ' + msg, true); },
+      onUnsupportedCodec: c => { if(gen === VS.gen) vsFail('this phone can\u2019t play ' + c, true); }
+    });
+  }
+  // unwrap the 32-bit millisecond counter
+  let t = m.raw;
+  if(VS.lastRaw >= 0){
+    if(VS.lastRaw - 1e9 > t) VS.wrap += 4294967296;
+    else if(VS.lastRaw + 1e9 < t) VS.wrap -= 4294967296;
+  }
+  VS.lastRaw = m.raw; t += VS.wrap;
+  const f = { data, t, utc: m.utc };
+  if(VS.last){
+    // Feed the previous frame now that we know how long it lasts. Recorded streams at 2x+ carry
+    // recording-time stamps, so divide by speed to play in real time. Gaps (no recording) are capped.
+    let d = (f.t - VS.last.t) / (VS.kind === 'rec' ? VS.speed : 1);
+    d = Math.max(1, Math.min(1000, Math.round(d)));
+    VS.frames.push({ ms: VS.fedMs, utc: VS.last.utc });
+    if(VS.frames.length > 1200) VS.frames.splice(0, 400);
+    VS.fedMs += d;
+    VS.jm.feed({ video: VS.last.data, duration: d });
+    if(!VS.fed){ VS.fed = true; const p = vEl.play(); if(p && p.catch) p.catch(() => {}); }
+  }
+  VS.last = f;
+}
+
+// Reveal the video only once it is actually rendering frames (stills stay on top until then)
+function vsShow(){
+  if(VS.started || !VS.ctrl || !VS.fed || vEl.readyState < 2) return;
+  VS.started = true; VS.retry = 0;
+  clearTimeout(VS.watchdog);
+  vEl.hidden = false;
+  stage.querySelectorAll('img.frame').forEach(i => i.remove());
+  resetFrames();
+  $('#vSpin').hidden = true; hideMsg();
+}
+['playing', 'timeupdate', 'loadeddata'].forEach(ev => vEl.addEventListener(ev, vsShow));
+
+// Which recording time is on screen right now (from the frame log)
+function vsShownUtc(){
+  if(!VS.started || !VS.frames.length) return 0;
+  if(!VS.t0 && vEl.buffered.length) VS.t0 = vEl.buffered.start(0);
+  const ms = (vEl.currentTime - VS.t0) * 1000;
+  const fr = VS.frames;
+  let lo = 0, hi = fr.length - 1;
+  if(ms <= fr[0].ms) return fr[0].utc;
+  while(lo < hi){ const mid = (lo + hi + 1) >> 1; if(fr[mid].ms <= ms) lo = mid; else hi = mid - 1; }
+  return fr[lo].utc;
+}
+setInterval(() => {
+  if(!V.open || !VS.ctrl || !VS.started || V.dragging || V.mode !== 'rec' || !V.playing) return;
+  const t = vsShownUtc(); if(!t) return;
+  V.pos = t;
+  if(V.pos > Date.now() - KEEP_OUT){ goLive(); return; }
+  if(V.pos > V.winStart + V.W * 0.88) centerWindow(V.pos + V.W * 0.3);
+  updateUI();
+}, 250);
+
+function vsEnded(){
+  const kind = VS.kind;
+  VS.ctrl = null;
+  if(!V.open) return;
+  if(kind === 'live' && V.mode === 'live'){
+    VS.retryTimer = setTimeout(() => { if(V.open && V.mode === 'live') goLive(); }, 1500);
+  } else if(kind === 'rec' && V.mode === 'rec' && V.playing){
+    const t = vsShownUtc(); if(t) V.pos = t;
+    if(V.pos > Date.now() - 60000) goLive();     // caught up with the present
+    else { V.playing = false; updateUI(); }
+  }
+}
+function vsFail(why, permanent){
+  const kind = VS.kind;
+  console.warn('Video stream failed:', why);
+  if(why === 'session'){ vsStop(false); reauth().then(ok => { if(ok && V.open){ if(V.mode === 'live') goLive(); else if(V.playing) startPlayback(); } }); return; }
+  // Network hiccup after video was working: retry a couple of times before giving up on video
+  if(!permanent && VS.started && VS.retry < 2){
+    VS.retry++;
+    const t = vsShownUtc(); if(t && V.mode === 'rec') V.pos = t;
+    vsStop(true);
+    VS.retryTimer = setTimeout(() => { if(!V.open) return; if(V.mode === 'live') goLive(); else if(V.playing) startPlayback(); }, 1000);
+    return;
+  }
+  VS.failed[V.cam] = true;
+  vsStop(false);
+  showMsg('Smooth video unavailable \u2014 showing still frames');
+  setTimeout(hideMsg, 4000);
+  if(kind === 'live' && V.mode === 'live') requestLiveFrame();
+  else if(V.mode === 'rec'){ V.lastTick = 0; requestRecFrame(); }
+}
+
+/* ---- audio (mu-law from Blue Iris -> Web Audio) ---- */
+const AU = { ctx:null, gain:null, next:0, on: store.get('bis_sound') !== '0', vol: (() => { const v = parseFloat(store.get('bis_vol')); return isNaN(v) ? 1 : Math.max(0, Math.min(2, v)); })() };
+const ULAW = new Float32Array(256);
+for(let i = 0; i < 256; i++){
+  const u = ~i & 0xff, e = (u >> 4) & 7, m = u & 0x0f;
+  const v = (((m << 3) + 0x84) << e) - 0x84;
+  ULAW[i] = ((u & 0x80) ? -v : v) / 32768;
+}
+function ensureAudio(){
+  try{
+    if(!AU.ctx){
+      const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
+      AU.ctx = new C(); AU.gain = AU.ctx.createGain(); AU.gain.connect(AU.ctx.destination);
+    }
+    AU.gain.gain.value = AU.on ? AU.vol : 0;
+    if(AU.ctx.state === 'suspended') AU.ctx.resume().catch(() => {});
+  }catch(e){}
+}
+function vsAudioFrame(data){
+  if(!AU.on || !AU.ctx || !VS.started || !VS.aud) return;
+  if(VS.aud.tag !== 7 || VS.aud.ch !== 1 || !VS.aud.rate) return;    // 7 = mu-law mono
+  if(VS.kind === 'rec' && VS.speed !== 1) return;
+  try{
+    const f = new Float32Array(data.length);
+    for(let i = 0; i < data.length; i++) f[i] = ULAW[data[i]];
+    const buf = AU.ctx.createBuffer(1, f.length, VS.aud.rate);
+    buf.copyToChannel(f, 0);
+    const now = AU.ctx.currentTime;
+    if(AU.next < now) AU.next = now + 0.25;        // small cushion against network jitter
+    if(AU.next - now > 1.2) return;                 // fell too far behind real time: drop
+    const src = AU.ctx.createBufferSource(); src.buffer = buf; src.connect(AU.gain);
+    src.start(AU.next); AU.next += buf.duration;
+  }catch(e){}
+}
+function updateSoundBtn(){
+  const off = !AU.on || AU.vol === 0;
+  $('#vSound').classList.toggle('off', off); $('#volMute').classList.toggle('off', off);
+  $('#vSound').setAttribute('aria-label', 'Volume');
+  $('#volMute').setAttribute('aria-label', AU.on ? 'Mute' : 'Unmute');
+  $('#volSlider').value = Math.round(AU.vol * 100);
+  $('#volPct').textContent = AU.on ? Math.round(AU.vol * 100) + '%' : 'Muted';
+}
+function applySound(){
+  store.set('bis_sound', AU.on ? '1' : '0'); store.set('bis_vol', String(AU.vol));
+  ensureAudio(); updateSoundBtn();
+  // Turning sound on mid-stream: reopen so Blue Iris starts including audio
+  if(AU.on && AU.vol > 0 && VS.ctrl && !VS.aud){ if(V.mode === 'live') goLive(); else if(V.playing){ const t = vsShownUtc(); if(t) V.pos = t; startPlayback(); } }
+}
+let volTimer;
+function volPopTouch(){ clearTimeout(volTimer); volTimer = setTimeout(() => { $('#volPop').hidden = true; }, 4000); }
+$('#vSound').addEventListener('click', () => {
+  ensureAudio();
+  const pop = $('#volPop'); pop.hidden = !pop.hidden;
+  if(!pop.hidden){ updateSoundBtn(); volPopTouch(); }
+});
+$('#volMute').addEventListener('click', () => { AU.on = !AU.on; if(AU.on && AU.vol === 0) AU.vol = 1; applySound(); volPopTouch(); });
+$('#volSlider').addEventListener('input', e => {
+  AU.vol = (+e.target.value) / 100;
+  AU.on = AU.vol > 0;
+  if(AU.gain) AU.gain.gain.value = AU.on ? AU.vol : 0;
+  updateSoundBtn(); volPopTouch();
+});
+$('#volSlider').addEventListener('change', () => { applySound(); volPopTouch(); });
+stage.addEventListener('pointerdown', () => { $('#volPop').hidden = true; });
+updateSoundBtn();
+
+/* ---- motion boxes: on-device frame differencing drawn over the picture ----
+   Every ~120 ms the current picture (video or still) is shrunk to a 128-px-wide greyscale sample and
+   compared with the previous one. Grid cells whose pixels changed enough are joined into regions, and a
+   box is drawn around each region. Whole-picture changes (IR switching, exposure jumps) are ignored. */
+// Sensitivity: how much a spot must change (floor / k*average / add) and how big it must be to get a box
+// Motion box sensitivity, 1 (only big, obvious movement) .. 10 (almost any change).
+// Anchors: 3 = the old Low, 5 = the old Medium (default), 8 = the old High; levels in between are blended.
+//   floor/k/add: how much a 4x4-pixel cell must change (vs. the frame's average noise) to count as motion
+//   minCells: smallest blob kept;  minArea: smallest box kept, as a fraction of the picture
+const SENS_ANCHORS = [
+  [1,  { floor:30, k:4.2, add:14, minCells:6, minArea:0.012 }],
+  [3,  { floor:22, k:3.5, add:10, minCells:4, minArea:0.006 }],
+  [5,  { floor:14, k:3.0, add:6,  minCells:2, minArea:0 }],
+  [8,  { floor:9,  k:2.5, add:4,  minCells:1, minArea:0 }],
+  [10, { floor:6,  k:2.1, add:3,  minCells:1, minArea:0 }]
+];
+function sensParams(level){
+  level = Math.max(1, Math.min(10, level));
+  let i = 0; while(i < SENS_ANCHORS.length - 2 && level > SENS_ANCHORS[i + 1][0]) i++;
+  const [l0, a] = SENS_ANCHORS[i], [l1, b] = SENS_ANCHORS[i + 1], t = (level - l0) / (l1 - l0);
+  const mix = k => a[k] + (b[k] - a[k]) * t;
+  return { floor: mix('floor'), k: mix('k'), add: mix('add'), minCells: Math.round(mix('minCells')), minArea: mix('minArea') };
+}
+function sensDesc(level){
+  if(level <= 2) return 'Only large, obvious movement. Ignores most leaves, shadows, rain and headlights.';
+  if(level <= 4) return 'Bigger, clearer movement. Fewer false boxes from leaves, shadows and rain.';
+  if(level === 5) return 'Balanced. A good starting point for most cameras.';
+  if(level <= 7) return 'Smaller movement too, like a pet farther from the camera.';
+  if(level <= 9) return 'Small or distant movement. Expect more boxes at night and in wind.';
+  return 'Maximum. Almost any change gets a box, including noise and flicker.';
+}
+const SENS_OLD = { low: 3, med: 5, high: 8 };     // earlier versions stored a word
+function loadSens(){ const v = store.get('bis_msens'); const n = SENS_OLD[v] || parseInt(v, 10); return n >= 1 && n <= 10 ? n : 5; }
+const MB = { sens: loadSens(), on: store.get('bis_motion') === '1', timer:null, prev:null, pw:0, ph:0, boxes:[], lastKey:'' };
+const mCanvas = $('#motionCanvas'), mctx = mCanvas.getContext('2d');
+const sampleCanvas = document.createElement('canvas'), sctx = sampleCanvas.getContext('2d', { willReadFrequently: true });
+
+function mbSource(){
+  if(!vEl.hidden && VS.started && vEl.readyState >= 2 && vEl.videoWidth) return { el: vEl, w: vEl.videoWidth, h: vEl.videoHeight, key: 'v' + vEl.currentTime };
+  const im = stage.querySelector('img.frame');
+  if(im && im.complete && im.naturalWidth) return { el: im, w: im.naturalWidth, h: im.naturalHeight, key: 'i' + im.src };
+  return null;
+}
+// Where the picture actually sits inside the stage (object-fit contain or cover)
+function mbContentRect(iw, ih){
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const sc = stage.classList.contains('fill') ? Math.max(W / iw, H / ih) : Math.min(W / iw, H / ih);
+  const w = iw * sc, h = ih * sc;
+  return { x: (W - w) / 2, y: (H - h) / 2, w, h };
+}
+function mbTick(){
+  if(!MB.on || !V.open || document.visibilityState !== 'visible'){ mbDraw(null); return; }
+  const src = mbSource();
+  if(!src){ mbDraw(null); return; }
+  if(src.key !== MB.lastKey){
+    MB.lastKey = src.key;
+    const SW = 128, SH = Math.max(8, Math.round(SW * src.h / src.w));
+    if(sampleCanvas.width !== SW || sampleCanvas.height !== SH){ sampleCanvas.width = SW; sampleCanvas.height = SH; MB.prev = null; }
+    let px;
+    try{ sctx.drawImage(src.el, 0, 0, SW, SH); px = sctx.getImageData(0, 0, SW, SH).data; }catch(e){ return; }
+    const g = new Uint8Array(SW * SH);
+    for(let i = 0, j = 0; i < g.length; i++, j += 4) g[i] = (px[j] * 77 + px[j+1] * 150 + px[j+2] * 29) >> 8;
+    if(MB.prev && MB.prev.length === g.length) mbDetect(MB.prev, g, SW, SH);
+    MB.prev = g;
+  }
+  mbDraw(src);
+}
+function mbGray(el, iw, ih, cnv, ctx){
+  const SW = 128, SH = Math.max(8, Math.round(SW * ih / iw));
+  if(cnv.width !== SW || cnv.height !== SH){ cnv.width = SW; cnv.height = SH; }
+  let px;
+  try{ ctx.drawImage(el, 0, 0, SW, SH); px = ctx.getImageData(0, 0, SW, SH).data; }catch(e){ return null; }
+  const g = new Uint8Array(SW * SH);
+  for(let i = 0, j = 0; i < g.length; i++, j += 4) g[i] = (px[j] * 77 + px[j+1] * 150 + px[j+2] * 29) >> 8;
+  return { g, SW, SH };
+}
+function mbDetect(a, b, SW, SH, D = MB){
+  const CELL = 4, GW = Math.floor(SW / CELL), GH = Math.floor(SH / CELL);
+  const diff = new Float32Array(GW * GH);
+  let total = 0;
+  for(let gy = 0; gy < GH; gy++) for(let gx = 0; gx < GW; gx++){
+    let s = 0;
+    for(let y = gy * CELL; y < gy * CELL + CELL; y++){ const row = y * SW; for(let x = gx * CELL; x < gx * CELL + CELL; x++) s += Math.abs(a[row + x] - b[row + x]); }
+    s /= CELL * CELL; diff[gy * GW + gx] = s; total += s;
+  }
+  const mean = total / diff.length;
+  if(mean > 22) return;                                   // whole picture changed (lights, IR mode, camera move): ignore
+  const P = MB.P || (MB.P = sensParams(MB.sens));
+  const thr = Math.max(P.floor, mean * P.k + P.add);
+  const on = new Uint8Array(GW * GH);
+  for(let i = 0; i < on.length; i++) on[i] = diff[i] > thr ? 1 : 0;
+  // join neighbouring changed cells into regions
+  const seen = new Uint8Array(GW * GH), found = [];
+  for(let i = 0; i < on.length; i++){
+    if(!on[i] || seen[i]) continue;
+    let x0 = GW, y0 = GH, x1 = 0, y1 = 0, n = 0; const st = [i]; seen[i] = 1;
+    while(st.length){
+      const k = st.pop(), x = k % GW, y = (k / GW) | 0; n++;
+      if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y;
+      for(let dy = -2; dy <= 2; dy++) for(let dx = -2; dx <= 2; dx++){        // bridge 1-cell gaps
+        const nx = x + dx, ny = y + dy; if(nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue;
+        const q = ny * GW + nx; if(on[q] && !seen[q]){ seen[q] = 1; st.push(q); }
+      }
+    }
+    if(n < P.minCells) continue;                          // tiny speckles are noise
+    const bw = (x1 - x0 + 1) / GW, bh = (y1 - y0 + 1) / GH;
+    if(bw * bh < P.minArea) continue;                     // too small to care about at this sensitivity
+    found.push({ x: x0 / GW, y: y0 / GH, w: bw, h: bh });
+  }
+  const now = performance.now();
+  for(const f of found){
+    // follow an existing box if it overlaps, so boxes glide instead of flickering
+    const hit = D.boxes.find(b => f.x < b.x + b.w && b.x < f.x + f.w && f.y < b.y + b.h && b.y < f.y + f.h);
+    if(hit){ Object.assign(hit, { x: hit.x * 0.4 + f.x * 0.6, y: hit.y * 0.4 + f.y * 0.6, w: hit.w * 0.4 + f.w * 0.6, h: hit.h * 0.4 + f.h * 0.6, t: now }); }
+    else D.boxes.push(Object.assign(f, { t: now }));
+  }
+  D.boxes = mbMerge(D.boxes);
+}
+// Join boxes that touch or nearly touch (one moving object often shows up as a few edge fragments)
+function mbMerge(list){
+  const near = (a, b) => {
+    const gx = Math.max(a.x, b.x) - Math.min(a.x + a.w, b.x + b.w);   // > 0 means a horizontal gap
+    const gy = Math.max(a.y, b.y) - Math.min(a.y + a.h, b.y + b.h);
+    return gx <= 0.05 && gy <= 0.07;
+  };
+  let changed = true;
+  while(changed){
+    changed = false;
+    outer: for(let i = 0; i < list.length; i++) for(let j = i + 1; j < list.length; j++){
+      const a = list[i], b = list[j];
+      if(!near(a, b)) continue;
+      const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y);
+      list[i] = { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y, t: Math.max(a.t, b.t) };
+      list.splice(j, 1); changed = true; break outer;
+    }
+  }
+  return list;
+}
+function mbDraw(src){
+  const dpr = Math.min(4, Math.min(2, devicePixelRatio || 1) * Math.min(2, Z.s)), W = stage.clientWidth, H = stage.clientHeight;
+  if(mCanvas.width !== Math.round(W * dpr) || mCanvas.height !== Math.round(H * dpr)){ mCanvas.width = Math.round(W * dpr); mCanvas.height = Math.round(H * dpr); }
+  mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  mctx.clearRect(0, 0, W, H);
+  const now = performance.now();
+  MB.boxes = MB.boxes.filter(b => now - b.t < 900);      // a box lingers briefly after motion stops
+  if(!src || !MB.on) return;
+  const r = mbContentRect(src.w, src.h);
+  mctx.lineWidth = 2 / Z.s;
+  for(const b of MB.boxes){
+    const age = (now - b.t) / 900, alpha = age < 0.4 ? 1 : 1 - (age - 0.4) / 0.6;
+    const pad = 4 / Z.s, x = r.x + b.x * r.w - pad, y = r.y + b.y * r.h - pad, w = b.w * r.w + pad * 2, h = b.h * r.h + pad * 2;
+    mctx.strokeStyle = `rgba(76,194,255,${alpha.toFixed(2)})`;
+    mctx.shadowColor = 'rgba(0,0,0,.6)'; mctx.shadowBlur = 3;
+    mctx.strokeRect(x, y, w, h);
+  }
+  mctx.shadowBlur = 0;
+}
+function mbSet(on){
+  MB.on = on; store.set('bis_motion', on ? '1' : '0');
+  $('#vMotion').setAttribute('aria-pressed', on);
+  $('#tileMotionBtn').setAttribute('aria-pressed', on);
+  tiles.forEach(t => { t.det = { prev:null, boxes:[] }; tileDrawBoxes(t); });
+  if(on) tiles.forEach(t => { if(t.timer && !t.busy){ clearTimeout(t.timer); t.timer = null; pumpTile(t); } });  // speed up now
+  MB.prev = null; MB.boxes = []; MB.lastKey = '';
+  clearInterval(MB.timer);
+  if(on) MB.timer = setInterval(mbTick, 120);
+  mbDraw(null);
+}
+$('#vMotion').addEventListener('click', () => { mbSet(!MB.on); toast(MB.on ? 'Motion boxes on' : 'Motion boxes off', 1200); });
+$('#tileMotionBtn').addEventListener('click', () => { mbSet(!MB.on); toast(MB.on ? 'Motion boxes on' : 'Motion boxes off', 1200); });
+
+/* ---- motion boxes on grid tiles (same detector, run on each tile's snapshots) ---- */
+const tileSample = document.createElement('canvas'), tileSampleCtx = tileSample.getContext('2d', { willReadFrequently: true });
+const TILE_LINGER = 2200;
+function tileRefreshMs(){ return MB.on ? 600 : TILE_REFRESH; }   // faster snapshots while boxes are on
+function tileDetect(t, im){
+  const s = mbGray(im, im.naturalWidth, im.naturalHeight, tileSample, tileSampleCtx);
+  if(!s) return;
+  if(t.det.prev && t.det.prev.length === s.g.length) mbDetect(t.det.prev, s.g, s.SW, s.SH, t.det);
+  t.det.prev = s.g; t.det.iw = im.naturalWidth; t.det.ih = im.naturalHeight;
+  tileDrawBoxes(t);
+}
+function tileDrawBoxes(t){
+  const cnv = t.el.querySelector('canvas.tbox'); if(!cnv) return;
+  const dpr = Math.min(2, devicePixelRatio || 1), W = t.el.clientWidth, H = t.el.clientHeight;
+  if(cnv.width !== Math.round(W * dpr) || cnv.height !== Math.round(H * dpr)){ cnv.width = Math.round(W * dpr); cnv.height = Math.round(H * dpr); }
+  const ctx = cnv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  const now = performance.now();
+  t.det.boxes = t.det.boxes.filter(b => now - b.t < TILE_LINGER);
+  if(!MB.on || !t.det.boxes.length || !t.det.iw) return;
+  // tiles crop to fill (portrait cameras are letterboxed)
+  const cover = !t.el.classList.contains('portrait');
+  const sc = cover ? Math.max(W / t.det.iw, H / t.det.ih) : Math.min(W / t.det.iw, H / t.det.ih);
+  const r = { w: t.det.iw * sc, h: t.det.ih * sc }; r.x = (W - r.w) / 2; r.y = (H - r.h) / 2;
+  ctx.lineWidth = 2;
+  for(const b of t.det.boxes){
+    const age = (now - b.t) / TILE_LINGER, alpha = age < 0.5 ? 1 : 1 - (age - 0.5) / 0.5;
+    ctx.strokeStyle = `rgba(76,194,255,${alpha.toFixed(2)})`; ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 3;
+    const pad = 3;
+    ctx.strokeRect(Math.round(r.x + b.x * r.w - pad) + 0.5, Math.round(r.y + b.y * r.h - pad) + 0.5, Math.round(b.w * r.w + pad * 2), Math.round(b.h * r.h + pad * 2));
+  }
+  ctx.shadowBlur = 0;
+}
+setInterval(() => { if(MB.on && S.tab === 'live' && !V.open) tiles.forEach(t => { if(t.det.boxes.length) tileDrawBoxes(t); }); }, 250);
+mbSet(MB.on);
+
+/* ---- window / zoom ---- */
+function setZoom(W, redraw = true){
+  const anchor = V.mode === 'live' ? null : V.pos;
+  V.W = W;
+  document.querySelectorAll('#zoom button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.w === W));
+  if(!redraw) return;
+  if(anchor == null) updateWindow(true); else centerWindow(anchor);
+  updateUI();
+}
+function centerWindow(c){
+  let end = c + V.W / 2;
+  const maxEnd = Date.now() + V.W * 0.04;
+  if(end > maxEnd) end = maxEnd;
+  V.winEnd = end; V.winStart = end - V.W;
+  loadTimeline();
+}
+function updateWindow(force){
+  if(V.mode === 'live' || force){
+    V.winEnd = Date.now() + V.W * 0.04; V.winStart = V.winEnd - V.W;
+    loadTimeline();
+  }
+}
+setInterval(() => { if(V.open && V.mode === 'live' && !V.dragging){ updateWindow(); updateUI(); } }, 5000);
+$('#zoom').addEventListener('click', e => { const b = e.target.closest('button'); if(b) setZoom(+b.dataset.w); });
+
+/* ---- timeline data (recording coverage + alert markers) ---- */
+let tlTimer;
+function loadTimeline(){
+  clearTimeout(tlTimer);
+  tlTimer = setTimeout(async () => {
+    const cam = V.cam, start = Math.floor(V.winStart / 1000), end = Math.ceil(V.winEnd / 1000);
+    const msecpp = Math.pow(2, Math.max(6, Math.round(Math.log2(V.W / 500))));
+    const key = cam + ':' + start + ':' + end;
+    if(key === V.tlKey) return;
+    V.tlKey = key;
+    try{
+      const r = await api({cmd:'timeline', startdate:start, enddate:end, msecpp, camera:cam});
+      if(cam !== V.cam || key !== V.tlKey || !r.data) return;
+      const off = start * 1000;
+      V.tl = {
+        clips: (r.data.clips || []).map(c => ({ t: off + c.x1 * msecpp, len: (c.x2 - c.x1) * msecpp })),
+        alerts: (r.data.alerts || []).map(a => ({ t: off + a.x1 * msecpp, len: Math.max(1, a.x2 - a.x1) * msecpp, cls: flagClass(a.type) }))
+      };
+      drawScrub();
+    }catch(e){ /* timeline is optional decoration */ }
+  }, 250);
+}
+async function loadCamAlerts(){
+  const cam = V.cam; V.camAlerts = [];
+  try{
+    const now = Math.floor(Date.now() / 1000);
+    const r = await api({cmd:'alertlist', camera:cam, startdate:now - 7*86400, enddate:now + 60, view:'alerts'});
+    if(cam !== V.cam) return;
+    V.camAlerts = (r.data || []).map(a => ({ t:a.date * 1000, a })).sort((x,y) => x.t - y.t);
+    updateUI();
+  }catch(e){}
+}
+function jumpAlert(dir){
+  const ref = V.mode === 'live' ? Date.now() : V.pos + 2000;
+  let target = null;
+  if(dir < 0){ for(let i = V.camAlerts.length - 1; i >= 0; i--) if(V.camAlerts[i].t < ref - 1500){ target = V.camAlerts[i]; break; } }
+  else { for(const x of V.camAlerts) if(x.t > ref + 1500){ target = x; break; } }
+  if(!target) return;
+  V.alert = target.a;
+  V.clip = { path: target.a.clip && !/^@-1\./.test(target.a.clip) ? target.a.clip : target.a.path, start: target.t - (target.a.offset || 0), useClip:false };
+  setCamTitle();
+  if(V.W > 900000) setZoom(120000, false);
+  if(V.mode === 'live') resetFrames();
+  enterRec(target.t - 2000, true);
+}
+
+/* ---- scrub bar ---- */
+const scrub = $('#scrub'), canvas = $('#scrubCanvas'), head = $('#head'), bubble = $('#bubble');
+const COLORS = { person:'#ffb547', vehicle:'#5aa9ff', animal:'#7bd88f', delivery:'#c792ea', motion:'#9aa5b1' };
+function niceStep(W){
+  const steps = [5e3,1e4,15e3,3e4,6e4,12e4,3e5,6e5,9e5,18e5,36e5,72e5,108e5,216e5];
+  for(const s of steps) if(W / s <= 6) return s;
+  return 432e5;
+}
+// Timeline marks only carry flag bits; the alert list's AI label (e.g. "dog 94") is more specific, so prefer it
+function markClass(a){
+  for(const x of V.camAlerts){
+    if(x.t >= a.t - 3000 && x.t <= a.t + Math.max(3000, a.len)) return alertTags(x.a)[0].cls;
+  }
+  return a.cls;
+}
+function drawScrub(){
+  const dpr = devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
+  if(!w) return;
+  if(canvas.width !== Math.round(w*dpr) || canvas.height !== Math.round(h*dpr)){ canvas.width = Math.round(w*dpr); canvas.height = Math.round(h*dpr); }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  const s = V.winStart, W = V.winEnd - V.winStart, X = t => (t - s) / W * w;
+  const ty = 12, th = 22;
+  // track
+  ctx.fillStyle = '#1c2229'; roundRect(ctx, 0, ty, w, th, 6); ctx.fill();
+  // recorded coverage
+  ctx.save(); roundRect(ctx, 0, ty, w, th, 6); ctx.clip();
+  ctx.fillStyle = '#2b4d61';
+  for(const c of V.tl.clips){ const x1 = X(c.t), x2 = X(c.t + c.len); if(x2 < 0 || x1 > w) continue; ctx.fillRect(x1, ty, Math.max(1, x2 - x1), th); }
+  // alerts
+  for(const a of V.tl.alerts){
+    const x1 = X(a.t), x2 = X(a.t + a.len); if(x2 < 0 || x1 > w) continue;
+    ctx.fillStyle = COLORS[markClass(a)] || COLORS.motion; ctx.fillRect(x1, ty + 4, Math.max(3, x2 - x1), th - 8);
+  }
+  // future
+  const xn = X(Date.now());
+  if(xn < w){ ctx.fillStyle = '#0b0d10'; ctx.fillRect(Math.max(0,xn), ty, w - xn, th); }
+  ctx.restore();
+  // ticks
+  const step = niceStep(W);
+  const tz = new Date().getTimezoneOffset() * 60000;
+  let t0 = Math.ceil((s - tz) / step) * step + tz;
+  ctx.fillStyle = '#5d6875'; ctx.font = '600 10.5px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for(let t = t0; t <= V.winEnd; t += step){
+    const x = X(t); if(x < 14 || x > w - 14) continue;
+    ctx.fillRect(Math.round(x), ty + th + 2, 1, 4);
+    const d = new Date(t);
+    const label = step < 6e4 ? d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',second:'2-digit'}).replace(/\s?[AP]M$/i,'')
+                             : d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}).replace(/\s?([AP])M$/i, (m,p) => p.toLowerCase());
+    ctx.fillText(label, x, ty + th + 8);
+  }
+}
+function roundRect(ctx, x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function posToX(t){ return (t - V.winStart) / (V.winEnd - V.winStart) * scrub.clientWidth; }
+function xToPos(x){ return V.winStart + (x / scrub.clientWidth) * (V.winEnd - V.winStart); }
+
+let dragState = null;
+scrub.addEventListener('pointerdown', e => {
+  scrub.setPointerCapture(e.pointerId);
+  dragState = { wasLive: V.mode === 'live', wasPlaying: V.playing || V.mode === 'live', x: e.clientX };
+  V.dragging = true;
+  vsStop(true);                                  // keep the current picture until the first still arrives
+  if(V.mode === 'live'){ resetFrames(); V.mode = 'rec'; V.playing = false; }
+  dragTo(e);
+});
+scrub.addEventListener('pointermove', e => { if(dragState) dragTo(e); });
+const endDrag = e => {
+  if(!dragState) return;
+  const st = dragState; dragState = null; V.dragging = false;
+  bubble.hidden = true;
+  if(V.pos > Date.now() - KEEP_OUT){ goLive(); return; }
+  if(V.pos < V.winStart + V.W*0.08 || V.pos > V.winEnd - V.W*0.08) centerWindow(V.pos);
+  V.playing = st.wasPlaying; V.lastTick = 0;
+  updateUI();
+  if(V.playing) startPlayback(); else requestRecFrame();
+};
+scrub.addEventListener('pointerup', endDrag);
+scrub.addEventListener('pointercancel', endDrag);
+function dragTo(e){
+  const r = scrub.getBoundingClientRect();
+  const x = Math.max(0, Math.min(r.width, e.clientX - r.left));
+  V.pos = Math.min(xToPos(x), Date.now() - KEEP_OUT);
+  bubble.hidden = false;
+  bubble.textContent = fmtWhen(V.pos, true);
+  const bw = bubble.offsetWidth / 2 + 2;
+  bubble.style.left = Math.max(bw, Math.min(r.width - bw, posToX(V.pos))) + 'px';
+  updateUI();
+  requestRecFrame();
+}
+
+/* ---- buttons ---- */
+const ICON_PLAY = '<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.4-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg>';
+const ICON_PAUSE = '<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4.2" height="16" rx="1.2"/><rect x="13.8" y="4" width="4.2" height="16" rx="1.2"/></svg>';
+$('#playBtn').addEventListener('click', () => setPlaying(V.mode === 'live' ? false : !V.playing));
+$('#back10').addEventListener('click', () => seek((V.mode === 'live' ? Date.now() - KEEP_OUT : V.pos) - 10000));
+$('#fwd10').addEventListener('click', () => { if(V.mode === 'rec') seek(V.pos + 10000); });
+$('#prevAlert').addEventListener('click', () => jumpAlert(-1));
+$('#nextAlert').addEventListener('click', () => jumpAlert(1));
+$('#liveBtn').addEventListener('click', () => { if(V.mode !== 'live') goLive(); });
+$('#speedBtn').addEventListener('click', () => {
+  const speeds = [1,2,4,8,16]; V.speed = speeds[(speeds.indexOf(V.speed) + 1) % speeds.length];
+  $('#speedBtn').textContent = V.speed + '\u00d7';
+  if(V.mode === 'rec' && V.playing && VS.ctrl){ const t = vsShownUtc(); if(t) V.pos = t; startPlayback(); }
+  updateUI();
+});
+
+function fmtWhen(t, sec){
+  const d = new Date(t), dl = dayLabel(d);
+  return (dl === 'Today' ? '' : dl + ' \u00b7 ') + fmtClock(d, sec);
+}
+function updateUI(){
+  const live = V.mode === 'live';
+  const badge = $('#vBadge');
+  badge.className = 'badge ' + (live ? 'live' : 'rec');
+  badge.textContent = live ? 'LIVE' : (V.playing ? (V.speed > 1 ? V.speed + '\u00d7 PLAY' : (innerWidth <= 480 ? 'PLAY' : 'PLAYBACK')) : 'PAUSED');
+  $('#vTime').textContent = live ? 'Live view' : fmtWhen(V.pos, true);
+  $('#playBtn').innerHTML = (live || V.playing) ? ICON_PAUSE : ICON_PLAY;
+  $('#playBtn').setAttribute('aria-label', (live || V.playing) ? 'Pause' : 'Play');
+  $('#fwd10').disabled = live;
+  $('#liveBtn').disabled = live;
+  const ref = live ? Date.now() : V.pos;
+  $('#prevAlert').disabled = !V.camAlerts.some(x => x.t < ref + 500);
+  $('#nextAlert').disabled = live || !V.camAlerts.some(x => x.t > V.pos + 3500);
+  head.classList.toggle('live', live);
+  head.style.left = (live ? Math.min(scrub.clientWidth, posToX(Date.now())) : posToX(V.pos)) + 'px';
+  head.hidden = !live && (V.pos < V.winStart || V.pos > V.winEnd);
+  drawScrub();
+}
+addEventListener('resize', () => { if(V.open) updateUI(); });
+
+/* ---- stage gestures: swipe to change camera, tap to hide controls, double-tap to fill (or to undo a zoom) ---- */
+let touch = null, lastTap = 0;
+stage.addEventListener('pointerdown', e => { touch = { x:e.clientX, y:e.clientY, t:Date.now() }; });
+stage.addEventListener('pointerup', e => {
+  if(!touch || e.target.closest('.camnav, .zbadge')) { touch = null; return; }
+  if(Z.moved || Z.pinch || Z.ptrs.size){ if(!Z.ptrs.size) touch = null; return; }   // that was a pinch / pan
+  const dx = e.clientX - touch.x, dy = e.clientY - touch.y, dt = Date.now() - touch.t;
+  touch = null;
+  if(Z.s === 1 && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 600){ switchCam(dx < 0 ? 1 : -1); return; }
+  if(Math.abs(dx) < 10 && Math.abs(dy) < 10){
+    const now = Date.now();
+    if(now - lastTap < 300){ if(Z.s > 1) zReset(); else { stage.classList.toggle('fill'); zReset(); } lastTap = 0; }
+    else { lastTap = now; setTimeout(() => { if(lastTap === now) $('#viewer').classList.toggle('hideui'); }, 300); }
+  }
+});
+$('#camPrev').addEventListener('click', () => switchCam(-1));
+$('#camNext').addEventListener('click', () => switchCam(1));
+function switchCam(dir){
+  let list = visibleCams();
+  if(!list.some(c => c.id === V.cam)) list = S.cams;
+  if(list.length < 2) return;
+  const i = list.findIndex(c => c.id === V.cam);
+  V.cam = list[(i + dir + list.length) % list.length].id;
+  V.tlKey = ''; V.tl = {alerts:[], clips:[]};
+  Z.boost = 1; zReset();
+  if(V.alert && V.alert.camera !== V.cam){ V.alert = null; V.clip = null; }
+  setCamTitle();
+  loadCamAlerts();
+  resetFrames();
+  vsStop(false);
+  $('#vSpin').hidden = false;
+  stage.querySelectorAll('img.frame').forEach(i => i.remove());
+  if(V.mode === 'live') goLive();
+  else { loadTimeline(); updateUI(); if(V.playing) startPlayback(); else requestRecFrame(); }
+}
+
+/* ---- misc ---- */
+function showMsg(t){ const m = $('#vMsg'); m.textContent = t; m.hidden = false; }
+function hideMsg(){ $('#vMsg').hidden = true; }
+async function requestWake(){ try{ V.wake = await navigator.wakeLock.request('screen'); }catch(e){} }
+function releaseWake(){ try{ V.wake && V.wake.release(); }catch(e){} V.wake = null; }
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+document.addEventListener('keydown', e => {
+  if(!V.open) return;
+  if(e.key === 'Escape') closeViewer(false);
+  else if(e.key === ' '){ e.preventDefault(); $('#playBtn').click(); }
+  else if(e.key === 'ArrowLeft') $('#back10').click();
+  else if(e.key === 'ArrowRight') $('#fwd10').click();
+  else if(e.key === 'ArrowUp') switchCam(-1);
+  else if(e.key === 'ArrowDown') switchCam(1);
+  else if(e.key === '+' || e.key === '=') zoomAt(stage.clientWidth / 2, stage.clientHeight / 2, Z.s * 1.4);
+  else if(e.key === '-' || e.key === '_') zoomAt(stage.clientWidth / 2, stage.clientHeight / 2, Z.s / 1.4);
+  else if(e.key === '0') zReset();
+});
+
+boot().catch(e => showLogin(e.message));
+</script>
+</body>
+</html>
