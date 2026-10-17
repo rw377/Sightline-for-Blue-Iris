@@ -2,6 +2,14 @@
 
 All notable changes to Sightline for Blue Iris. The version shown in **Settings → About** matches the newest entry here.
 
+## 0.11.2 — 2026-10-17
+
+Pre-release review fixes.
+
+- Fixed: for new users, the Alerts filter buttons could change on a later visit, from the basic set (All, People, Vehicles, Animals) to a longer set. The starting set is now saved on first load.
+- Hardened: alert thumbnail addresses only accept plain recording IDs.
+- README: corrected the date-range and browser-testing details.
+
 ## 0.11.1 — 2026-10-17
 
 - Licensed under the **GNU GPL v3.0 or later**. Added the LICENSE file, a copyright and license notice at the top of `sightline.htm`, and a license note in Settings → About.

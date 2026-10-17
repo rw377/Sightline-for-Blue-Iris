@@ -43,14 +43,14 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 ### Alerts
 - **AI-aware filter buttons:** People, Vehicles, Animals, plus any label your AI model reports, such as Dogs, UPS or Amazon.
 - **Labels picked from real data.** Sightline scans the last 14 days of alerts and lists every label your cameras have actually reported, with counts. You can also type your own. Capitalization and plurals don't matter.
-- **Date and time ranges:** last hour, today, yesterday, overnight (8 PM–6 AM), or any custom day and time window.
+- **Date and time ranges:** last hour, today, yesterday, last night (8 PM–6 AM), or any custom day and time window.
 - **Filter by camera or group.**
 - **Tap an alert to play it** from the moment it happened.
 
 ### Player
 - **Smooth video with audio**, both live and recorded. It falls back to still frames on browsers that can't play the stream.
 - **A scrubbable timeline** with colored alert markers and zoom levels from 2 minutes to 48 hours. Longer views mark each midnight with the day's name.
-- **Quick controls:** previous / next alert, ±10 seconds, faster playback, and a one-tap jump to live.
+- **Quick controls:** previous / next alert, ±10 seconds, playback up to 16× speed, and a one-tap jump to live.
 - **Swipe between cameras.**
 - **Digital zoom up to 8×:** pinch or use the mouse wheel, then drag to pan. In Auto quality, Sightline asks Blue Iris for a sharper picture while you're zoomed in.
 - **Quality picker** (Auto, 480p to 4K) and a **volume slider**.
@@ -85,7 +85,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 
 - **Blue Iris 5** with its **web server** turned on (Blue Iris Settings → *Web server*). Developed and tested on Blue Iris **5.8.1.5**.
 - A **Blue Iris user account** to sign in with (Settings → *Users*). A dedicated, non-admin account is recommended; see [Security](#security-and-privacy).
-- A **modern browser.** Tested on Chrome for Android and on desktop Chrome / Edge. Safari (iPhone / iPad) and Firefox should work but haven't been tested yet.
+- A **modern browser.** Tested on Chrome for Android and desktop Chrome. Other Chromium browsers (Edge, Brave) should behave the same. Safari (iPhone / iPad) and Firefox should work but haven't been tested yet.
 - **For AI labels and filters:** Blue Iris AI detection set up on your cameras (for example CodeProject.AI). Without AI, everything else still works; alerts just won't have labels.
 - **For smooth video:** Blue Iris's web streams in **H.264**, which is Blue Iris's usual setting for web viewing. If the browser can't play the stream, Sightline shows still frames instead.
 

@@ -542,7 +542,7 @@ main{flex:1;overflow:hidden;position:relative}
 'use strict';
 /* Values filled in by the Blue Iris web server when it serves this .htm file */
 const INJECTED_SESSION = "%%SESSION%%";
-const APP = { name: 'Sightline', version: '0.11.1' };   // bump the version with every change you copy to the www folder
+const APP = { name: 'Sightline', version: '0.11.2' };   // bump the version with every change you copy to the www folder
 const INJECTED_SYSNAME = "%%SYSNAME%%";
 /* Note: never write two percent signs together anywhere else in this file \u2014 Blue Iris treats the
    text between them as a placeholder and blanks it out when serving the page. */
@@ -1295,6 +1295,8 @@ function saveAf(list){
   store.set('bis_afilters', JSON.stringify([...front, ...list.filter(x => !front.includes(x))]));
 }
 function customLabels(){ try{ const v = JSON.parse(store.get('bis_alabels') || '[]'); return Array.isArray(v) ? v : []; }catch(e){ return []; } }
+// First run: save the starting set now, so it can't change later once other settings exist
+if(store.get('bis_afilters') == null) saveAf(loadAf());
 A.filter = loadAf()[0] || 'all';
 function renderFilterChips(){
   const list = loadAf();
@@ -1495,7 +1497,7 @@ async function loadAlerts(reset){
   }
 }
 
-function recIdOf(path){ return String(path || '').replace(/@/g,'').replace(/\..*/,''); }
+function recIdOf(path){ return String(path || '').replace(/@/g,'').replace(/\..*/,'').replace(/[^\w-]/g, ''); }   // record ids are plain numbers
 function durMs(fs){
   fs = String(fs || ''); const p = fs.indexOf('('); if(p > 1) fs = fs.slice(0, p - 1);
   const h = /(\d+) ?h/.exec(fs), m = /(\d+) ?m/.exec(fs), s = /(\d+) ?s/.exec(fs);
