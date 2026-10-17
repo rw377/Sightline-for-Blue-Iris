@@ -2,6 +2,10 @@
 
 All notable changes to Sightline for Blue Iris. The version shown in **Settings → About** matches the newest entry here.
 
+## 0.11.1 — 2026-10-17
+
+- Licensed under the **GNU GPL v3.0 or later**. Added the LICENSE file, a copyright and license notice at the top of `sightline.htm`, and a license note in Settings → About.
+
 ## 0.11.0 — 2026-10-17
 
 - Player timeline: new **48h** zoom level next to 24h.

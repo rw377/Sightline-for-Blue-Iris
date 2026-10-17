@@ -2,6 +2,8 @@
 
 **A simple, phone-first viewer for [Blue Iris](https://blueirissoftware.com/) live cameras, alerts and playback.**
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+
 Sightline is a single web page you drop into Blue Iris's own `www` folder. There is nothing to install and no extra server, container or cloud account: Blue Iris serves the page and handles sign-in, so it works anywhere you can already reach Blue Iris, whether on your home network, over a VPN or through Tailscale.
 
 It's built for the two things you do most: **glancing at your cameras** and **finding out what happened**.
@@ -193,4 +195,4 @@ Sightline is deliberately simple: **one HTML file with inline CSS and JavaScript
 ## Credits and license
 
 - Video playback uses [jmuxer](https://github.com/samirkumardas/jmuxer) by Samir Das (MIT License). Its license header is kept in `sightline-jmuxer.min.js`.
-- Sightline's own license will be chosen before the first public release.
+- Sightline is free software, licensed under the **[GNU General Public License v3.0 or later](LICENSE)**. You're free to use it, study it, change it and share it, including at a business. If you distribute Sightline or a modified version, it must stay under the GPL with its source code included, and the copyright and license notices must be kept. It comes with no warranty.

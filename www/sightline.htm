@@ -1,5 +1,15 @@
 <!doctype html>
 <!-- Sightline for Blue Iris - https://github.com/rw377/Sightline-for-Blue-Iris
+     Copyright (C) 2026 rw377 and contributors
+
+     This program is free software: you can redistribute it and/or modify it under the terms of the
+     GNU General Public License as published by the Free Software Foundation, either version 3 of the
+     License, or (at your option) any later version. This program is distributed in the hope that it
+     will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+     FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details:
+     https://www.gnu.org/licenses/gpl-3.0.html
+     SPDX-License-Identifier: GPL-3.0-or-later
+
      Keep this file ASCII-only, and never put two percent signs next to each other anywhere in it:
      Blue Iris serves .htm files as Latin-1 and treats percent-pairs as template placeholders.
      See README, section Development. -->
@@ -500,6 +510,7 @@ main{flex:1;overflow:hidden;position:relative}
       <p><b>Unofficial.</b> An independent viewer for Blue Iris. It is not affiliated with, endorsed by or supported by Perspective Software, the maker of Blue Iris. Blue Iris is a trademark of its owner. Please don&#8217;t contact Blue Iris support about problems with this page.</p>
       <p><b>Private.</b> This page talks only to your own Blue Iris server. No accounts, cloud services, tracking or analytics. Settings are saved in this browser on this device.</p>
       <p><b>View-only.</b> Recording, motion detection, AI and camera settings all stay in Blue Iris. Use Blue Iris or UI3 to change them.</p>
+      <p><b>Free software.</b> Licensed under the GNU GPL v3: free to use, change and share. Shared or modified versions must stay under the same license, with source included. Provided as is, without warranty.</p>
       <p><b>Credits.</b> Video playback uses jmuxer (MIT License).</p>
     </div>
     <div class="btnrow"><button class="primary" id="aboutDone">Done</button></div>
@@ -531,7 +542,7 @@ main{flex:1;overflow:hidden;position:relative}
 'use strict';
 /* Values filled in by the Blue Iris web server when it serves this .htm file */
 const INJECTED_SESSION = "%%SESSION%%";
-const APP = { name: 'Sightline', version: '0.11.0' };   // bump the version with every change you copy to the www folder
+const APP = { name: 'Sightline', version: '0.11.1' };   // bump the version with every change you copy to the www folder
 const INJECTED_SYSNAME = "%%SYSNAME%%";
 /* Note: never write two percent signs together anywhere else in this file \u2014 Blue Iris treats the
    text between them as a placeholder and blanks it out when serving the page. */
