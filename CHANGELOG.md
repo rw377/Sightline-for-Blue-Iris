@@ -2,6 +2,11 @@
 
 All notable changes to Sightline for Blue Iris. The version shown in **Settings → About** matches the newest entry here.
 
+## 0.11.0 — 2026-10-17
+
+- Player timeline: new **48h** zoom level next to 24h.
+- On the 24h and 48h views, the midnight tick shows the day (for example "Sat") instead of "12a", so you can tell the days apart.
+
 ## 0.10.0 — 2026-10-17
 
 - Renamed to **Sightline for Blue Iris**. Files are now `sightline.htm`, `sightline-jmuxer.min.js`, `sightline.json` and `sightline-icon-*.png`. Open the page at `/sightline.htm`.

@@ -239,6 +239,7 @@ main{flex:1;overflow:hidden;position:relative}
 .zoom{display:flex;gap:2px;background:var(--surface);border-radius:10px;padding:2px}
 .zoom button{height:28px;padding:0 9px;border-radius:8px;font-size:12px;font-weight:700;color:var(--muted)}
 .zoom button[aria-pressed=true]{background:var(--surface2);color:var(--text)}
+@media (max-width:400px){.zoom button{padding:0 6px}}
 .pill{height:32px;padding:0 12px;border-radius:16px;background:var(--surface2);font-size:12px;font-weight:800;letter-spacing:.4px}
 .pill.golive{color:var(--live);background:rgba(255,77,77,.14)}
 .pill:disabled{opacity:.35}
@@ -354,7 +355,7 @@ main{flex:1;overflow:hidden;position:relative}
     <div class="lower">
     <div class="row">
       <div class="zoom" id="zoom">
-        <button data-w="120000">2m</button><button data-w="900000">15m</button><button data-w="3600000">1h</button><button data-w="21600000">6h</button><button data-w="86400000">24h</button>
+        <button data-w="120000">2m</button><button data-w="900000">15m</button><button data-w="3600000">1h</button><button data-w="21600000">6h</button><button data-w="86400000">24h</button><button data-w="172800000">48h</button>
       </div>
       <button class="pill" id="speedBtn">1&#215;</button>
       <button class="pill golive" id="liveBtn">LIVE</button>
@@ -530,7 +531,7 @@ main{flex:1;overflow:hidden;position:relative}
 'use strict';
 /* Values filled in by the Blue Iris web server when it serves this .htm file */
 const INJECTED_SESSION = "%%SESSION%%";
-const APP = { name: 'Sightline', version: '0.10.0' };   // bump the version with every change you copy to the www folder
+const APP = { name: 'Sightline', version: '0.11.0' };   // bump the version with every change you copy to the www folder
 const INJECTED_SYSNAME = "%%SYSNAME%%";
 /* Note: never write two percent signs together anywhere else in this file \u2014 Blue Iris treats the
    text between them as a placeholder and blanks it out when serving the page. */
@@ -2503,7 +2504,9 @@ function drawScrub(){
     const x = X(t); if(x < 14 || x > w - 14) continue;
     ctx.fillRect(Math.round(x), ty + th + 2, 1, 4);
     const d = new Date(t);
-    const label = step < 6e4 ? d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',second:'2-digit'}).replace(/\s?[AP]M$/i,'')
+    const midnight = step >= 36e5 && d.getHours() === 0 && d.getMinutes() === 0;   // long views span days: name the day
+    const label = midnight ? d.toLocaleDateString(undefined, { weekday: 'short' })
+                : step < 6e4 ? d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',second:'2-digit'}).replace(/\s?[AP]M$/i,'')
                              : d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}).replace(/\s?([AP])M$/i, (m,p) => p.toLowerCase());
     ctx.fillText(label, x, ty + th + 8);
   }

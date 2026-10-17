@@ -47,7 +47,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 
 ### Player
 - **Smooth video with audio**, both live and recorded. It falls back to still frames on browsers that can't play the stream.
-- **A scrubbable timeline** with colored alert markers and zoom levels from 2 minutes to 24 hours.
+- **A scrubbable timeline** with colored alert markers and zoom levels from 2 minutes to 48 hours. Longer views mark each midnight with the day's name.
 - **Quick controls:** previous / next alert, ±10 seconds, faster playback, and a one-tap jump to live.
 - **Swipe between cameras.**
 - **Digital zoom up to 8×:** pinch or use the mouse wheel, then drag to pan. In Auto quality, Sightline asks Blue Iris for a sharper picture while you're zoomed in.
