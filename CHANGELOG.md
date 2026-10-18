@@ -4,6 +4,7 @@ All notable changes to Sightline for Blue Iris. Released versions match what **S
 
 ## Unreleased (next: 0.12.1)
 
+- **Sharper video, matching UI3.** Sightline now asks Blue Iris for video the way UI3 does: a size plus UI3's quality and bitrate settings for that size. Before, Blue Iris fell back to its web server defaults, which looked softer and took longer to sharpen after movement. **Auto** picks the size from the pixels the player covers, with a margin: a full-screen browser on a computer gets the camera's full picture (for example 2560×1440 at up to 4 Mbps on a 4MP camera, the same as UI3's 4MP setting), while a phone held upright gets 720p at up to 1 Mbps. Fixed choices (480p to 4K) use UI3's settings for that size. The quality menu shows the data rate for each choice and the live rate being received. Viewing on a computer away from home can now use more data than before.
 - **Links in Settings → About** to the project page, What’s new (Releases) and Report a problem (Issues) on GitHub. They open in a new tab only when tapped; Sightline still never contacts anything but your Blue Iris server by itself.
 
 ## 0.12.0 — 2026-10-18

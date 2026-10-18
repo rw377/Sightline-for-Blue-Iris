@@ -1924,7 +1924,7 @@ function pullFrame(){
   };
   im.src = w.url;
 }
-function frameWidth(){ return targetSize().w; }
+function frameWidth(){ return Math.min(targetSize().w, screenFit().w); }   // stills stay screen-sized
 
 function onFrame(ok, meta){
   if(meta.live){
@@ -2044,35 +2044,70 @@ const vEl = $('#vVideo');
 const useVideo = () => VS_OK && !VS.failed[V.cam];
 
 /* ---- video quality ----
-   Auto = just enough pixels for this screen (capped at 1080p). A fixed choice asks Blue Iris for that size,
-   measured on the short side (so 1080p on a portrait camera is 1080 wide), never above the camera's own size. */
-const QUALITIES = [ ['auto','Auto','Sized to this screen'], ['480','480p',''], ['720','720p','HD'], ['1080','1080p','Full HD'], ['1440','1440p','2K'], ['2160','2160p','4K'] ];
+   Streams are requested the way UI3 asks for them: a size tier plus that tier's encoder settings (Blue Iris
+   quality and a bitrate cap, the same values as UI3's built-in profiles). Without them Blue Iris falls back to
+   its web server defaults, which look softer. Auto picks the smallest tier that covers the player's pixels
+   (more when zoomed in), so a computer gets the camera's full picture and a phone a lighter stream.
+   A fixed choice uses that tier. Never above the camera's own size. */
+const TIERS = [
+  { s:480,  w:856,  h:480,  q:30, kbps:456 },
+  { s:720,  w:1280, h:720,  q:35, kbps:1024 },
+  { s:1080, w:1920, h:1080, q:35, kbps:2048 },
+  { s:1440, w:2560, h:1440, q:40, kbps:4096 },
+  { s:2160, w:3840, h:2160, q:50, kbps:8192 } ];
+const QUALITIES = [ ['auto','Auto','Matched to this screen'], ['480','480p',''], ['720','720p','HD'], ['1080','1080p','Full HD'], ['1440','1440p','2K'], ['2160','2160p','4K'] ];
 S.quality = store.get('bis_quality') || 'auto';
 function camDims(){ const c = S.camMap[V.cam]; return c ? { w:c.w, h:c.h } : { w:1920, h:1080 }; }
-function targetSize(){
-  const cam = camDims(), even = n => Math.max(2, Math.round(n / 2) * 2);
-  let sc;
-  if(S.quality === 'auto'){
-    const dpr = Math.min(2, devicePixelRatio || 1);
-    const zb = Z.boost || 1;
-    const maxW = Math.min(1920 * zb, (stage.clientWidth || 640) * dpr * zb), maxH = Math.min(1920 * zb, (stage.clientHeight || 360) * dpr * zb);
-    sc = Math.min(1, maxW / cam.w, maxH / cam.h);
-  } else {
-    sc = Math.min(1, +S.quality / Math.min(cam.w, cam.h));
-  }
-  return { w: even(cam.w * sc), h: even(cam.h * sc) };
+const r8 = n => Math.max(8, Math.round(n / 8) * 8);
+// the camera's size limited to a box; the box turns to match a portrait camera
+function fitBox(cam, bw, bh){
+  if((bw / bh < 1) !== (cam.w / cam.h < 1)){ const t = bw; bw = bh; bh = t; }
+  const sc = Math.min(1, bw / cam.w, bh / cam.h);
+  return { w: r8(cam.w * sc), h: r8(cam.h * sc) };
 }
+// pixels the player actually shows (x2 at most for sharp screens, more when zoomed in)
+function screenFit(){
+  const cam = camDims(), dpr = Math.min(2, devicePixelRatio || 1), zb = Z.boost || 1;
+  const sc = Math.min(1, (stage.clientWidth || 640) * dpr * zb / cam.w, (stage.clientHeight || 360) * dpr * zb / cam.h);
+  return { w: r8(cam.w * sc), h: r8(cam.h * sc) };
+}
+function streamTier(){
+  if(S.quality !== 'auto') return TIERS.find(t => t.s === +S.quality) || TIERS[2];
+  const cam = camDims(), camShort = Math.min(cam.w, cam.h), fit = screenFit(), need = Math.min(fit.w, fit.h);
+  // a quarter more than the screen shows (a larger picture shrunk to fit looks crisper); 720p at least
+  let i = TIERS.findIndex(t => t.s >= need * 1.25); if(i < 0) i = TIERS.length - 1; i = Math.max(1, i);
+  while(i > 0 && TIERS[i - 1].s >= camShort) i--;   // no bigger tier than the camera needs
+  return TIERS[i];
+}
+function targetSize(){ const t = streamTier(); return fitBox(camDims(), t.w, t.h); }
 function vsSize(){ return targetSize(); }
+function streamArgs(){ const t = streamTier(); return `&q=${t.q}&kbps=${t.kbps}`; }
+const kbpsText = k => k < 1000 ? `${k} kbps` : `${Math.round(k / 1024)} Mbps`;
+function rxMbps(){
+  const now = performance.now(), rx = VS.rx || [];
+  while(rx.length && now - rx[0][0] > 4000) rx.shift();
+  if(!rx.length) return 0;
+  return rx.reduce((a, r) => a + r[1], 0) * 8 / Math.max(1000, now - rx[0][0]) / 1000;
+}
 function qualLabel(){ return S.quality === 'auto' ? 'AUTO' : S.quality === '2160' ? '4K' : S.quality + 'P'; }
 function updateQualBtn(){ $('#vQual').textContent = qualLabel(); }
+function qualNowText(){
+  const cam = camDims();
+  const now = VS.started && VS.res ? `Streaming now: ${VS.res.w}\u00d7${VS.res.h} ${VS.codec === 'H265' ? 'H.265' : 'H.264'}, ${rxMbps().toFixed(1)} Mbps`
+            : VS.ctrl ? 'Connecting video\u2026' : (VS.failed[V.cam] ? 'Showing still frames (video unavailable)' : 'Paused');
+  return `${now} \u00b7 camera is ${cam.w}\u00d7${cam.h}`;
+}
 function openQualSheet(){
   const cam = camDims(), camShort = Math.min(cam.w, cam.h);
-  const now = VS.started && VS.res ? `Streaming now: ${VS.res.w}\u00d7${VS.res.h} ${VS.codec === 'H265' ? 'H.265' : 'H.264'}`
-            : VS.ctrl ? 'Connecting video\u2026' : (VS.failed[V.cam] ? 'Showing still frames (video unavailable)' : 'Paused');
-  $('#qualNow').textContent = `${now} \u00b7 camera is ${cam.w}\u00d7${cam.h}`;
+  $('#qualNow').textContent = qualNowText();
+  clearInterval(VS.rateTimer);
+  VS.rateTimer = setInterval(() => { if($('#qualSheet').hidden){ clearInterval(VS.rateTimer); return; } $('#qualNow').textContent = qualNowText(); }, 1000);
+  const autoTier = S.quality === 'auto' ? streamTier() : null;
   $('#qualOpts').innerHTML = QUALITIES.map(([v, name, sub]) => {
     const tooBig = v !== 'auto' && +v > camShort && +v !== 480;
-    const note = tooBig ? 'above camera resolution' : sub;
+    const t = v === 'auto' ? autoTier : TIERS.find(x => x.s === +v);
+    const extra = v === 'auto' ? (t ? `now ${t.s}p, up to ${kbpsText(t.kbps)}` : '') : `up to ${kbpsText(t.kbps)}`;
+    const note = tooBig ? 'above camera resolution' : [sub, extra].filter(Boolean).join(' \u00b7 ');
     return `<button class="opt" role="menuitemradio" data-q="${v}" aria-checked="${S.quality === v}" ${tooBig ? 'disabled' : ''}>` +
       `<span>${name}${S.quality === v ? ' \u2713' : ''}</span><span class="sub">${note}</span></button>`;
   }).join('');
@@ -2095,12 +2130,12 @@ function restartStream(){
 updateQualBtn();
 function liveVideoUrl(){
   const z = vsSize();
-  return `video/${camEnc(V.cam)}/2.0?${sq()}&audio=${AU.on ? 1 : 0}&stream=0&w=${z.w}&h=${z.h}&extend=2`;
+  return `video/${camEnc(V.cam)}/2.0?${sq()}&audio=${AU.on ? 1 : 0}&stream=0&w=${z.w}&h=${z.h}${streamArgs()}&extend=2`;
 }
 function recVideoUrl(){
   const z = vsSize();
   return `time/${camEnc(V.cam)}?${sq()}&opaque=${OPAQUE}&pos=${Math.floor(V.pos)}&speed=${Math.round(V.speed * 100)}` +
-    `&audio=${AU.on && V.speed === 1 ? 1 : 0}&stream=0&w=${z.w}&h=${z.h}&extend=2`;
+    `&audio=${AU.on && V.speed === 1 ? 1 : 0}&stream=0&w=${z.w}&h=${z.h}${streamArgs()}&extend=2`;
 }
 
 function vsStop(keepPicture){
@@ -2161,6 +2196,7 @@ async function vsPump(reader, gen){
     const r = await reader.read();
     if(gen !== VS.gen){ try{ reader.cancel(); }catch(e){} return; }
     if(r.done){ vsEnded(); return; }
+    (VS.rx || (VS.rx = [])).push([performance.now(), r.value.length]);
     q.push(r.value);
     for(;;){
       if(state === 0){

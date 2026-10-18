@@ -57,7 +57,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **Full screen** for the player or the whole camera grid (handy on a wall display). The player's controls float over the picture and fade out while you watch. Not available on iPhone, where Safari doesn't support it.
 - **Digital zoom up to 8×:** pinch or use the mouse wheel, then drag to pan. In Auto quality, Sightline asks Blue Iris for a sharper picture while you're zoomed in.
 - **PTZ controls** for cameras Blue Iris marks as PTZ: hold an arrow or + / − to move or zoom, let go to stop; Home; and a list of your saved presets. Live view only.
-- **Quality picker** (Auto, 480p to 4K) and a **volume slider**.
+- **Quality picker** (Auto, 480p to 4K) and a **volume slider**. Video is requested with the same quality and bitrate settings as UI3's built-in profiles, so the picture matches UI3. Auto gives a computer the full camera picture and a phone a lighter 720p stream.
 - **Motion boxes** with a **1–10 sensitivity** setting.
 - Keyboard shortcuts on desktop: space to play / pause, ← → to skip 10 s, ↑ ↓ to switch camera, `+` `−` `0` to zoom, `F` for full screen, Esc to close.
 
