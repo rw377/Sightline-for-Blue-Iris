@@ -265,14 +265,16 @@ body.isfs #viewer.hideui{cursor:none}
 .camnav.l{left:0}.camnav.r{right:0}
 @media (hover:none){.camnav{display:none}}
 
-.vctl{background:var(--bg);padding:10px calc(12px + var(--safe-r)) calc(12px + var(--safe-b)) calc(12px + var(--safe-l));z-index:2}
-.scrub{position:relative;height:58px;touch-action:none;cursor:pointer}
+.vctl{background:var(--bg);padding:4px calc(12px + var(--safe-r)) calc(8px + var(--safe-b)) calc(12px + var(--safe-l));z-index:2}
+.scrub{position:relative;height:50px;touch-action:none;cursor:pointer}
 .scrub canvas{position:absolute;inset:0;width:100%;height:100%}
-.head{position:absolute;top:2px;bottom:18px;width:2px;margin-left:-1px;background:#fff;border-radius:1px;pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+.head{position:absolute;top:0;bottom:16px;width:2px;margin-left:-1px;background:#fff;border-radius:1px;pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
 .head::before{content:"";position:absolute;left:50%;top:-3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
 .head.live{background:var(--live)}.head.live::before{background:var(--live)}
-.bubble{position:absolute;bottom:62px;transform:translateX(-50%);padding:5px 9px;border-radius:8px;background:#fff;color:#000;font-size:13px;font-weight:700;white-space:nowrap;pointer-events:none}
-.row{display:flex;align-items:center;justify-content:space-between;gap:4px;margin-top:6px}
+.bubble{position:absolute;bottom:54px;transform:translateX(-50%);padding:5px 9px;border-radius:8px;background:#fff;color:#000;font-size:13px;font-weight:700;white-space:nowrap;pointer-events:none}
+.lower{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-top:2px}
+.zoomwrap{justify-self:start;position:relative;display:flex;align-items:center}
+.rside{justify-self:end;display:flex;gap:6px;align-items:center}
 .zoom{display:flex;gap:2px;background:var(--surface);border-radius:10px;padding:2px}
 .zoom button{height:28px;padding:0 9px;border-radius:8px;font-size:12px;font-weight:700;color:var(--muted)}
 .zoom button[aria-pressed=true]{background:var(--surface2);color:var(--text)}
@@ -280,7 +282,7 @@ body.isfs #viewer.hideui{cursor:none}
 .pill{height:32px;padding:0 12px;border-radius:16px;background:var(--surface2);font-size:12px;font-weight:800;letter-spacing:.4px}
 .pill.golive{color:var(--live);background:rgba(255,77,77,.14)}
 .pill:disabled{opacity:.35}
-.transport{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px}
+.transport{display:flex;align-items:center;justify-content:center;gap:6px}
 .tbtn{width:52px;height:48px;border-radius:14px;display:grid;place-items:center;color:var(--text)}
 .tbtn:active{background:var(--surface2)}
 .tbtn:disabled{opacity:.28}
@@ -291,13 +293,12 @@ body.isfs #viewer.hideui{cursor:none}
   #viewer .stage{position:absolute;inset:0}
   #viewer .vtop{position:absolute;left:0;right:0;top:0;background:linear-gradient(rgba(0,0,0,.75),transparent);padding-bottom:22px}
   #viewer .vctl{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.85) 38%);padding-top:34px}
-  #viewer .lower{display:flex;align-items:center;gap:12px;flex-direction:row-reverse;justify-content:space-between}
-  #viewer .lower .row{margin-top:0;gap:8px}
+  #viewer .lower{margin-top:0}
   #viewer .transport{margin-top:0}
   #viewer .tbtn{width:44px;height:40px}
   #viewer .tbtn.big{width:54px;height:44px}
   #viewer .vctl{padding-top:28px;padding-bottom:calc(6px + var(--safe-b))}
-  #viewer .scrub{height:52px}
+  #viewer .scrub{height:50px}
   #viewer.hideui .vtop,#viewer.hideui .vctl{opacity:0;pointer-events:none}
   #viewer .vtop,#viewer .vctl{transition:opacity .2s}
   #viewer .zbadge{top:calc(62px + var(--safe-t))}
@@ -307,17 +308,36 @@ body.isfs #viewer.hideui{cursor:none}
   body.isfs #viewer .stage{position:absolute;inset:0}
   body.isfs #viewer .vtop{position:absolute;left:0;right:0;top:0;background:linear-gradient(rgba(0,0,0,.75),transparent);padding-bottom:22px}
   body.isfs #viewer .vctl{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.85) 38%);padding-top:34px}
-  body.isfs #viewer .lower{display:flex;align-items:center;gap:12px;flex-direction:row-reverse;justify-content:space-between}
-  body.isfs #viewer .lower .row{margin-top:0;gap:8px}
+  body.isfs #viewer .lower{margin-top:0}
   body.isfs #viewer .transport{margin-top:0}
   body.isfs #viewer .tbtn{width:44px;height:40px}
   body.isfs #viewer .tbtn.big{width:54px;height:44px}
   body.isfs #viewer .vctl{padding-top:28px;padding-bottom:calc(6px + var(--safe-b))}
-  body.isfs #viewer .scrub{height:52px}
+  body.isfs #viewer .scrub{height:50px}
   body.isfs #viewer.hideui .vtop,body.isfs #viewer.hideui .vctl{opacity:0;pointer-events:none}
   body.isfs #viewer .vtop,body.isfs #viewer .vctl{transition:opacity .2s}
   body.isfs #viewer .zbadge{top:calc(62px + var(--safe-t))}
   body.isfs #viewer.hideui .zbadge{top:calc(10px + var(--safe-t))}
+/* phones keep the original two-row controls: spans, speed and LIVE on top, play controls below */
+@media (max-width:640px){
+  .vctl{padding:10px calc(12px + var(--safe-r)) calc(12px + var(--safe-b)) calc(12px + var(--safe-l))}
+  .scrub,body.isfs #viewer .scrub{height:58px}
+  .head{top:2px;bottom:18px}
+  .bubble{bottom:62px}
+  .lower,body.isfs #viewer .lower{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0 4px;margin-top:6px}
+  .rside{display:contents}
+  .transport{order:9;flex-basis:100%;margin-top:8px}
+  body.isfs #viewer .transport{margin-top:4px}
+}
+/* phones sideways: one row, play controls on the left as before */
+@media (orientation:landscape) and (max-height:540px){
+  #viewer .scrub,body.isfs #viewer .scrub{height:52px}
+  #viewer .head{top:2px;bottom:18px}
+  #viewer .bubble{bottom:62px}
+  #viewer .lower,body.isfs #viewer .lower{display:flex;flex-wrap:nowrap;align-items:center;justify-content:flex-start;gap:8px;margin-top:0}
+  #viewer .transport,body.isfs #viewer .transport{order:-1;flex-basis:auto;margin:0 auto 0 0}
+  #viewer .rside{display:flex;gap:8px}
+}
 
 /* ---------- login / sheet ---------- */
 .overlay{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:24px;background:var(--bg)}
@@ -420,13 +440,11 @@ body.isfs #viewer.hideui{cursor:none}
   <div class="vctl">
     <div class="scrub" id="scrub"><canvas id="scrubCanvas"></canvas><div class="head" id="head"></div><div class="bubble num" id="bubble" hidden></div></div>
     <div class="lower">
-    <div class="row">
+      <div class="zoomwrap">
       <div class="zoom" id="zoom">
         <button data-w="120000">2m</button><button data-w="900000">15m</button><button data-w="3600000">1h</button><button data-w="21600000">6h</button><button data-w="86400000">24h</button><button data-w="172800000">48h</button>
       </div>
-      <button class="pill" id="speedBtn">1&#215;</button>
-      <button class="pill golive" id="liveBtn">LIVE</button>
-    </div>
+      </div>
     <div class="transport">
       <button class="tbtn" id="prevAlert" aria-label="Previous alert"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9.5 12z"/></svg></button>
       <button class="tbtn" id="back10" aria-label="Back 10 seconds"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><text x="12.3" y="15.6" font-size="7.5" font-weight="800" fill="currentColor" stroke="none" text-anchor="middle" font-family="system-ui">10</text></svg></button>
@@ -434,6 +452,7 @@ body.isfs #viewer.hideui{cursor:none}
       <button class="tbtn" id="fwd10" aria-label="Forward 10 seconds"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/><text x="11.7" y="15.6" font-size="7.5" font-weight="800" fill="currentColor" stroke="none" text-anchor="middle" font-family="system-ui">10</text></svg></button>
       <button class="tbtn" id="nextAlert" aria-label="Next alert"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l10.5-7z"/></svg></button>
     </div>
+      <div class="rside"><button class="pill" id="speedBtn">1&#215;</button><button class="pill golive" id="liveBtn">LIVE</button></div>
     </div>
   </div>
 </div>
@@ -2655,7 +2674,7 @@ function drawScrub(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,w,h);
   const s = V.winStart, W = V.winEnd - V.winStart, X = t => (t - s) / W * w;
-  const ty = 12, th = 22;
+  const ty = h >= 52 ? 12 : 10, th = 22;
   // track
   ctx.fillStyle = '#1c2229'; roundRect(ctx, 0, ty, w, th, 6); ctx.fill();
   // recorded coverage
@@ -2684,7 +2703,7 @@ function drawScrub(){
     const label = midnight ? d.toLocaleDateString(undefined, { weekday: 'short' })
                 : step < 6e4 ? d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',second:'2-digit'}).replace(/\s?[AP]M$/i,'')
                              : d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}).replace(/\s?([AP])M$/i, (m,p) => p.toLowerCase());
-    ctx.fillText(label, x, ty + th + 8);
+    ctx.fillText(label, x, ty + th + (ty > 10 ? 8 : 7));
   }
 }
 function roundRect(ctx, x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
