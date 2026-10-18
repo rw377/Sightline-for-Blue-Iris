@@ -2,6 +2,12 @@
 
 All notable changes to Sightline for Blue Iris. The version shown in **Settings → About** matches the newest entry here.
 
+## 0.12.0 — 2026-10-17
+
+- **Hidden and disabled cameras are left out.** Cameras marked Hidden in Blue Iris, and disabled cameras, no longer appear in the Live grid, the alert list, alert-label counts or the camera picker. New setting: **Settings → Live view → Show hidden cameras** (off by default). Disabled cameras are never shown.
+- **Combine alert filters.** Tapping a filter button now adds or removes it, so you can show, for example, Dogs + People together (alerts matching any selected filter). Tap All to clear.
+- **Full screen.** New button in the player and in the main header (camera grid), plus the `F` key on desktop. In full screen, the player's controls float over the picture and fade out after a few seconds; move the mouse or tap to bring them back. Hidden on browsers without full-screen support (iPhone Safari).
+
 ## 0.11.3 — 2026-10-17
 
 - **"Stay signed in" is now off by default.** New users choose it with the checkbox on the sign-in screen, or later in Settings. Anyone who already has it turned on keeps it.

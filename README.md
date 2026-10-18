@@ -37,11 +37,13 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **A camera grid that fits your screen.** Tiles size themselves so the whole group fits (2 + 2, not 3 + 1), or pick Large / Medium / Small. The choice is remembered for each group.
 - **Your Blue Iris groups as buttons** (Outdoor, Indoor and so on). Choose which ones appear.
 - **Drag to reorder** cameras, with a separate order for each group.
+- **Hidden and disabled cameras stay out of the way.** Cameras marked Hidden in Blue Iris, and disabled cameras, don't appear in the grid or the alerts. A setting lets you show hidden cameras if you want them.
 - **Activity at a glance.** A tile's border lights up when Blue Iris sees motion (white) or a trigger, colored by what the AI found (person, vehicle, animal, delivery), with a label such as **"Dog 88%"**.
 - **Optional motion boxes on the tiles** show *where* something is moving, so you can follow the dog around the house without opening each camera.
 
 ### Alerts
 - **AI-aware filter buttons:** People, Vehicles, Animals, plus any label your AI model reports, such as Dogs, UPS or Amazon.
+- **Combine filters:** tap several buttons, for example Dogs + People, to see alerts matching any of them. Tap All to clear.
 - **Labels picked from real data.** Sightline scans the last 14 days of alerts and lists every label your cameras have actually reported, with counts. You can also type your own. Capitalization and plurals don't matter.
 - **Date and time ranges:** last hour, today, yesterday, last night (8 PM–6 AM), or any custom day and time window.
 - **Filter by camera or group.**
@@ -52,10 +54,11 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **A scrubbable timeline** with colored alert markers and zoom levels from 2 minutes to 48 hours. Longer views mark each midnight with the day's name.
 - **Quick controls:** previous / next alert, ±10 seconds, playback up to 16× speed, and a one-tap jump to live.
 - **Swipe between cameras.**
+- **Full screen** for the player or the whole camera grid (handy on a wall display). The player's controls float over the picture and fade out while you watch. Not available on iPhone, where Safari doesn't support it.
 - **Digital zoom up to 8×:** pinch or use the mouse wheel, then drag to pan. In Auto quality, Sightline asks Blue Iris for a sharper picture while you're zoomed in.
 - **Quality picker** (Auto, 480p to 4K) and a **volume slider**.
 - **Motion boxes** with a **1–10 sensitivity** setting.
-- Keyboard shortcuts on desktop: space to play / pause, ← → to skip 10 s, ↑ ↓ to switch camera, `+` `−` `0` to zoom, Esc to close.
+- Keyboard shortcuts on desktop: space to play / pause, ← → to skip 10 s, ↑ ↓ to switch camera, `+` `−` `0` to zoom, `F` for full screen, Esc to close.
 
 ### Everyday comfort
 - **Handles dropped connections:** a network blip shows a banner instead of a login screen.

@@ -156,6 +156,12 @@ main{flex:1;overflow:hidden;position:relative}
 .zbadge{position:absolute;top:10px;right:10px;z-index:3;display:flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:16px;
   background:rgba(0,0,0,.62);color:#fff;font-size:13px;font-weight:700;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .zbadge span{color:var(--accent);font-weight:700}
+.fsbtn .fs-off{display:none}
+body.isfs .fsbtn .fs-on{display:none}
+body.isfs .fsbtn .fs-off{display:block}
+.nofs .fsbtn{display:none!important}
+#vFs svg{stroke:#fff}
+body.isfs #viewer.hideui{cursor:none}
 .stage .spin,.stage .vmsg,.stage .camnav{z-index:3}
 #vMotion svg{stroke:#fff}
 #vMotion[aria-pressed=true] svg{stroke:var(--accent)}
@@ -276,6 +282,21 @@ main{flex:1;overflow:hidden;position:relative}
   #viewer .zbadge{top:calc(62px + var(--safe-t))}
   #viewer.hideui .zbadge{top:calc(10px + var(--safe-t))}
 }
+/* fullscreen: same floating controls on any screen */
+  body.isfs #viewer .stage{position:absolute;inset:0}
+  body.isfs #viewer .vtop{position:absolute;left:0;right:0;top:0;background:linear-gradient(rgba(0,0,0,.75),transparent);padding-bottom:22px}
+  body.isfs #viewer .vctl{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.85) 38%);padding-top:34px}
+  body.isfs #viewer .lower{display:flex;align-items:center;gap:12px;flex-direction:row-reverse;justify-content:space-between}
+  body.isfs #viewer .lower .row{margin-top:0;gap:8px}
+  body.isfs #viewer .transport{margin-top:0}
+  body.isfs #viewer .tbtn{width:44px;height:40px}
+  body.isfs #viewer .tbtn.big{width:54px;height:44px}
+  body.isfs #viewer .vctl{padding-top:28px;padding-bottom:calc(6px + var(--safe-b))}
+  body.isfs #viewer .scrub{height:52px}
+  body.isfs #viewer.hideui .vtop,body.isfs #viewer.hideui .vctl{opacity:0;pointer-events:none}
+  body.isfs #viewer .vtop,body.isfs #viewer .vctl{transition:opacity .2s}
+  body.isfs #viewer .zbadge{top:calc(62px + var(--safe-t))}
+  body.isfs #viewer.hideui .zbadge{top:calc(10px + var(--safe-t))}
 
 /* ---------- login / sheet ---------- */
 .overlay{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:24px;background:var(--bg)}
@@ -307,6 +328,7 @@ main{flex:1;overflow:hidden;position:relative}
 <div id="app" hidden>
   <header class="top">
     <h1 id="title">Sightline</h1>
+    <button class="iconbtn fsbtn" id="fsBtn" aria-label="Full screen" title="Full screen (F)"><svg class="fs-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="fs-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>
     <button class="iconbtn" id="refreshBtn" aria-label="Refresh"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
     <button class="iconbtn" id="menuBtn" aria-label="Menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
   </header>
@@ -341,6 +363,7 @@ main{flex:1;overflow:hidden;position:relative}
     <button class="iconbtn" id="vBack" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg></button>
     <div class="vtitle"><div id="vCam"></div><div id="vTime" class="num"></div></div>
     <button class="iconbtn" id="vSound" aria-label="Sound"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z" fill="#fff"/><path class="wave" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/><path class="mute" d="m16 9 6 6m0-6-6 6"/></svg></button>
+    <button class="iconbtn fsbtn" id="vFs" aria-label="Full screen" title="Full screen (F)"><svg class="fs-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="fs-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>
     <button class="iconbtn" id="vMotion" aria-label="Motion boxes" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><rect x="9" y="9" width="6" height="6" rx="1" stroke-dasharray="2 2"/></svg></button>
     <button id="vQual" class="badge q" aria-label="Video quality">AUTO</button>
     <a id="vUi3" class="badge ui3" target="_blank" rel="noopener" hidden>UI3</a>
@@ -488,6 +511,7 @@ main{flex:1;overflow:hidden;position:relative}
     <div class="sect">Live view</div>
     <button id="hlBtn" class="tgl" role="switch" aria-checked="true"><span class="lbl">Highlight active cameras<small>Colored border on tiles with motion or a detection</small></span><span class="tog"></span></button>
     <button id="tlBtn" class="tgl" role="switch" aria-checked="true"><span class="lbl">AI labels on cameras<small>Show what the AI saw on the tile, e.g. &#8220;Dog 82%&#8221;</small></span><span class="tog"></span></button>
+    <button id="hidBtn" class="tgl" role="switch" aria-checked="false"><span class="lbl">Show hidden cameras<small>Cameras marked Hidden in Blue Iris. Disabled cameras are never shown.</small></span><span class="tog"></span></button>
     <button id="resetOrderBtn">Reset camera order for this view</button>
     <div class="sect">Interface</div>
     <button id="groupsBtn" class="opt"><span>Groups on Live screen</span><span class="sub" id="groupsCur"></span></button>
@@ -542,7 +566,7 @@ main{flex:1;overflow:hidden;position:relative}
 'use strict';
 /* Values filled in by the Blue Iris web server when it serves this .htm file */
 const INJECTED_SESSION = "%%SESSION%%";
-const APP = { name: 'Sightline', version: '0.11.3' };   // bump the version with every change you copy to the www folder
+const APP = { name: 'Sightline', version: '0.12.0' };   // bump the version with every change you copy to the www folder
 const INJECTED_SYSNAME = "%%SYSNAME%%";
 /* Note: never write two percent signs together anywhere else in this file \u2014 Blue Iris treats the
    text between them as a placeholder and blanks it out when serving the page. */
@@ -754,7 +778,9 @@ async function loadCams(){
   let r;
   try{ r = await api({cmd:'camlist'}); }
   catch(e){ if(e.message !== 'session') $('#grid').innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
-  const list = (r.data || []).filter(c => !c.group && c.isEnabled !== false && c.webcast !== false && !/^[@+]/.test(c.optionValue || ''));
+  // Cameras only: no groups or cycles, not disabled, web access allowed, and not Hidden unless asked for
+  const list = (r.data || []).filter(c => !c.group && c.isEnabled !== false && c.webcast !== false && !/^[@+]/.test(c.optionValue || '')
+    && (LV.hidden || !c.hidden));
   const camIds = new Set(list.map(c => c.optionValue));
   S.groups = (r.data || [])
     .filter(g => Array.isArray(g.group) && g.group.length && String(g.optionValue).toLowerCase() !== 'index' && !String(g.optionValue).startsWith('@'))
@@ -766,6 +792,7 @@ async function loadCams(){
     online: c.isOnline !== false && !c.isNoSignal, trig: !!(c.isTriggered || c.isAlerting)
   }));
   S.camMap = Object.fromEntries(S.cams.map(c => [c.id, c]));
+  S.camKeys = new Set(S.cams.map(c => String(c.id).toLowerCase()));
   if(S.group !== 'index' && !S.groups.some(g => g.id === S.group)) S.group = 'index';
   buildGroupBar();
   buildGrid();
@@ -1006,16 +1033,25 @@ $('#aboutBtn').addEventListener('click', () => {
 });
 $('#aboutSheet').addEventListener('click', e => { if(e.target.id === 'aboutSheet' || e.target.id === 'aboutDone') $('#aboutSheet').hidden = true; });
 /* ---- Live view switches: tile highlight borders and AI labels ---- */
-const LV = { hl: store.get('bis_hl') !== '0', labels: store.get('bis_tlabels') !== '0' };
+const LV = { hl: store.get('bis_hl') !== '0', labels: store.get('bis_tlabels') !== '0', hidden: store.get('bis_showhidden') === '1' };
+// Alerts only from cameras Sightline shows (skips hidden and disabled cameras). Until the camera list loads, allow all.
+const camShown = id => !S.camKeys || !S.camKeys.size || S.camKeys.has(String(id || '').toLowerCase());
 function applyLiveOpts(){
   $('#hlBtn').setAttribute('aria-checked', LV.hl);
   $('#tlBtn').setAttribute('aria-checked', LV.labels);
+  $('#hidBtn').setAttribute('aria-checked', LV.hidden);
   $('#grid').classList.toggle('nohl', !LV.hl);
   tileLabels();
 }
 $('#hlBtn').addEventListener('click', () => {
   LV.hl = !LV.hl; store.set('bis_hl', LV.hl ? '1' : '0'); applyLiveOpts();
   if(LV.hl){ refreshStatus(); pollRecentAlerts(); }
+});
+$('#hidBtn').addEventListener('click', async () => {
+  LV.hidden = !LV.hidden; store.set('bis_showhidden', LV.hidden ? '1' : '0'); applyLiveOpts();
+  await loadCams();
+  AFS.scan = null;                                   // label counts change with the camera set
+  if(A.loadedAt) loadAlerts(true);
 });
 $('#tlBtn').addEventListener('click', () => {
   LV.labels = !LV.labels; store.set('bis_tlabels', LV.labels ? '1' : '0'); applyLiveOpts();
@@ -1175,6 +1211,7 @@ async function pollRecentAlerts(){
     const now = Math.floor(Date.now() / 1000);
     const r = await api({cmd:'alertlist', camera:'index', startdate: now - 120, enddate: now + 60, view:'alerts'});
     for(const it of (r.data || [])){
+      if(!camShown(it.camera)) continue;
       const tag = alertTags(it)[0];
       if(!tag || tag.cls === 'motion') continue;
       const prev = TA[it.camera];
@@ -1278,7 +1315,17 @@ function filterDef(id){
   if(String(id).startsWith('label:')){ const l = id.slice(6); return { get name(){ return labelChip(l); }, view:'alerts', match:id, get noun(){ return LABEL_NAMES[l] || l; } }; }
   return null;
 }
+const VEHICLES = /\b(car|truck|bus|motorcycle|bicycle|boat|vehicle|van|suv)s?\b/;
+// One matcher per filter button, used when several are selected together (alerts matching ANY of them)
+function filterMatcher(id){
+  if(id === 'all') return () => true;
+  if(id === 'people') return it => hasBit(it.flags, 26) || /\b(person|people)\b/.test(memoOf(it));     // Blue Iris AI person flag
+  if(id === 'vehicles') return it => hasBit(it.flags, 27) || VEHICLES.test(memoOf(it));                // Blue Iris AI vehicle flag
+  if(id === 'animals') return matcherFor('animal');
+  return matcherFor(id);
+}
 function matcherFor(match){
+  if(match === 'multi'){ const ms = A.sel.map(filterMatcher); return it => ms.some(m => m(it)); }
   if(match === 'animal') return it => ANIMALS.test(memoOf(it)) || hasBit(it.flags, 31);
   if(String(match).startsWith('label:')){ const k = normLabel(match.slice(6)); return it => memoKeys(it).has(k); }
   return () => true;
@@ -1298,23 +1345,37 @@ function saveAf(list){
 function customLabels(){ try{ const v = JSON.parse(store.get('bis_alabels') || '[]'); return Array.isArray(v) ? v : []; }catch(e){ return []; } }
 // First run: save the starting set now, so it can't change later once other settings exist
 if(store.get('bis_afilters') == null) saveAf(loadAf());
-A.filter = loadAf()[0] || 'all';
+// Selected filter buttons. Empty = All. One = that filter (People/Vehicles use Blue Iris's own lists).
+// Several = alerts matching any of them, filtered on this device from the full alert list.
+A.sel = [];
 function renderFilterChips(){
   const list = loadAf();
-  if(!list.includes(A.filter) && A.filter !== 'all'){ A.filter = list[0] || 'all'; applyFilterState(); }
+  const keep = A.sel.filter(id => list.includes(id));
+  if(keep.length !== A.sel.length){ A.sel = keep; applyFilterState(); }
   $('#afChips').innerHTML = list.length < 2 ? '' : list.map(id =>
-    `<button class="chip" data-f="${esc(id)}" aria-pressed="${id === A.filter}">${esc(filterDef(id).name)}</button>`).join('');
+    `<button class="chip" data-f="${esc(id)}" aria-pressed="${id === 'all' ? !A.sel.length : A.sel.includes(id)}">${esc(filterDef(id).name)}</button>`).join('');
 }
-function applyFilterState(){ const d = filterDef(A.filter) || FILTER_BUILTIN.all; A.view = d.view; A.match = d.match || ''; }
-function setAlertFilter(id){
-  A.filter = filterDef(id) ? id : 'all'; applyFilterState();
-  document.querySelectorAll('#afChips .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.f === A.filter));
+function applyFilterState(){
+  if(A.sel.length > 1){ A.view = 'alerts'; A.match = 'multi'; return; }
+  const d = filterDef(A.sel[0] || 'all') || FILTER_BUILTIN.all; A.view = d.view; A.match = d.match || '';
+}
+// What the selection is called in messages: "dog or person alerts"
+function selNoun(){
+  const nouns = A.sel.map(id => (filterDef(id) || {}).noun).filter(Boolean);
+  return nouns.length ? nouns.join(' or ') + ' alerts' : 'alerts';
+}
+function setAlertFilter(id, toggle){
+  if(!filterDef(id) || id === 'all') A.sel = [];
+  else if(toggle) A.sel = A.sel.includes(id) ? A.sel.filter(x => x !== id) : [...A.sel, id];
+  else A.sel = [id];
+  applyFilterState();
+  document.querySelectorAll('#afChips .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.f === 'all' ? !A.sel.length : A.sel.includes(c.dataset.f)));
   loadAlerts(true);
 }
 applyFilterState();
 $('#afChips').addEventListener('click', e => {
   const b = e.target.closest('[data-f]'); if(!b) return;
-  setAlertFilter(b.dataset.f);
+  setAlertFilter(b.dataset.f, true);                  // tap to add or remove; All clears
 });
 setTimeout(renderFilterChips, 0);
 /* ---- Alert filters settings: built-ins, labels seen on your cameras, and your own labels ---- */
@@ -1330,6 +1391,7 @@ async function scanLabels(){
       const res = await Promise.all(days.slice(i, i + 4).map(d =>
         api({cmd:'alertlist', camera:'index', startdate: now - (d + 1) * 86400, enddate: now - d * 86400 + (d ? 0 : 60), view:'alerts'}).catch(() => null)));
       for(const r of res) for(const it of ((r && r.data) || [])){
+        if(!camShown(it.camera)) continue;
         for(const n of new Set(memoNames(it))){
           const k = normLabel(n); if(!k) continue;
           const c = counts.get(k) || { name: n.replace(/[_-]+/g, ' '), n: 0 }; c.n++; counts.set(k, c);
@@ -1369,8 +1431,8 @@ function afToggle(id){
   if(cur) list = list.filter(x => x !== cur); else list.push(id);
   saveAf(list);
   renderAfList(); updateAfUi(); renderFilterChips();
-  if(!loadAf().includes(A.filter) && A.filter !== 'all') setAlertFilter(loadAf()[0] || 'all');
-  else if(!loadAf().length && A.filter !== 'all') setAlertFilter('all');
+  const now = loadAf();
+  if(A.sel.some(id => !now.includes(id))){ A.sel = A.sel.filter(id => now.includes(id)); applyFilterState(); renderFilterChips(); loadAlerts(true); }
 }
 $('#afBtn').addEventListener('click', () => {
   $('#sheet').hidden = true; $('#afNote').textContent = ''; $('#afInput').value = '';
@@ -1463,7 +1525,8 @@ async function loadAlerts(reset){
       // If Blue Iris capped the result size, continue from the oldest item; otherwise the whole day is covered
       A.end = raw.length >= 100 ? Math.max(start, raw[raw.length-1].date) : start;
       raw.forEach(it => A.seen.add(it.path));
-      let items = A.match ? raw.filter(matcherFor(A.match)) : raw;
+      let items = raw.filter(it => camShown(it.camera));
+      if(A.match) items = items.filter(matcherFor(A.match));
       if(A.range) items = items.filter(it => it.date >= A.range.start && it.date <= A.range.end);
       for(const it of items){ renderAlert(it); added++; }
       if(!items.length) emptyDays++;
@@ -1472,11 +1535,11 @@ async function loadAlerts(reset){
     A.count += added;
     if(A.range && A.end <= A.range.start){
       A.exhausted = true;
-      const what = (filterDef(A.filter) || {}).noun ? filterDef(A.filter).noun + ' alerts' : 'alerts';
+      const what = selNoun();
       $('#alertMore').innerHTML = A.count ? 'End of the selected time range.' : `No ${esc(what)} for ${esc(rangeText(A.range))}.`;
     } else if(added === 0){
       A.exhausted = true;
-      const what = (filterDef(A.filter) || {}).noun ? filterDef(A.filter).noun + ' alerts' : 'alerts';
+      const what = selNoun();
       $('#alertMore').innerHTML = (A.count ? 'Nothing in the week before this.' : `No ${esc(what)} in the last 7 days.`) +
         '<div style="margin-top:12px"><button id="olderBtn">Look further back</button></div>';
       $('#olderBtn').onclick = () => { A.exhausted = false; loadAlerts(false); };
@@ -1688,11 +1751,50 @@ function closeViewer(fromPop){
   vsStop(false);
   stage.querySelectorAll('img.frame').forEach(i => { i.src = ''; i.remove(); });
   $('#viewer').hidden = true;
+  if(FS.fromViewer && fsEl()) toggleFs();          // full screen that started in the player ends with it
   releaseWake();
   if(!fromPop && history.state && history.state.viewer) history.back();
   pumpAllTiles();
 }
 $('#vBack').addEventListener('click', () => closeViewer(false));
+/* ---- full screen (the whole page, so sheets like Quality still work). Not available on iPhone Safari. ---- */
+const FS = { fromViewer:false, idle:0 };
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+const fsOk = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+if(!fsOk) document.body.classList.add('nofs');
+function toggleFs(fromViewer){
+  if(!fsOk) return;
+  if(fsEl()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+  FS.fromViewer = !!fromViewer;
+  const el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+  try{ const p = req.call(el, { navigationUI: 'hide' }); if(p && p.catch) p.catch(() => {}); }catch(e){}
+}
+function onFsChange(){
+  const on = !!fsEl();
+  document.body.classList.toggle('isfs', on);
+  document.querySelectorAll('.fsbtn').forEach(b => { b.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen'); b.title = on ? 'Exit full screen (F)' : 'Full screen (F)'; });
+  if(!on){ FS.fromViewer = false; $('#viewer').classList.remove('hideui'); }
+  fsIdle();
+  setTimeout(() => { if(V.open){ if(Z.s > 1) zApply(); updateUI(); } else layoutGrid(); }, 150);
+}
+document.addEventListener('fullscreenchange', onFsChange);
+document.addEventListener('webkitfullscreenchange', onFsChange);
+$('#fsBtn').addEventListener('click', () => toggleFs(false));
+$('#vFs').addEventListener('click', () => toggleFs(true));
+// In full screen, the player's controls fade out after 3 s of watching; moving the mouse or tapping brings them back
+function fsIdle(){
+  clearTimeout(FS.idle);
+  if(!fsEl() || !V.open) return;
+  FS.idle = setTimeout(() => {
+    const busy = !$('#volPop').hidden || !$('#qualSheet').hidden || V.dragging || (V.mode !== 'live' && !V.playing);
+    if(fsEl() && V.open && !busy) $('#viewer').classList.add('hideui'); else fsIdle();
+  }, 3000);
+}
+$('#viewer').addEventListener('pointermove', e => {
+  if(e.pointerType !== 'mouse' || !fsEl()) return;
+  $('#viewer').classList.remove('hideui'); fsIdle();
+});
+$('#viewer').addEventListener('pointerdown', () => { if(fsEl()) fsIdle(); });
 addEventListener('popstate', () => { if(V.open) closeViewer(true); });
 
 function setCamTitle(){
@@ -2646,6 +2748,7 @@ async function requestWake(){ try{ V.wake = await navigator.wakeLock.request('sc
 function releaseWake(){ try{ V.wake && V.wake.release(); }catch(e){} V.wake = null; }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 document.addEventListener('keydown', e => {
+  if((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '')){ toggleFs(V.open); return; }
   if(!V.open) return;
   if(e.key === 'Escape') closeViewer(false);
   else if(e.key === ' '){ e.preventDefault(); $('#playBtn').click(); }
