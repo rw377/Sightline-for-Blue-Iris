@@ -2,6 +2,10 @@
 
 All notable changes to Sightline for Blue Iris. Released versions match what **Settings → About** shows; a version ending in `-dev` is a work-in-progress copy from `main`.
 
+## Unreleased (next: 0.12.1)
+
+- **Links in Settings → About** to the project page, What’s new (Releases) and Report a problem (Issues) on GitHub. They open in a new tab only when tapped; Sightline still never contacts anything but your Blue Iris server by itself.
+
 ## 0.12.0 — 2026-10-18
 
 - **Hidden and disabled cameras are left out.** Cameras marked Hidden in Blue Iris, and disabled cameras, no longer appear in the Live grid, the alert list, alert-label counts or the camera picker. New setting: **Settings → Live view → Show hidden cameras** (off by default). Disabled cameras are never shown.

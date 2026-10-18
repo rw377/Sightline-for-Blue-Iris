@@ -202,6 +202,11 @@ body.isfs #viewer.hideui{cursor:none}
 .about-rows div + div{border-top:1px solid var(--line)}
 .about-rows span:first-child{color:var(--muted)}
 .about-rows span:last-child{text-align:right}
+.about-links a{display:flex;justify-content:space-between;gap:12px;padding:12px 14px;font-size:14px;color:var(--text);text-decoration:none}
+.about-links a + a{border-top:1px solid var(--line)}
+.about-links a span:last-child{color:var(--accent)}
+.about-links a:active{background:var(--surface)}
+@media (hover:hover){.about-links a:hover{background:var(--surface)}}
 .about-text{margin:14px 14px 0;color:var(--muted);font-size:13px;line-height:1.45}
 .about-text p{margin:0 0 10px}
 .about-text b{color:var(--text);font-weight:650}
@@ -591,6 +596,11 @@ body.isfs #viewer.hideui{cursor:none}
   <div class="sheet scroll">
     <div class="about-head"><img src="sightline-icon-192.png" alt=""><div><b id="aboutName"></b><small id="aboutVer"></small></div></div>
     <div class="about-rows" id="aboutRows"></div>
+    <div class="about-rows about-links">
+      <a href="https://github.com/rw377/Sightline-for-Blue-Iris" target="_blank" rel="noopener noreferrer"><span>Project page</span><span>GitHub &#8599;</span></a>
+      <a href="https://github.com/rw377/Sightline-for-Blue-Iris/releases" target="_blank" rel="noopener noreferrer"><span>What&#8217;s new</span><span>Releases &#8599;</span></a>
+      <a href="https://github.com/rw377/Sightline-for-Blue-Iris/issues" target="_blank" rel="noopener noreferrer"><span>Report a problem</span><span>Issues &#8599;</span></a>
+    </div>
     <div class="about-text">
       <p><b>Unofficial.</b> An independent viewer for Blue Iris. It is not affiliated with, endorsed by or supported by Perspective Software, the maker of Blue Iris. Blue Iris is a trademark of its owner. Please don&#8217;t contact Blue Iris support about problems with this page.</p>
       <p><b>Private.</b> This page talks only to your own Blue Iris server. No accounts, cloud services, tracking or analytics. Settings are saved in this browser on this device.</p>
@@ -627,7 +637,7 @@ body.isfs #viewer.hideui{cursor:none}
 'use strict';
 /* Values filled in by the Blue Iris web server when it serves this .htm file */
 const INJECTED_SESSION = "%%SESSION%%";
-const APP = { name: 'Sightline', version: '0.12.0' };   // bump the version with every change you copy to the www folder
+const APP = { name: 'Sightline', version: '0.12.1-dev' };   // bump the version with every change you copy to the www folder
 const INJECTED_SYSNAME = "%%SYSNAME%%";
 /* Note: never write two percent signs together anywhere else in this file \u2014 Blue Iris treats the
    text between them as a placeholder and blanks it out when serving the page. */

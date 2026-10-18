@@ -66,7 +66,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **Optional "Stay signed in"** keeps you signed in through Blue Iris session timeouts. It's off by default; tick it when signing in or turn it on in Settings.
 - **Settings for each device and browser,** so everyone who uses it can set it up their own way.
 - **Add to your home screen** and it opens full-screen like an app.
-- A built-in **color legend** and an **About** screen showing the Sightline and Blue Iris versions.
+- A built-in **color legend** and an **About** screen showing the Sightline and Blue Iris versions, with links to this project, its releases and its issue tracker.
 
 ## Screenshots
 
