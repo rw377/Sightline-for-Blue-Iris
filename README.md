@@ -56,6 +56,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **Swipe between cameras.**
 - **Full screen** for the player or the whole camera grid (handy on a wall display). The player's controls float over the picture and fade out while you watch. Not available on iPhone, where Safari doesn't support it.
 - **Digital zoom up to 8×:** pinch or use the mouse wheel, then drag to pan. In Auto quality, Sightline asks Blue Iris for a sharper picture while you're zoomed in.
+- **PTZ controls** for cameras Blue Iris marks as PTZ: hold an arrow or + / − to move or zoom, let go to stop; Home; and a list of your saved presets. Live view only.
 - **Quality picker** (Auto, 480p to 4K) and a **volume slider**.
 - **Motion boxes** with a **1–10 sensitivity** setting.
 - Keyboard shortcuts on desktop: space to play / pause, ← → to skip 10 s, ↑ ↓ to switch camera, `+` `−` `0` to zoom, `F` for full screen, Esc to close.
@@ -91,6 +92,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - A **Blue Iris user account** to sign in with (Settings → *Users*). A dedicated, non-admin account is recommended; see [Security](#security-and-privacy).
 - A **modern browser.** Tested on Chrome for Android and desktop Chrome. Other Chromium browsers (Edge, Brave) should behave the same. Safari (iPhone / iPad) and Firefox should work but haven't been tested yet.
 - **For AI labels and filters:** Blue Iris AI detection set up on your cameras (for example CodeProject.AI). Without AI, everything else still works; alerts just won't have labels.
+- **For PTZ controls:** a Blue Iris user that's allowed to control PTZ. Without permission, Sightline shows "Access denied" and sends nothing else.
 - **For smooth video:** Blue Iris's web streams in **H.264**, which is Blue Iris's usual setting for web viewing. If the browser can't play the stream, Sightline shows still frames instead.
 
 ## Install
@@ -169,7 +171,7 @@ While the Live screen is open, Sightline checks Blue Iris for motion / trigger s
 ## Limitations
 
 - **View-only.** Recording, motion zones, AI settings and camera configuration stay in Blue Iris / UI3.
-- **Not yet supported:** PTZ controls, push notifications, clip download / export, two-way audio.
+- **Not yet supported:** push notifications, clip download / export, two-way audio. PTZ covers moving, zooming, Home and going to presets; saving presets and focus / IR controls stay in Blue Iris / UI3.
 - **Motion boxes are drawn by the browser.** They are an approximation and don't use Blue Iris's motion zones.
 - **Smooth video needs an H.264 web stream.** Otherwise you get still frames.
 

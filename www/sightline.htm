@@ -161,6 +161,26 @@ body.isfs .fsbtn .fs-on{display:none}
 body.isfs .fsbtn .fs-off{display:block}
 .nofs .fsbtn{display:none!important}
 #vFs svg{stroke:#fff}
+#vPtz[aria-pressed=true]{background:rgba(76,194,255,.18)}
+.ptzpad{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:4;display:flex;flex-direction:column;gap:8px;
+  padding:10px;border-radius:18px;background:rgba(12,15,19,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  box-shadow:0 8px 30px rgba(0,0,0,.5);touch-action:none;user-select:none;-webkit-user-select:none;max-width:calc(100% - 20px)}
+.ptzpad[hidden]{display:none}
+.ptzrow{display:flex;gap:10px;align-items:center;justify-content:center}
+.ptzgrid{display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px);gap:4px}
+.ptzzoom{display:grid;grid-template-rows:repeat(2,48px);gap:4px}
+.ptzpad button{display:grid;place-items:center;width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.08);color:#fff;font-size:22px;font-weight:700;-webkit-touch-callout:none}
+.ptzpad button.on{background:var(--accent);color:#04131c}
+.ptzpad button.home{font-size:11px;font-weight:800;letter-spacing:.4px;color:var(--muted)}
+.ptzpad button.diag{background:rgba(255,255,255,.04)}
+.ptzpad .ptzpbtn{width:100%;height:38px;border-radius:12px;font-size:14px;font-weight:700;display:flex;gap:8px;justify-content:center;align-items:center}
+.ptzpad .ptzpbtn[hidden]{display:none}
+.ptzpad .ptzpbtn small{color:var(--muted);font-weight:600}
+#ptzPresetList .opt .sub{flex:none}
+.ptzpad .ptzx{position:absolute;top:-10px;right:-10px;width:28px;height:28px;border-radius:14px;background:#2a3038;font-size:15px}
+@media (orientation:landscape) and (max-height:540px){ #ptzPad{left:auto;right:12px;bottom:auto;top:50%;transform:translateY(-50%)} }
+@media (min-width:700px){ #ptzPad{left:auto;right:16px;transform:none} }
+body.isfs #ptzPad{left:auto;right:16px;bottom:auto;top:50%;transform:translateY(-50%)}
 body.isfs #viewer.hideui{cursor:none}
 .stage .spin,.stage .vmsg,.stage .camnav{z-index:3}
 #vMotion svg{stroke:#fff}
@@ -363,6 +383,7 @@ body.isfs #viewer.hideui{cursor:none}
     <button class="iconbtn" id="vBack" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg></button>
     <div class="vtitle"><div id="vCam"></div><div id="vTime" class="num"></div></div>
     <button class="iconbtn" id="vSound" aria-label="Sound"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z" fill="#fff"/><path class="wave" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/><path class="mute" d="m16 9 6 6m0-6-6 6"/></svg></button>
+    <button class="iconbtn" id="vPtz" aria-label="PTZ controls" aria-pressed="false" title="Pan / tilt / zoom" hidden><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/><path d="m9 5 3-3 3 3M9 19l3 3 3-3M5 9l-3 3 3 3M19 9l3 3-3 3"/><circle cx="12" cy="12" r="2"/></svg></button>
     <button class="iconbtn fsbtn" id="vFs" aria-label="Full screen" title="Full screen (F)"><svg class="fs-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="fs-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>
     <button class="iconbtn" id="vMotion" aria-label="Motion boxes" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><rect x="9" y="9" width="6" height="6" rx="1" stroke-dasharray="2 2"/></svg></button>
     <button id="vQual" class="badge q" aria-label="Video quality">AUTO</button>
@@ -381,6 +402,18 @@ body.isfs #viewer.hideui{cursor:none}
     <button class="camnav l" id="camPrev" aria-label="Previous camera"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m15 5-7 7 7 7"/></svg></button>
     <button class="camnav r" id="camNext" aria-label="Next camera"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 5 7 7-7 7"/></svg></button>
     <div class="vmsg" id="vMsg" hidden></div>
+    <div class="ptzpad" id="ptzPad" hidden>
+      <button class="ptzx" id="ptzClose" aria-label="Close PTZ controls">&#215;</button>
+      <div class="ptzrow">
+        <div class="ptzgrid">
+          <button class="diag" data-ptz="59" aria-label="Up left"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(-45deg)"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button><button data-ptz="2" aria-label="Up"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(0deg)"><path d="m6 15 6-6 6 6"/></svg></button><button class="diag" data-ptz="60" aria-label="Up right"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(45deg)"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+          <button data-ptz="0" aria-label="Left"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(-90deg)"><path d="m6 15 6-6 6 6"/></svg></button><button class="home" data-ptz-home aria-label="Home">HOME</button><button data-ptz="1" aria-label="Right"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(90deg)"><path d="m6 15 6-6 6 6"/></svg></button>
+          <button class="diag" data-ptz="61" aria-label="Down left"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(-135deg)"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button><button data-ptz="3" aria-label="Down"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg)"><path d="m6 15 6-6 6 6"/></svg></button><button class="diag" data-ptz="62" aria-label="Down right"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(135deg)"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+        </div>
+        <div class="ptzzoom"><button data-ptz="5" aria-label="Zoom in">+</button><button data-ptz="6" aria-label="Zoom out">&#8722;</button></div>
+      </div>
+      <button class="ptzpbtn" id="ptzPresetBtn" hidden>Presets <small id="ptzPresetCount"></small></button>
+    </div>
     <button class="zbadge num" id="zoomBadge" hidden aria-label="Reset zoom"><b id="zoomPct">1.0&#215;</b><span>Reset</span></button>
   </div>
   <div class="vctl">
@@ -523,6 +556,14 @@ body.isfs #viewer.hideui{cursor:none}
     <a href="ui3.htm" target="_blank" rel="noopener">Open full Blue Iris UI (UI3)</a>
     <button id="logoutBtn">Sign out</button>
     <button id="aboutBtn" class="opt"><span>About</span><span class="sub" id="aboutCur"></span></button>
+  </div>
+</div>
+
+<div id="ptzSheet" class="sheetbg" hidden>
+  <div class="sheet scroll">
+    <h3>PTZ presets</h3>
+    <div class="meta" id="ptzSheetCam"></div>
+    <div id="ptzPresetList"></div>
   </div>
 </div>
 
@@ -789,7 +830,7 @@ async function loadCams(){
   S.cams = list.map(c => ({
     id: c.optionValue, name: c.optionDisplay || c.optionValue,
     w: c.width > 100 ? c.width : 1920, h: c.height > 100 ? c.height : 1080,
-    online: c.isOnline !== false && !c.isNoSignal, trig: !!(c.isTriggered || c.isAlerting)
+    online: c.isOnline !== false && !c.isNoSignal, trig: !!(c.isTriggered || c.isAlerting), ptz: !!c.ptz
   }));
   S.camMap = Object.fromEntries(S.cams.map(c => [c.id, c]));
   S.camKeys = new Set(S.cams.map(c => String(c.id).toLowerCase()));
@@ -1684,7 +1725,7 @@ stage.addEventListener('wheel', e => {
   zoomAt(p.x, p.y, Z.s * Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0015)));   // trackpad pinch arrives as ctrl+wheel
 }, { passive: false });
 stage.addEventListener('pointerdown', e => {
-  if(e.target.closest('.camnav, .zbadge')) return;
+  if(e.target.closest('.camnav, .zbadge, .ptzpad')) return;
   if(e.isPrimary){ Z.ptrs.clear(); Z.pinch = null; }       // a new gesture: forget any pointer whose release we never saw
   Z.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
   try{ stage.setPointerCapture(e.pointerId); }catch(_){}
@@ -1747,6 +1788,7 @@ function openViewer(cam, opts = {}){
 function closeViewer(fromPop){
   if(!V.open) return;
   V.open = false; V.playing = false;
+  ptzClose();
   resetFrames();
   vsStop(false);
   stage.querySelectorAll('img.frame').forEach(i => { i.src = ''; i.remove(); });
@@ -1786,7 +1828,7 @@ function fsIdle(){
   clearTimeout(FS.idle);
   if(!fsEl() || !V.open) return;
   FS.idle = setTimeout(() => {
-    const busy = !$('#volPop').hidden || !$('#qualSheet').hidden || V.dragging || (V.mode !== 'live' && !V.playing);
+    const busy = !$('#volPop').hidden || !$('#qualSheet').hidden || !$('#ptzPad').hidden || !$('#ptzSheet').hidden || V.dragging || (V.mode !== 'live' && !V.playing);
     if(fsEl() && V.open && !busy) $('#viewer').classList.add('hideui'); else fsIdle();
   }, 3000);
 }
@@ -2687,6 +2729,7 @@ function fmtWhen(t, sec){
 }
 function updateUI(){
   const live = V.mode === 'live';
+  ptzUi();
   const badge = $('#vBadge');
   badge.className = 'badge ' + (live ? 'live' : 'rec');
   badge.textContent = live ? 'LIVE' : (V.playing ? (V.speed > 1 ? V.speed + '\u00d7 PLAY' : (innerWidth <= 480 ? 'PLAY' : 'PLAYBACK')) : 'PAUSED');
@@ -2709,7 +2752,7 @@ addEventListener('resize', () => { if(V.open) updateUI(); });
 let touch = null, lastTap = 0;
 stage.addEventListener('pointerdown', e => { touch = { x:e.clientX, y:e.clientY, t:Date.now() }; });
 stage.addEventListener('pointerup', e => {
-  if(!touch || e.target.closest('.camnav, .zbadge')) { touch = null; return; }
+  if(!touch || e.target.closest('.camnav, .zbadge, .ptzpad')) { touch = null; return; }
   if(Z.moved || Z.pinch || Z.ptrs.size){ if(!Z.ptrs.size) touch = null; return; }   // that was a pinch / pan
   const dx = e.clientX - touch.x, dy = e.clientY - touch.y, dt = Date.now() - touch.t;
   touch = null;
@@ -2722,6 +2765,125 @@ stage.addEventListener('pointerup', e => {
 });
 $('#camPrev').addEventListener('click', () => switchCam(-1));
 $('#camNext').addEventListener('click', () => switchCam(1));
+/* ---- PTZ: pan / tilt / zoom for cameras Blue Iris marks as PTZ (live view only) ----
+   Hold an arrow or zoom button to move; let go to stop. Same commands as UI3: the button is sent with updown=1
+   on press and again on release, followed by an explicit stop (64) as a backstop. Every way a press can end
+   (release, cancel, leaving the page, closing the player, switching camera) sends the stop, and a long hold
+   stops by itself after PTZ.maxHold ms. */
+const PTZ = { active:null, startP:null, timer:0, maxHold:30000, presetsFor:'', presets:[], log:[] };
+function camIsPtz(id){ return !!(S.camMap[id] && S.camMap[id].ptz); }
+function ptzUi(){
+  const show = V.open && V.mode === 'live' && camIsPtz(V.cam);
+  $('#vPtz').hidden = !show;
+  if(!show && !$('#ptzPad').hidden) ptzClose();
+}
+async function ptzCall(args, quiet){
+  PTZ.log.push(JSON.stringify(args)); if(PTZ.log.length > 50) PTZ.log.shift();
+  console.info('[ptz]', JSON.stringify(args));
+  let r;
+  try{ r = await api(Object.assign({ cmd:'ptz' }, args)); }
+  catch(e){ if(!quiet && e.message !== 'session') toast('PTZ: ' + e.message, 2600); throw e; }
+  if(r.result !== 'success'){
+    const why = (r.data && r.data.reason) || r.status || 'command failed';
+    if(!quiet) toast('PTZ: ' + why, 2600);
+    throw new Error(why);
+  }
+  return r;
+}
+function ptzStart(btn){
+  if(PTZ.active) ptzStop();
+  const a = { cam: V.cam, btn };
+  PTZ.active = a;
+  PTZ.startP = ptzCall({ camera: a.cam, button: btn, updown: 1 }).catch(e => { if(e.message !== "Can't reach Blue Iris") a.refused = true; });
+  clearTimeout(PTZ.timer);
+  PTZ.timer = setTimeout(() => { if(PTZ.active === a){ ptzStop(); toast('PTZ stopped (held too long)', 1800); } }, PTZ.maxHold);
+}
+async function ptzStop(){
+  const a = PTZ.active; if(!a) return;
+  PTZ.active = null; clearTimeout(PTZ.timer);
+  document.querySelectorAll('#ptzPad button.on').forEach(b => b.classList.remove('on'));
+  try{ await PTZ.startP; }catch(e){}                      // let the start land first so the stop isn't overtaken
+  if(a.refused) return;                                  // Blue Iris said no (e.g. no PTZ permission): nothing is moving
+  // Retry through an outage for up to 30 s (backing off to 1 s): a camera must never be left moving
+  for(let wait = 250, until = Date.now() + 30000; Date.now() < until; wait = Math.min(1000, wait * 2)){
+    try{ await ptzCall({ camera: a.cam, button: a.btn, updown: 1 }, true); break; }
+    catch(e){ if(e.message !== "Can't reach Blue Iris") break; await new Promise(r => setTimeout(r, wait)); }
+  }
+  try{ await ptzCall({ camera: a.cam, button: 64 }, true); }catch(e){}
+}
+// Last-chance stop when the page is going away (keepalive lets the request finish after unload)
+function ptzStopNow(){
+  const a = PTZ.active; if(!a) return;
+  PTZ.active = null; clearTimeout(PTZ.timer);
+  const send = args => { try{ fetch('json?_=ptz', { method:'POST', keepalive:true, headers:{'Content-Type':'text/plain'}, body: JSON.stringify(Object.assign({ cmd:'ptz', session:S.session }, args)) }); }catch(e){} };
+  send({ camera:a.cam, button:a.btn, updown:1 }); send({ camera:a.cam, button:64 });
+}
+addEventListener('pagehide', ptzStopNow);
+addEventListener('blur', () => ptzStop());
+document.addEventListener('visibilitychange', () => { if(document.visibilityState !== 'visible') ptzStop(); });
+async function ptzLoadPresets(){
+  const cam = V.cam, btn = $('#ptzPresetBtn');
+  if(PTZ.presetsFor === cam) return;
+  PTZ.presetsFor = cam; PTZ.presets = []; btn.hidden = true;
+  try{
+    const r = await ptzCall({ camera: cam }, true);
+    if(cam !== V.cam) return;
+    const d = r.data || {}, list = [];
+    (d.presets || []).forEach((p, i) => {
+      const num = typeof p === 'object' && p ? parseInt(p.num, 10) : i + 1;
+      const desc = String(typeof p === 'object' && p ? (p.desc || '') : (p || '')).trim();
+      if(num > 0 && desc && desc !== '(undefined)') list.push({ num, desc });
+    });
+    if(!list.length) for(let n = 1; n <= Math.min(8, parseInt(d.presetnum, 10) || 0); n++) list.push({ num: n, desc: 'Preset ' + n });
+    PTZ.presets = list;
+    $('#ptzPresetCount').textContent = list.length ? '(' + list.length + ')' : '';
+    btn.hidden = !list.length;
+  }catch(e){ PTZ.presetsFor = ''; }
+}
+function ptzGoPreset(n){
+  const p = PTZ.presets.find(x => x.num === n);
+  ptzStop();
+  ptzCall({ camera: V.cam, button: 100 + n }).then(() => toast('PTZ: ' + (p ? p.desc : 'preset ' + n), 1200)).catch(() => {});
+}
+$('#ptzPresetBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  $('#ptzSheetCam').textContent = camName(V.cam);
+  $('#ptzPresetList').innerHTML = PTZ.presets.map(p =>
+    `<button class="opt" data-preset="${p.num}"><span>${esc(p.desc)}</span><span class="sub">#${p.num}</span></button>`).join('');
+  $('#ptzSheet').hidden = false;
+});
+$('#ptzSheet').addEventListener('click', e => {
+  if(e.target.id === 'ptzSheet'){ $('#ptzSheet').hidden = true; return; }
+  const b = e.target.closest('[data-preset]'); if(!b) return;
+  $('#ptzSheet').hidden = true;
+  ptzGoPreset(+b.dataset.preset);
+});
+function ptzOpen(){ $('#ptzPad').hidden = false; $('#vPtz').setAttribute('aria-pressed', 'true'); ptzLoadPresets(); }
+function ptzClose(){ ptzStop(); $('#ptzPad').hidden = true; $('#ptzSheet').hidden = true; $('#vPtz').setAttribute('aria-pressed', 'false'); }
+$('#vPtz').addEventListener('click', () => { if($('#ptzPad').hidden) ptzOpen(); else ptzClose(); });
+$('#ptzClose').addEventListener('click', e => { e.stopPropagation(); ptzClose(); });
+const pad = $('#ptzPad');
+['pointerdown', 'pointerup', 'click', 'dblclick', 'wheel'].forEach(t => pad.addEventListener(t, e => e.stopPropagation()));
+pad.addEventListener('contextmenu', e => e.preventDefault());
+pad.addEventListener('pointerdown', e => {
+  const b = e.target.closest('[data-ptz]'); if(!b) return;
+  e.preventDefault();
+  try{ b.setPointerCapture(e.pointerId); }catch(_){}
+  b.classList.add('on');
+  ptzStart(+b.dataset.ptz);
+});
+['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => pad.addEventListener(t, e => { if(e.target.closest && e.target.closest('[data-ptz]')) ptzStop(); }));
+pad.addEventListener('click', e => {
+  const h = e.target.closest('[data-ptz-home]');
+  if(h){
+    ptzStop();
+    // A preset named "Home" wins; otherwise the camera's own home position (button 4, sent as a press like UI3 does)
+    const hp = PTZ.presets.find(p => /^\s*home\s*$/i.test(p.desc));
+    ptzCall(hp ? { camera: V.cam, button: 100 + hp.num } : { camera: V.cam, button: 4, updown: 1 })
+      .then(() => toast(hp ? 'PTZ: going to Home preset' : 'PTZ: going home', 1200)).catch(() => {});
+    return;
+  }
+});
 function switchCam(dir){
   let list = visibleCams();
   if(!list.some(c => c.id === V.cam)) list = S.cams;
@@ -2730,6 +2892,7 @@ function switchCam(dir){
   V.cam = list[(i + dir + list.length) % list.length].id;
   V.tlKey = ''; V.tl = {alerts:[], clips:[]};
   Z.boost = 1; zReset();
+  ptzStop(); PTZ.presetsFor = ''; if(!$('#ptzPad').hidden) setTimeout(() => { if(camIsPtz(V.cam)) ptzLoadPresets(); }, 0);
   if(V.alert && V.alert.camera !== V.cam){ V.alert = null; V.clip = null; }
   setCamTitle();
   loadCamAlerts();
