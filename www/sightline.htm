@@ -101,6 +101,7 @@ main{flex:1;overflow:hidden;position:relative}
 .filters::-webkit-scrollbar{display:none}
 .chip{flex:none;height:32px;padding:0 13px;border-radius:16px;border:1px solid var(--line);color:var(--muted);font-size:13px;font-weight:600;white-space:nowrap}
 .chip[aria-pressed=true]{background:var(--text);border-color:var(--text);color:var(--bg)}
+#afChips .chip{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 .selectwrap{position:relative;flex:none}
 .selectwrap select{appearance:none;-webkit-appearance:none;height:32px;padding:0 30px 0 13px;border-radius:16px;border:1px solid var(--line);
   background:var(--bg);color:var(--muted);font:600 13px system-ui,sans-serif}
@@ -1394,7 +1395,7 @@ function renderFilterChips(){
   const keep = A.sel.filter(id => list.includes(id));
   if(keep.length !== A.sel.length){ A.sel = keep; applyFilterState(); }
   $('#afChips').innerHTML = list.length < 2 ? '' : list.map(id =>
-    `<button class="chip" data-f="${esc(id)}" aria-pressed="${id === 'all' ? !A.sel.length : A.sel.includes(id)}">${esc(filterDef(id).name)}</button>`).join('');
+    `<button class="chip" data-f="${esc(id)}" aria-pressed="${id === 'all' ? !A.sel.length : A.sel.includes(id)}"${id === 'all' ? '' : ' title="Shift or Ctrl + click (long-press on touch) to combine with other filters"'}>${esc(filterDef(id).name)}</button>`).join('');
 }
 function applyFilterState(){
   if(A.sel.length > 1){ A.view = 'alerts'; A.match = 'multi'; return; }
@@ -1414,10 +1415,27 @@ function setAlertFilter(id, toggle){
   loadAlerts(true);
 }
 applyFilterState();
+// Click / tap = show just that filter. Shift, Ctrl or Cmd + click, or a long-press on touch screens,
+// adds or removes a filter to combine several. All clears the selection.
+const AFP = { timer:0, x:0, y:0, fired:false };
 $('#afChips').addEventListener('click', e => {
   const b = e.target.closest('[data-f]'); if(!b) return;
-  setAlertFilter(b.dataset.f, true);                  // tap to add or remove; All clears
+  if(AFP.fired){ AFP.fired = false; return; }          // the long-press already handled this tap
+  setAlertFilter(b.dataset.f, e.shiftKey || e.ctrlKey || e.metaKey);
 });
+$('#afChips').addEventListener('pointerdown', e => {
+  const b = e.target.closest('[data-f]'); if(!b || e.pointerType === 'mouse') return;
+  AFP.fired = false; AFP.x = e.clientX; AFP.y = e.clientY; clearTimeout(AFP.timer);
+  AFP.timer = setTimeout(() => {
+    AFP.fired = true;
+    try{ navigator.vibrate && navigator.vibrate(15); }catch(_){}
+    setAlertFilter(b.dataset.f, true);
+    const n = A.sel.length; toast(n > 1 ? n + ' filters combined' : n ? 'Showing ' + filterDef(A.sel[0]).name : 'Showing all alerts', 1200);
+  }, 500);
+});
+$('#afChips').addEventListener('pointermove', e => { if(Math.hypot(e.clientX - AFP.x, e.clientY - AFP.y) > 8) clearTimeout(AFP.timer); });
+['pointerup', 'pointercancel', 'pointerleave'].forEach(t => $('#afChips').addEventListener(t, () => clearTimeout(AFP.timer)));
+$('#afChips').addEventListener('contextmenu', e => { if(e.target.closest('[data-f]')) e.preventDefault(); });
 setTimeout(renderFilterChips, 0);
 /* ---- Alert filters settings: built-ins, labels seen on your cameras, and your own labels ---- */
 const AFS = { scan:null, scanAt:0, scanning:false };

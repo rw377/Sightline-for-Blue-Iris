@@ -43,7 +43,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 
 ### Alerts
 - **AI-aware filter buttons:** People, Vehicles, Animals, plus any label your AI model reports, such as Dogs, UPS or Amazon.
-- **Combine filters:** tap several buttons, for example Dogs + People, to see alerts matching any of them. Tap All to clear.
+- **Combine filters:** a click or tap shows one filter. To see alerts matching several, for example Dogs + People, Shift- or Ctrl-click the extra ones (long-press on a phone). Tap All to clear.
 - **Labels picked from real data.** Sightline scans the last 14 days of alerts and lists every label your cameras have actually reported, with counts. You can also type your own. Capitalization and plurals don't matter.
 - **Date and time ranges:** last hour, today, yesterday, last night (8 PM–6 AM), or any custom day and time window.
 - **Filter by camera or group.**
