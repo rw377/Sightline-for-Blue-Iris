@@ -8,6 +8,7 @@ All notable changes to Sightline for Blue Iris. Released versions match what **S
 - **Combine alert filters.** Tapping a filter button now adds or removes it, so you can show, for example, Dogs + People together (alerts matching any selected filter). Tap All to clear.
 - **PTZ controls.** For cameras Blue Iris marks as PTZ, a new button in the player (live view) opens a pad: hold an arrow, a diagonal or + / − to move or zoom, and let go to stop. **Home** sends the camera to its home position, or to a preset named "Home" if there is one. **Presets** lists every saved preset by name. Sends the same commands as UI3, plus an explicit stop as a backstop; the camera is stopped on release, sliding off the button, leaving the page, closing the player, switching camera, after 30 s of holding, and retried for up to 30 s if Blue Iris can't be reached.
 - **Full screen.** New button in the player and in the main header (camera grid), plus the `F` key on desktop. In full screen, the player's controls float over the picture and fade out after a few seconds; move the mouse or tap to bring them back. Hidden on browsers without full-screen support (iPhone Safari).
+- README: Blue Iris 6 listed as supported (reported working by a user).
 
 ## 0.11.3 — 2026-10-17
 

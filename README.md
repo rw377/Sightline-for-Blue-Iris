@@ -88,7 +88,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 
 ## Requirements
 
-- **Blue Iris 5** with its **web server** turned on (Blue Iris Settings → *Web server*). Developed and tested on Blue Iris **5.8.1.5**.
+- **Blue Iris 5 or 6** with its **web server** turned on (Blue Iris Settings → *Web server*). Developed and tested on Blue Iris **5.8.1.5**; users report it working on **Blue Iris 6** as well.
 - A **Blue Iris user account** to sign in with (Settings → *Users*). A dedicated, non-admin account is recommended; see [Security](#security-and-privacy).
 - A **modern browser.** Tested on Chrome for Android and desktop Chrome. Other Chromium browsers (Edge, Brave) should behave the same. Safari (iPhone / iPad) and Firefox should work but haven't been tested yet.
 - **For AI labels and filters:** Blue Iris AI detection set up on your cameras (for example CodeProject.AI). Without AI, everything else still works; alerts just won't have labels.
@@ -114,7 +114,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
    C:\Program Files\Blue Iris 5\www
    ```
 
-   Windows will ask for administrator permission because the folder is under Program Files. Put the files directly in `www`, not in a subfolder.
+   On Blue Iris 6, use the `www` folder inside its install folder. Windows will ask for administrator permission because the folder is under Program Files. Put the files directly in `www`, not in a subfolder.
 
 3. **Open Sightline** in a browser, using the same address and port you use for Blue Iris's web interface (UI3):
 
