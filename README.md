@@ -52,7 +52,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 ### Player
 - **Smooth video with audio**, both live and recorded. It falls back to still frames on browsers that can't play the stream.
 - **A scrubbable timeline** with colored alert markers and zoom levels from 2 minutes to 48 hours. Longer views mark each midnight with the day's name.
-- **Quick controls:** previous / next alert, ±10 seconds, playback up to 16× speed, and a one-tap jump to live.
+- **Quick controls:** previous / next alert, ±10 seconds, playback up to 16× speed, and a one-tap jump to live. On a computer they fit in one row under a slim timeline, leaving more room for the video.
 - **Swipe between cameras.**
 - **Full screen** for the player or the whole camera grid (handy on a wall display). The player's controls float over the picture and fade out while you watch. Not available on iPhone, where Safari doesn't support it.
 - **Digital zoom up to 8×:** pinch or use the mouse wheel, then drag to pan. In Auto quality, Sightline asks Blue Iris for a sharper picture while you're zoomed in.
@@ -205,7 +205,7 @@ Sightline is deliberately simple: **one HTML file with inline CSS and JavaScript
 
 Small fixes bump the last number (0.12.1), new features the middle one (0.13.0).
 
-**Blue Iris API used:** the JSON API (`login`, `camlist`, `alertlist`, `timeline`, `status`, `logout`), plus `/image/`, `/thumbs/`, `/file/clips/`, `/time/` and `/video/` for pictures and streams.
+**Blue Iris API used:** the JSON API (`login`, `camlist`, `alertlist`, `timeline`, `status`, `ptz`, `logout`), plus `/image/`, `/thumbs/`, `/file/clips/`, `/time/` and `/video/` for pictures and streams.
 
 ## Credits and license
 
