@@ -54,6 +54,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **A scrubbable timeline** with colored alert markers and zoom levels from 2 minutes to 48 hours. Longer views mark each midnight with the day's name.
 - **Quick controls:** previous / next alert, ±10 seconds, playback up to 16× speed, and a one-tap jump to live. On a computer they fit in one row under a slim timeline, leaving more room for the video.
 - **Swipe between cameras.**
+- **Click or tap the video, like UI3:** it pauses or resumes a recording, and closes a live camera back to the camera grid. Double-click to switch between fit and fill. When the controls float over the video (phone sideways, or full screen on a touch screen), a tap shows or hides them instead.
 - **Full screen** for the player or the whole camera grid (handy on a wall display). The player's controls float over the picture and fade out while you watch. Not available on iPhone, where Safari doesn't support it.
 - **Digital zoom up to 8×:** pinch or use the mouse wheel, then drag to pan. In Auto quality, Sightline asks Blue Iris for a sharper picture while you're zoomed in.
 - **PTZ controls** for cameras Blue Iris marks as PTZ: hold an arrow or + / − to move or zoom, let go to stop; Home; and a list of your saved presets. Live view only.

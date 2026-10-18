@@ -2831,8 +2831,19 @@ function updateUI(){
 }
 addEventListener('resize', () => { if(V.open) updateUI(); });
 
-/* ---- stage gestures: swipe to change camera, tap to hide controls, double-tap to fill (or to undo a zoom) ---- */
+/* ---- stage gestures: swipe to change camera, tap or click (see stageTap), double-tap to fill (or to undo a zoom) ---- */
 let touch = null, lastTap = 0;
+// Controls float over the picture on a phone held sideways and in full screen
+const overlayCtl = () => document.body.classList.contains('isfs') || matchMedia('(orientation:landscape) and (max-height:540px)').matches;
+// A single tap or click on the picture, like UI3: a recording pauses or resumes, and a live camera closes back to
+// where you opened it. When the controls float over the picture on a touch screen, a tap shows or hides them instead.
+function stageTap(pointerType){
+  if(!V.open) return;
+  const v = $('#viewer');
+  if(pointerType !== 'mouse' && overlayCtl()){ v.classList.toggle('hideui'); return; }
+  if(V.mode === 'live') closeViewer(false);
+  else { setPlaying(!V.playing); v.classList.remove('hideui'); if(fsEl()) fsIdle(); }
+}
 stage.addEventListener('pointerdown', e => { touch = { x:e.clientX, y:e.clientY, t:Date.now() }; });
 stage.addEventListener('pointerup', e => {
   if(!touch || e.target.closest('.camnav, .zbadge, .ptzpad')) { touch = null; return; }
@@ -2843,7 +2854,7 @@ stage.addEventListener('pointerup', e => {
   if(Math.abs(dx) < 10 && Math.abs(dy) < 10){
     const now = Date.now();
     if(now - lastTap < 300){ if(Z.s > 1) zReset(); else { stage.classList.toggle('fill'); zReset(); } lastTap = 0; }
-    else { lastTap = now; setTimeout(() => { if(lastTap === now) $('#viewer').classList.toggle('hideui'); }, 300); }
+    else { lastTap = now; const pt = e.pointerType; setTimeout(() => { if(lastTap === now) stageTap(pt); }, 300); }
   }
 });
 $('#camPrev').addEventListener('click', () => switchCam(-1));
