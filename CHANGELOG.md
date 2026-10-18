@@ -1,8 +1,8 @@
 # Changelog
 
-All notable changes to Sightline for Blue Iris. The version shown in **Settings → About** matches the newest entry here.
+All notable changes to Sightline for Blue Iris. Released versions match what **Settings → About** shows; a version ending in `-dev` is a work-in-progress copy from `main`.
 
-## 0.12.0 — 2026-10-17
+## Unreleased (next: 0.12.0)
 
 - **Hidden and disabled cameras are left out.** Cameras marked Hidden in Blue Iris, and disabled cameras, no longer appear in the Live grid, the alert list, alert-label counts or the camera picker. New setting: **Settings → Live view → Show hidden cameras** (off by default). Disabled cameras are never shown.
 - **Combine alert filters.** Tapping a filter button now adds or removes it, so you can show, for example, Dogs + People together (alerts matching any selected filter). Tap All to clear.

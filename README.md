@@ -95,7 +95,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 
 ## Install
 
-1. **Download** the files in the [`www`](www) folder of this repository:
+1. **Download the latest release:** go to [**Releases → Latest**](https://github.com/rw377/Sightline-for-Blue-Iris/releases/latest), download `sightline-x.y.z.zip` and unzip it. It contains these five files:
 
    | File | What it is |
    |---|---|
@@ -103,6 +103,8 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
    | `sightline-jmuxer.min.js` | Video playback library |
    | `sightline.json` | Home-screen app settings |
    | `sightline-icon-192.png`, `sightline-icon-512.png` | App icons |
+
+   The `www` folder on the `main` branch holds work in progress between releases. Use a release unless you want to test the newest changes.
 
 2. **Copy all five files** into Blue Iris's `www` folder, usually:
 
@@ -132,7 +134,7 @@ No Blue Iris restart is needed. Blue Iris serves any file placed in its `www` fo
 
 ## Updating and uninstalling
 
-- **To update:** copy the new files over the old ones, then reload the page. Check **Settings → About** to confirm the version. If the old version still shows, do a hard refresh, or clear the site's cached files in your browser.
+- **To update:** download the latest release, copy its files over the old ones, then reload the page. Check **Settings → About** to confirm the version. If the old version still shows, do a hard refresh, or clear the site's cached files in your browser. To hear about new versions, use **Watch → Custom → Releases** on this repository.
 - **Your settings survive updates.** They're saved in each browser and don't live in these files.
 - **After upgrading Blue Iris,** check that the Sightline files are still in the `www` folder.
 - **To uninstall:** delete the five `sightline*` files from the `www` folder.
@@ -192,7 +194,14 @@ Sightline is deliberately simple: **one HTML file with inline CSS and JavaScript
 1. **Keep the file ASCII-only.** Blue Iris serves `.htm` files as Latin-1, so any non-ASCII character is garbled. Use `\uXXXX` escapes in JavaScript and `&#NNNN;` entities in HTML.
 2. **Never put two percent signs next to each other** anywhere in the file, including comments and strings. Blue Iris treats `%%NAME%%` as a template placeholder: it fills in the ones it knows and blanks out everything between unknown pairs. Sightline uses exactly two, `%%SESSION%%` and `%%SYSNAME%%`, near the top of the script. The file should contain exactly four `%%` sequences.
 
-**Versioning:** bump `APP.version` near the top of the script with every change, and add an entry to [CHANGELOG.md](CHANGELOG.md). Small fixes bump the last number (0.10.1), new features the middle one (0.11.0).
+**Versioning:** add every change to the **Unreleased** section at the top of [CHANGELOG.md](CHANGELOG.md). Between releases, `APP.version` ends in `-dev` (for example `0.13.0-dev`), so a test copy shows as such in Settings → About. To release:
+
+1. Rename "Unreleased" to the new version and date.
+2. Set `APP.version` to that version (no `-dev`).
+3. Publish a GitHub Release tagged `vX.Y.Z` with a zip of the five `www` files.
+4. Set `APP.version` to the next `-dev` version.
+
+Small fixes bump the last number (0.12.1), new features the middle one (0.13.0).
 
 **Blue Iris API used:** the JSON API (`login`, `camlist`, `alertlist`, `timeline`, `status`, `logout`), plus `/image/`, `/thumbs/`, `/file/clips/`, `/time/` and `/video/` for pictures and streams.
 
