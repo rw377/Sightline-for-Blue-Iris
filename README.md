@@ -48,7 +48,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **Date and time ranges:** last hour, today, yesterday, last night (8 PM–6 AM), or any custom day and time window.
 - **Filter by camera or group.**
 - **Tap an alert to play it** from the moment it happened. Alerts play straight from their recording file, as in UI3's Clips list.
-- **Download an alert as an MP4** with the download button in the player. Blue Iris prepares the clip (the same export UI3 uses) and your browser saves it with a readable name such as `Driveway 2026-10-18 4-39-56 PM.mp4`. By default it's re-encoded to H.264, which plays smoothly in any player, with the camera's overlay and audio; you can choose the Blue Iris encoder profile, or the original recording instead (fastest, nothing lost, but some players show it choppy).
+- **Download an alert as an MP4** with the download button in the player. Blue Iris prepares the clip (the same export UI3 uses) and your browser saves it with a readable name such as `Driveway 2026-10-18 4-39-56 PM.mp4`. By default it's re-encoded to H.264, which plays smoothly in any player, with the camera's overlay and audio; you can choose the Blue Iris encoder profile, or the original recording instead (fastest, nothing lost, but some players show it choppy). Download the whole alert, or choose the start and end: drag the blue handles on the timeline or set them at the playhead (up to 15 minutes, within the alert's recording).
 
 ### Player
 - **Smooth video with audio**, both live and recorded. It falls back to still frames on browsers that can't play the stream.
@@ -174,7 +174,7 @@ While the Live screen is open, Sightline checks Blue Iris for motion / trigger s
 ## Limitations
 
 - **View-only.** Recording, motion zones, AI settings and camera configuration stay in Blue Iris / UI3.
-- **Not yet supported:** push notifications, two-way audio, choosing a custom start and end for a download. PTZ covers moving, zooming, Home and going to presets; saving presets and focus / IR controls stay in Blue Iris / UI3.
+- **Not yet supported:** push notifications, two-way audio. PTZ covers moving, zooming, Home and going to presets; saving presets and focus / IR controls stay in Blue Iris / UI3.
 - **Motion boxes are drawn by the browser.** They are an approximation and don't use Blue Iris's motion zones.
 - **Smooth video needs an H.264 web stream.** Otherwise you get still frames.
 

@@ -88,11 +88,21 @@ main{flex:1;overflow:hidden;position:relative}
 .dlstatus .bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:2px;transition:width .4s}
 .dlstatus.indet .bar i{width:35% !important;animation:dlslide 1.1s ease-in-out infinite}
 @keyframes dlslide{from{transform:translateX(-100%)}to{transform:translateX(290%)}}
-#dlModes .opt{flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;height:auto;min-height:56px;padding-top:9px;padding-bottom:9px;text-align:left}
+#dlRanges .opt,#dlModes .opt{flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;height:auto;min-height:56px;padding-top:9px;padding-bottom:9px;text-align:left}
 .dlprof{display:flex;flex-direction:column;gap:8px;padding:6px 14px 10px;font-size:13px;color:var(--muted)}
 .dlprof[hidden]{display:none}
 .dlchips{display:flex;gap:6px;flex-wrap:wrap}
 .sheet .dlchips .chip{width:auto;flex:none;height:32px;min-height:0;padding:0 14px;border-radius:16px;font-size:13px;font-weight:600;display:inline-flex;align-items:center}
+.trimbar{display:flex;flex-direction:column;gap:6px;padding:6px 0 8px}
+.trimbar[hidden]{display:none}
+.trow{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0}
+.tset{flex:none;height:30px;padding:0 12px;border-radius:15px;background:var(--surface2);color:var(--text);font-size:12px;font-weight:800}
+.ttime{flex:none;height:30px;padding:0 6px;border-radius:8px;color:var(--accent);font-size:13px;font-weight:700}
+.tarrow{color:var(--muted)}
+.tlen{color:var(--muted);font-size:12.5px}
+.tsp{flex:1}
+.tgo{flex:none;height:30px;padding:0 16px;border-radius:15px;background:var(--accent);color:#04121b;font-size:12.5px;font-weight:800}
+@media (min-width:641px){ .trimbar{flex-direction:row;align-items:center;justify-content:center;gap:14px} .trimbar .tsp{display:none} .trimbar .trow{gap:8px} }
 .toast{position:fixed;left:50%;bottom:calc(80px + var(--safe-b));transform:translateX(-50%);z-index:60;padding:10px 16px;border-radius:12px;background:var(--surface2);color:var(--text);font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.5);white-space:nowrap}
 .tile.portrait{background:#000}
 .tile.portrait img{object-fit:contain}
@@ -455,6 +465,18 @@ body.isfs #viewer.hideui{cursor:none}
     <button class="zbadge num" id="zoomBadge" hidden aria-label="Reset zoom"><b id="zoomPct">1.0&#215;</b><span>Reset</span></button>
   </div>
   <div class="vctl">
+    <div class="trimbar" id="trimBar" hidden>
+      <div class="trow">
+        <button class="tset" id="trimSetStart" title="Start the clip at the playhead">Set start</button>
+        <button class="ttime num" id="trimStart" title="Go to the start"></button><span class="tarrow">&#8594;</span><button class="ttime num" id="trimEnd" title="Go to the end"></button>
+        <button class="tset" id="trimSetEnd" title="End the clip at the playhead">Set end</button>
+      </div>
+      <div class="trow">
+        <span class="tlen" id="trimLen"></span><span class="tsp"></span>
+        <button class="tset" id="trimCancel">Cancel</button>
+        <button class="tgo" id="trimGo">Download</button>
+      </div>
+    </div>
     <div class="scrub" id="scrub"><canvas id="scrubCanvas"></canvas><div class="head" id="head"></div><div class="bubble num" id="bubble" hidden></div></div>
     <div class="lower">
       <div class="zoomwrap">
@@ -602,6 +624,8 @@ body.isfs #viewer.hideui{cursor:none}
   <div class="sheet scroll">
     <h3>Download this alert</h3>
     <div class="meta" id="dlInfo"></div>
+    <div class="sect">Length</div>
+    <div id="dlRanges"></div>
     <div class="sect">Video</div>
     <div id="dlModes"></div>
     <div class="dlprof" id="dlProfRow"><span>Blue Iris encoder profile</span><div class="dlchips" id="dlProfs"></div></div>
@@ -1860,6 +1884,7 @@ function openViewer(cam, opts = {}){
 }
 function closeViewer(fromPop){
   if(!V.open) return;
+  if(V.trim) trimEnd();
   V.open = false; V.playing = false;
   ptzClose();
   resetFrames();
@@ -1920,28 +1945,30 @@ function setCamTitle(){
     ui3.href = `ui3.htm?rec=@${recIdOf(V.alert.path)}-${V.alert.offset || 0}`;
   } else ui3.hidden = true;
   $('#vDl').hidden = !(V.alert && V.alert.camera === V.cam && canExport(V.alert));
+  if(V.trim && (V.trim.a !== V.alert || V.alert.camera !== V.cam)) trimEnd();
 }
 
 /* ---- download an alert as an MP4 ----
    Uses Blue Iris's export queue, the same feature UI3's Export uses: Blue Iris copies the alert's part of the
    recording into an MP4 (no re-encoding, so it's quick and the quality is unchanged), Sightline follows the
    job in the queue and downloads the file when it's done. Blue Iris keeps its copy in its export folder. */
-const DL = { job:null, opts:{ reencode:true, profile:0, audio:true, overlay:true } };
+const DL = { job:null, pick:false, opts:{ reencode:true, profile:0, audio:true, overlay:true } };
 try{ Object.assign(DL.opts, JSON.parse(store.get('bis_export_opts') || '{}')); }catch(e){}
 const DL_MODES = [
   [true, 'Re-encode to H.264', 'Blue Iris converts it to standard H.264, which plays smoothly anywhere. Takes longer. Quality comes from the encoder profile below.'],
   [false, 'Original recording', 'Some players may show as choppy. Exactly as the camera recorded it, nothing lost and fastest option.'] ];
 const canExport = a => !!(a && a.clip && !/^@-1\./.test(a.clip));      // snapshot-only alerts have no recording
-function exportArgs(a){
+function exportArgs(a, range){
   const dur = durMs(a.filesize), off = a.offset || 0;
   const o = DL.opts, args = { cmd:'export', path:a.clip, format:1, profile:o.profile, substream:false, audio:!!o.audio, reencode:!!o.reencode, overlay:!!(o.reencode && o.overlay) };
   if(a.flags & (1 << 16)){ args.startms = off; args.msec = dur; }      // alert starts part-way into the recording
   else { args.startms = 0; args.msec = off + dur; }
+  if(range){ args.startms = range.s - range.clipStart; args.msec = range.e - range.s; }
   args.startms = Math.round(args.startms); args.msec = Math.round(args.msec);
   return args;
 }
-function exportName(a){
-  const d = new Date(a.date * 1000), p = n => String(n).padStart(2, '0'), h = d.getHours();
+function exportName(a, t){
+  const d = new Date(t || a.date * 1000), p = n => String(n).padStart(2, '0'), h = d.getHours();
   const cam = String(camName(a.camera) || a.camera).replace(/[\\/:*?"<>|]+/g, '-').trim();
   return `${cam} ${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${h % 12 || 12}-${p(d.getMinutes())}-${p(d.getSeconds())} ${h < 12 ? 'AM' : 'PM'}.mp4`;
 }
@@ -1957,12 +1984,12 @@ function exportFail(r){
   return 'Blue Iris couldn\u2019t export this alert' + (why ? ` (${why})` : '') + '.';
 }
 const wait = ms => new Promise(r => setTimeout(r, ms));
-async function downloadAlert(a){
+async function downloadAlert(a, range){
   if(DL.job){ toast('Already preparing a download'); return; }
-  const job = DL.job = { name: exportName(a), t0: Date.now() };
+  const job = DL.job = { name: exportName(a, range && range.s), t0: Date.now() };
   dlShow('Asking Blue Iris to prepare the clip\u2026', null);
   try{
-    const r = await api(exportArgs(a));
+    const r = await api(exportArgs(a, range));
     if(r.result !== 'success') throw new Error(exportFail(r));
     const mine = r.data || {};
     let uri = '', misses = 0, errs = 0;
@@ -1992,8 +2019,12 @@ async function downloadAlert(a){
     if(e.message !== 'session') toast(e.message || 'Download failed', 6000);
   }finally{ DL.job = null; }
 }
+const DL_RANGES = [[false, 'Whole alert', ''], [true, 'Choose start and end', 'Mark them on the timeline, then download']];
 function renderDlSheet(){
   const o = DL.opts;
+  $('#dlRanges').innerHTML = DL_RANGES.map(([v, name, sub]) => `<button class="opt" role="menuitemradio" data-g="${v ? 1 : 0}" aria-checked="${DL.pick === v}">` +
+    `<span>${name}${DL.pick === v ? ' \u2713' : ''}</span><span class="sub">${v ? sub : DL.wholeText || ''}</span></button>`).join('');
+  $('#dlGo').textContent = DL.pick ? 'Choose start and end\u2026' : 'Download MP4';
   $('#dlModes').innerHTML = DL_MODES.map(([v, name, sub]) => `<button class="opt" role="menuitemradio" data-r="${v ? 1 : 0}" aria-checked="${o.reencode === v}">` +
     `<span>${name}${o.reencode === v ? ' \u2713' : ''}</span><span class="sub">${sub}</span></button>`).join('');
   $('#dlProfs').innerHTML = [0, 1, 2, 3].map(n => `<button class="chip" data-p="${n}" aria-pressed="${o.profile === n}">export ${n}</button>`).join('');
@@ -2007,15 +2038,74 @@ $('#vDl').addEventListener('click', () => {
   if(!V.alert || !canExport(V.alert)) return;
   if(DL.job){ toast('Already preparing a download'); return; }
   const a = V.alert, d = new Date(a.date * 1000);
-  $('#dlInfo').textContent = `${camName(a.camera)} \u00b7 ${d.toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', second:'2-digit' })} \u00b7 about ${fmtDur(durMs(a.filesize))} long`;
+  $('#dlInfo').textContent = `${camName(a.camera)} \u00b7 ${d.toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', second:'2-digit' })}`;
+  const w = wholeRange(a); DL.wholeText = `${fmtClock(new Date(w.s), true)} to ${fmtClock(new Date(w.e), true)}, about ${fmtDur(w.e - w.s)}`;
   renderDlSheet(); $('#dlSheet').hidden = false;
 });
+$('#dlRanges').addEventListener('click', e => { const b = e.target.closest('[data-g]'); if(b){ DL.pick = b.dataset.g === '1'; renderDlSheet(); } });
 $('#dlModes').addEventListener('click', e => { const b = e.target.closest('[data-r]'); if(b){ DL.opts.reencode = b.dataset.r === '1'; saveDlOpts(); } });
 $('#dlProfs').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if(b){ DL.opts.profile = +b.dataset.p; saveDlOpts(); } });
 $('#dlAudio').addEventListener('click', () => { DL.opts.audio = !DL.opts.audio; saveDlOpts(); });
 $('#dlOverlay').addEventListener('click', () => { DL.opts.overlay = !DL.opts.overlay; saveDlOpts(); });
 $('#dlSheet').addEventListener('click', e => { if(e.target.id === 'dlSheet') $('#dlSheet').hidden = true; });
-$('#dlGo').addEventListener('click', () => { $('#dlSheet').hidden = true; if(V.alert && canExport(V.alert)) downloadAlert(V.alert); });
+$('#dlGo').addEventListener('click', () => {
+  $('#dlSheet').hidden = true;
+  if(!V.alert || !canExport(V.alert)) return;
+  if(DL.pick) trimStart(); else downloadAlert(V.alert);
+});
+
+/* ---- choose the start and end of a download on the timeline ----
+   The clip comes from the alert's recording file, so it can't start before that file does. */
+const TRIM_MAX = 15 * 60000;
+function clipStartOf(a){ return a.date * 1000 - (a.offset || 0); }
+function wholeRange(a){                          // what "Whole alert" exports
+  const dur = durMs(a.filesize);
+  return (a.flags & (1 << 16)) ? { s: a.date * 1000, e: a.date * 1000 + dur } : { s: clipStartOf(a), e: a.date * 1000 + dur };
+}
+function trimStart(){
+  const a = V.alert, w = wholeRange(a);
+  V.trim = { a, clipStart: clipStartOf(a), s: w.s, e: w.e };
+  if(V.mode === 'live'){ enterRec(w.s, false); }
+  if(w.s < V.winStart || w.e > V.winEnd) centerWindow((w.s + w.e) / 2);
+  $('#trimBar').hidden = false; trimShow(); updateUI();
+}
+function trimEnd(){ if(!V.trim) return; V.trim = null; $('#trimBar').hidden = true; updateUI(); }
+function trimShow(){
+  const t = V.trim; if(!t) return;
+  $('#trimStart').textContent = fmtClock(new Date(t.s), true); $('#trimEnd').textContent = fmtClock(new Date(t.e), true);
+  $('#trimLen').textContent = `${fmtDur(t.e - t.s)} long`;
+}
+function trimSeek(t){
+  V.pos = t; V.lastTick = 0;
+  if(V.pos < V.winStart + V.W * 0.08 || V.pos > V.winEnd - V.W * 0.08) centerWindow(V.pos);
+  updateUI();
+  if(V.playing) startPlayback(); else requestRecFrame();
+}
+function trimHere(){ return V.mode === 'rec' ? V.pos : Date.now() - KEEP_OUT; }
+$('#trimSetStart').addEventListener('click', () => {
+  const t = V.trim; if(!t) return;
+  let p = Math.round(trimHere());
+  if(p < t.clipStart){ p = t.clipStart; toast('The recording starts at ' + fmtClock(new Date(p), true)); }
+  t.s = p;
+  if(t.e <= t.s + 1000) t.e = Math.min(t.s + 10000, Date.now() - KEEP_OUT);
+  if(t.e - t.s > TRIM_MAX){ t.e = t.s + TRIM_MAX; toast('A download can be up to 15 minutes'); }
+  trimShow(); drawScrub();
+});
+$('#trimSetEnd').addEventListener('click', () => {
+  const t = V.trim; if(!t) return;
+  const p = Math.round(trimHere());
+  if(p <= t.s + 1000){ toast('The end needs to be after the start'); return; }
+  if(p - t.s > TRIM_MAX){ toast('A download can be up to 15 minutes'); return; }
+  t.e = p; trimShow(); drawScrub();
+});
+$('#trimStart').addEventListener('click', () => { if(V.trim) trimSeek(V.trim.s); });
+$('#trimEnd').addEventListener('click', () => { if(V.trim) trimSeek(V.trim.e); });
+$('#trimCancel').addEventListener('click', trimEnd);
+$('#trimGo').addEventListener('click', () => {
+  const t = V.trim; if(!t) return;
+  const range = { s: t.s, e: t.e, clipStart: t.clipStart };
+  trimEnd(); downloadAlert(t.a, range);
+});
 
 /* ---- frame pipeline: one request in flight, newest request wins ---- */
 const FL = { busy:false, want:null, gen:0 };
@@ -2915,6 +3005,17 @@ function drawScrub(){
   const xn = X(Date.now());
   if(xn < w){ ctx.fillStyle = '#0b0d10'; ctx.fillRect(Math.max(0,xn), ty, w - xn, th); }
   ctx.restore();
+  // range chosen for a download
+  if(V.trim){
+    const a = Math.max(0, X(V.trim.s)), b = Math.min(w, X(V.trim.e));
+    if(b > 0 && a < w){
+      ctx.fillStyle = 'rgba(77,184,255,.30)'; ctx.fillRect(a, ty - 3, Math.max(2, b - a), th + 6);
+      const handle = x => { ctx.fillStyle = '#4db8ff'; roundRect(ctx, x - 3.5, ty - 7, 7, th + 14, 3.5); ctx.fill();
+        ctx.fillStyle = 'rgba(4,18,27,.65)'; ctx.fillRect(x - 0.5, ty + th / 2 - 5, 1, 10); };
+      if(X(V.trim.s) >= 0) handle(a);
+      if(X(V.trim.e) <= w) handle(b);
+    }
+  }
   // ticks
   const step = niceStep(W);
   const tz = new Date().getTimezoneOffset() * 60000;
@@ -2936,15 +3037,24 @@ function posToX(t){ return (t - V.winStart) / (V.winEnd - V.winStart) * scrub.cl
 function xToPos(x){ return V.winStart + (x / scrub.clientWidth) * (V.winEnd - V.winStart); }
 
 let dragState = null;
+// Download range: the start / end handle under the pointer, if any (generous on touch screens)
+function trimHit(e){
+  if(!V.trim) return null;
+  const x = e.clientX - scrub.getBoundingClientRect().left, tol = e.pointerType === 'mouse' ? 10 : 22;
+  const xs = posToX(V.trim.s), xe = posToX(V.trim.e), ds = Math.abs(x - xs), de = Math.abs(x - xe);
+  if(Math.min(ds, de) > tol) return null;
+  if(Math.abs(ds - de) < 2) return x < xs ? 's' : 'e';     // handles on top of each other: go by side
+  return ds < de ? 's' : 'e';
+}
 scrub.addEventListener('pointerdown', e => {
   scrub.setPointerCapture(e.pointerId);
-  dragState = { wasLive: V.mode === 'live', wasPlaying: V.playing || V.mode === 'live', x: e.clientX };
+  dragState = { wasLive: V.mode === 'live', wasPlaying: V.playing || V.mode === 'live', x: e.clientX, trim: trimHit(e) };
   V.dragging = true;
   vsStop(true);                                  // keep the current picture until the first still arrives
   if(V.mode === 'live'){ resetFrames(); V.mode = 'rec'; V.playing = false; }
   dragTo(e);
 });
-scrub.addEventListener('pointermove', e => { if(dragState) dragTo(e); });
+scrub.addEventListener('pointermove', e => { if(dragState) dragTo(e); else if(e.pointerType === 'mouse') scrub.style.cursor = trimHit(e) ? 'ew-resize' : ''; });
 const endDrag = e => {
   if(!dragState) return;
   const st = dragState; dragState = null; V.dragging = false;
@@ -2961,8 +3071,14 @@ function dragTo(e){
   const r = scrub.getBoundingClientRect();
   const x = Math.max(0, Math.min(r.width, e.clientX - r.left));
   V.pos = Math.min(xToPos(x), Date.now() - KEEP_OUT);
+  const h = dragState && dragState.trim, t = V.trim;
+  if(h && t){                                    // moving the start or end of the download range
+    if(h === 's') V.pos = Math.max(t.clipStart, t.e - TRIM_MAX, Math.min(V.pos, t.e - 1000));
+    else V.pos = Math.min(t.s + TRIM_MAX, Math.max(V.pos, t.s + 1000));
+    t[h] = Math.round(V.pos); trimShow();
+  }
   bubble.hidden = false;
-  bubble.textContent = fmtWhen(V.pos, true);
+  bubble.textContent = (h ? (h === 's' ? 'Start ' : 'End ') : '') + fmtWhen(V.pos, true);
   const bw = bubble.offsetWidth / 2 + 2;
   bubble.style.left = Math.max(bw, Math.min(r.width - bw, posToX(V.pos))) + 'px';
   updateUI();
