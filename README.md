@@ -47,7 +47,8 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **Labels picked from real data.** Sightline scans the last 14 days of alerts and lists every label your cameras have actually reported, with counts. You can also type your own. Capitalization and plurals don't matter.
 - **Date and time ranges:** last hour, today, yesterday, last night (8 PM–6 AM), or any custom day and time window.
 - **Filter by camera or group.**
-- **Tap an alert to play it** from the moment it happened.
+- **Tap an alert to play it** from the moment it happened. Alerts play straight from their recording file, as in UI3's Clips list.
+- **Download an alert as an MP4** with the download button in the player. Blue Iris prepares the clip (the same export UI3 uses) and your browser saves it with a readable name such as `Driveway 2026-10-18 4-39-56 PM.mp4`. By default it's re-encoded to H.264, which plays smoothly in any player, with the camera's overlay and audio; you can choose the Blue Iris encoder profile, or the original recording instead (fastest, nothing lost, but some players show it choppy).
 
 ### Player
 - **Smooth video with audio**, both live and recorded. It falls back to still frames on browsers that can't play the stream.
@@ -93,6 +94,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - A **Blue Iris user account** to sign in with (Settings → *Users*). A dedicated, non-admin account is recommended; see [Security](#security-and-privacy).
 - A **modern browser.** Tested on Chrome for Android and desktop Chrome. Other Chromium browsers (Edge, Brave) should behave the same. Safari (iPhone / iPad) and Firefox should work but haven't been tested yet.
 - **For AI labels and filters:** Blue Iris AI detection set up on your cameras (for example CodeProject.AI). Without AI, everything else still works; alerts just won't have labels.
+- **For downloading alerts:** a Blue Iris user that's allowed to export clips. Without permission, Sightline says so. Blue Iris keeps a copy of each download in its export folder (also listed in UI3's Convert/Export list).
 - **For PTZ controls:** a Blue Iris user that's allowed to control PTZ. Without permission, Sightline shows "Access denied" and sends nothing else.
 - **For smooth video:** Blue Iris's web streams in **H.264**, which is Blue Iris's usual setting for web viewing. If the browser can't play the stream, Sightline shows still frames instead.
 
@@ -172,7 +174,7 @@ While the Live screen is open, Sightline checks Blue Iris for motion / trigger s
 ## Limitations
 
 - **View-only.** Recording, motion zones, AI settings and camera configuration stay in Blue Iris / UI3.
-- **Not yet supported:** push notifications, clip download / export, two-way audio. PTZ covers moving, zooming, Home and going to presets; saving presets and focus / IR controls stay in Blue Iris / UI3.
+- **Not yet supported:** push notifications, two-way audio, choosing a custom start and end for a download. PTZ covers moving, zooming, Home and going to presets; saving presets and focus / IR controls stay in Blue Iris / UI3.
 - **Motion boxes are drawn by the browser.** They are an approximation and don't use Blue Iris's motion zones.
 - **Smooth video needs an H.264 web stream.** Otherwise you get still frames.
 
@@ -206,7 +208,7 @@ Sightline is deliberately simple: **one HTML file with inline CSS and JavaScript
 
 Small fixes bump the last number (0.12.1), new features the middle one (0.13.0).
 
-**Blue Iris API used:** the JSON API (`login`, `camlist`, `alertlist`, `timeline`, `status`, `ptz`, `logout`), plus `/image/`, `/thumbs/`, `/file/clips/`, `/time/` and `/video/` for pictures and streams.
+**Blue Iris API used:** the JSON API (`login`, `camlist`, `alertlist`, `timeline`, `status`, `ptz`, `export`, `logout`), plus `/image/`, `/thumbs/`, `/file/clips/`, `/time/` and `/video/` for pictures and streams, and `/clips/` for downloads.
 
 ## Credits and license
 

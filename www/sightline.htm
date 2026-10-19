@@ -83,6 +83,16 @@ main{flex:1;overflow:hidden;position:relative}
 .tile.placeholder{opacity:.25;outline:2px dashed var(--muted);outline-offset:-2px}
 .tile.ghost{position:fixed;z-index:50;margin:0;pointer-events:none;transform:scale(1.04);box-shadow:0 14px 40px rgba(0,0,0,.6);transition:transform .12s;outline:2px solid var(--accent)}
 .grid.dragging .tile:not(.ghost){transition:transform .18s ease}
+.dlstatus{position:fixed;left:50%;top:calc(64px + var(--safe-t));transform:translateX(-50%);z-index:61;display:flex;flex-direction:column;gap:7px;min-width:220px;max-width:calc(100vw - 32px);padding:10px 16px 11px;border-radius:12px;background:var(--surface2);color:var(--text);font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.dlstatus .bar{display:block;height:4px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden}
+.dlstatus .bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:2px;transition:width .4s}
+.dlstatus.indet .bar i{width:35% !important;animation:dlslide 1.1s ease-in-out infinite}
+@keyframes dlslide{from{transform:translateX(-100%)}to{transform:translateX(290%)}}
+#dlModes .opt{flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;height:auto;min-height:56px;padding-top:9px;padding-bottom:9px;text-align:left}
+.dlprof{display:flex;flex-direction:column;gap:8px;padding:6px 14px 10px;font-size:13px;color:var(--muted)}
+.dlprof[hidden]{display:none}
+.dlchips{display:flex;gap:6px;flex-wrap:wrap}
+.sheet .dlchips .chip{width:auto;flex:none;height:32px;min-height:0;padding:0 14px;border-radius:16px;font-size:13px;font-weight:600;display:inline-flex;align-items:center}
 .toast{position:fixed;left:50%;bottom:calc(80px + var(--safe-b));transform:translateX(-50%);z-index:60;padding:10px 16px;border-radius:12px;background:var(--surface2);color:var(--text);font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.5);white-space:nowrap}
 .tile.portrait{background:#000}
 .tile.portrait img{object-fit:contain}
@@ -139,6 +149,7 @@ main{flex:1;overflow:hidden;position:relative}
   #viewer .vtop #vUi3{display:none}
   #viewer .vtop .badge{padding:0 7px;letter-spacing:.3px}
 }
+@media (max-width:400px){ #viewer .vtop .iconbtn{width:32px} #viewer .vtop .badge{padding:0 6px} }
 .badge{flex:none;height:24px;padding:0 9px;border-radius:12px;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.7px}
 .badge.live{background:rgba(255,77,77,.16);color:var(--live)}
 .badge.live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--live);animation:pulse 1.6s infinite}
@@ -412,6 +423,7 @@ body.isfs #viewer.hideui{cursor:none}
     <button class="iconbtn" id="vPtz" aria-label="PTZ controls" aria-pressed="false" title="Pan / tilt / zoom" hidden><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/><path d="m9 5 3-3 3 3M9 19l3 3 3-3M5 9l-3 3 3 3M19 9l3 3-3 3"/><circle cx="12" cy="12" r="2"/></svg></button>
     <button class="iconbtn fsbtn" id="vFs" aria-label="Full screen" title="Full screen (F)"><svg class="fs-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="fs-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>
     <button class="iconbtn" id="vMotion" aria-label="Motion boxes" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><rect x="9" y="9" width="6" height="6" rx="1" stroke-dasharray="2 2"/></svg></button>
+    <button class="iconbtn" id="vDl" aria-label="Download this alert" title="Download this alert (MP4)" hidden><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"/></svg></button>
     <button id="vQual" class="badge q" aria-label="Video quality">AUTO</button>
     <a id="vUi3" class="badge ui3" target="_blank" rel="noopener" hidden>UI3</a>
     <span id="vBadge" class="badge live">LIVE</span>
@@ -484,6 +496,8 @@ body.isfs #viewer.hideui{cursor:none}
     <div class="err" id="loginErr"></div>
   </form>
 </div>
+
+<div id="dlStatus" class="dlstatus" role="status" aria-live="polite" hidden><span class="t"></span><span class="bar"><i></i></span></div>
 
 <div id="qualSheet" class="sheetbg" hidden>
   <div class="sheet">
@@ -581,6 +595,19 @@ body.isfs #viewer.hideui{cursor:none}
     <a href="ui3.htm" target="_blank" rel="noopener">Open full Blue Iris UI (UI3)</a>
     <button id="logoutBtn">Sign out</button>
     <button id="aboutBtn" class="opt"><span>About</span><span class="sub" id="aboutCur"></span></button>
+  </div>
+</div>
+
+<div id="dlSheet" class="sheetbg" hidden>
+  <div class="sheet scroll">
+    <h3>Download this alert</h3>
+    <div class="meta" id="dlInfo"></div>
+    <div class="sect">Video</div>
+    <div id="dlModes"></div>
+    <div class="dlprof" id="dlProfRow"><span>Blue Iris encoder profile</span><div class="dlchips" id="dlProfs"></div></div>
+    <button id="dlOverlay" class="tgl" role="switch" aria-checked="true"><span class="lbl">Add the camera&#8217;s text and graphic overlay<small>Timestamp and other overlays the camera currently shows in Blue Iris</small></span><span class="tog"></span></button>
+    <button id="dlAudio" class="tgl" role="switch" aria-checked="true"><span class="lbl">Include audio<small>The camera&#8217;s sound, if it records any</small></span><span class="tog"></span></button>
+    <div class="btnrow"><button class="primary" id="dlGo">Download MP4</button></div>
   </div>
 </div>
 
@@ -1824,9 +1851,8 @@ function openViewer(cam, opts = {}){
   loadCamAlerts();
   if(V.alert){
     setZoom(120000, false);
-    const t = V.alert.date * 1000 - 2000;
-    V.clip = { path: V.alert.clip && !/^@-1\./.test(V.alert.clip) ? V.alert.clip : V.alert.path, start: V.alert.date * 1000 - (V.alert.offset || 0), useClip:false };
-    enterRec(t, true);
+    V.clip = { path: V.alert.clip && !/^@-1\./.test(V.alert.clip) ? V.alert.clip : V.alert.path, start: V.alert.date * 1000 - (V.alert.offset || 0), end: V.alert.date * 1000 + durMs(V.alert.filesize), useClip:false };
+    enterRec(Math.max(V.alert.date * 1000 - 2000, V.clip.start), true);   // not before its recording file starts
   } else {
     setZoom(900000, false);
     goLive();
@@ -1875,7 +1901,7 @@ function fsIdle(){
   clearTimeout(FS.idle);
   if(!fsEl() || !V.open) return;
   FS.idle = setTimeout(() => {
-    const busy = !$('#volPop').hidden || !$('#qualSheet').hidden || !$('#ptzPad').hidden || !$('#ptzSheet').hidden || V.dragging || (V.mode !== 'live' && !V.playing);
+    const busy = !$('#volPop').hidden || !$('#qualSheet').hidden || !$('#ptzPad').hidden || !$('#ptzSheet').hidden || !$('#dlSheet').hidden || V.dragging || (V.mode !== 'live' && !V.playing);
     if(fsEl() && V.open && !busy) $('#viewer').classList.add('hideui'); else fsIdle();
   }, 3000);
 }
@@ -1893,7 +1919,103 @@ function setCamTitle(){
     ui3.hidden = false;
     ui3.href = `ui3.htm?rec=@${recIdOf(V.alert.path)}-${V.alert.offset || 0}`;
   } else ui3.hidden = true;
+  $('#vDl').hidden = !(V.alert && V.alert.camera === V.cam && canExport(V.alert));
 }
+
+/* ---- download an alert as an MP4 ----
+   Uses Blue Iris's export queue, the same feature UI3's Export uses: Blue Iris copies the alert's part of the
+   recording into an MP4 (no re-encoding, so it's quick and the quality is unchanged), Sightline follows the
+   job in the queue and downloads the file when it's done. Blue Iris keeps its copy in its export folder. */
+const DL = { job:null, opts:{ reencode:true, profile:0, audio:true, overlay:true } };
+try{ Object.assign(DL.opts, JSON.parse(store.get('bis_export_opts') || '{}')); }catch(e){}
+const DL_MODES = [
+  [true, 'Re-encode to H.264', 'Blue Iris converts it to standard H.264, which plays smoothly anywhere. Takes longer. Quality comes from the encoder profile below.'],
+  [false, 'Original recording', 'Some players may show as choppy. Exactly as the camera recorded it, nothing lost and fastest option.'] ];
+const canExport = a => !!(a && a.clip && !/^@-1\./.test(a.clip));      // snapshot-only alerts have no recording
+function exportArgs(a){
+  const dur = durMs(a.filesize), off = a.offset || 0;
+  const o = DL.opts, args = { cmd:'export', path:a.clip, format:1, profile:o.profile, substream:false, audio:!!o.audio, reencode:!!o.reencode, overlay:!!(o.reencode && o.overlay) };
+  if(a.flags & (1 << 16)){ args.startms = off; args.msec = dur; }      // alert starts part-way into the recording
+  else { args.startms = 0; args.msec = off + dur; }
+  args.startms = Math.round(args.startms); args.msec = Math.round(args.msec);
+  return args;
+}
+function exportName(a){
+  const d = new Date(a.date * 1000), p = n => String(n).padStart(2, '0'), h = d.getHours();
+  const cam = String(camName(a.camera) || a.camera).replace(/[\\/:*?"<>|]+/g, '-').trim();
+  return `${cam} ${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${h % 12 || 12}-${p(d.getMinutes())}-${p(d.getSeconds())} ${h < 12 ? 'AM' : 'PM'}.mp4`;
+}
+function dlShow(text, pct){
+  const el = $('#dlStatus'); el.hidden = !text; if(!text) return;
+  el.querySelector('.t').textContent = text;
+  el.classList.toggle('indet', pct == null);
+  el.querySelector('.bar i').style.width = (pct == null ? 0 : Math.max(3, Math.min(100, pct))) + '%';
+}
+function exportFail(r){
+  const why = String((r && r.data && r.data.reason) || (r && r.status) || '');
+  if(/denied|permission|admin/i.test(why)) return 'Your Blue Iris user isn\u2019t allowed to export clips.';
+  return 'Blue Iris couldn\u2019t export this alert' + (why ? ` (${why})` : '') + '.';
+}
+const wait = ms => new Promise(r => setTimeout(r, ms));
+async function downloadAlert(a){
+  if(DL.job){ toast('Already preparing a download'); return; }
+  const job = DL.job = { name: exportName(a), t0: Date.now() };
+  dlShow('Asking Blue Iris to prepare the clip\u2026', null);
+  try{
+    const r = await api(exportArgs(a));
+    if(r.result !== 'success') throw new Error(exportFail(r));
+    const mine = r.data || {};
+    let uri = '', misses = 0, errs = 0;
+    for(;;){
+      await wait(1500);
+      if(Date.now() - job.t0 > 180000) throw new Error('Blue Iris is taking too long to prepare this clip. Try again later.');
+      let list;
+      try{
+        const q = await api({ cmd:'export' });
+        if(q.result !== 'success') throw new Error(exportFail(q));
+        list = Array.isArray(q.data) ? q.data : []; errs = 0;
+      }catch(e){ if(e.message === 'session' || ++errs > 5) throw e; continue; }
+      const it = list.find(x => (mine.path && x.path === mine.path) || (mine.uri && x.uri === mine.uri));
+      if(!it){ if(++misses > 20) throw new Error('Couldn\u2019t find the clip in Blue Iris\u2019s export queue.'); continue; }
+      if(it.status === 'done'){ uri = it.uri || mine.uri; break; }
+      if(it.status === 'error') throw new Error('Blue Iris couldn\u2019t export this alert.');
+      if(it.status === 'active') dlShow(`Preparing the clip\u2026 ${Math.round(+it.progress || 0)}%`, +it.progress || 0);
+      else dlShow('Waiting in Blue Iris\u2019s export queue\u2026', null);
+    }
+    if(!uri) throw new Error('Blue Iris didn\u2019t say where the clip was saved.');
+    const link = document.createElement('a');
+    link.href = 'clips/' + uri + '?' + sq(); link.download = job.name;   // like UI3's export links: the browser names the file link.hidden = true;
+    document.body.appendChild(link); link.click(); link.remove();
+    dlShow(''); toast('Download started: ' + job.name, 4000);
+  }catch(e){
+    dlShow('');
+    if(e.message !== 'session') toast(e.message || 'Download failed', 6000);
+  }finally{ DL.job = null; }
+}
+function renderDlSheet(){
+  const o = DL.opts;
+  $('#dlModes').innerHTML = DL_MODES.map(([v, name, sub]) => `<button class="opt" role="menuitemradio" data-r="${v ? 1 : 0}" aria-checked="${o.reencode === v}">` +
+    `<span>${name}${o.reencode === v ? ' \u2713' : ''}</span><span class="sub">${sub}</span></button>`).join('');
+  $('#dlProfs').innerHTML = [0, 1, 2, 3].map(n => `<button class="chip" data-p="${n}" aria-pressed="${o.profile === n}">export ${n}</button>`).join('');
+  $('#dlProfRow').hidden = !o.reencode;
+  $('#dlOverlay').hidden = !o.reencode;                    // Blue Iris can only add the overlay while re-encoding
+  $('#dlOverlay').setAttribute('aria-checked', !!o.overlay);
+  $('#dlAudio').setAttribute('aria-checked', !!o.audio);
+}
+function saveDlOpts(){ store.set('bis_export_opts', JSON.stringify(DL.opts)); renderDlSheet(); }
+$('#vDl').addEventListener('click', () => {
+  if(!V.alert || !canExport(V.alert)) return;
+  if(DL.job){ toast('Already preparing a download'); return; }
+  const a = V.alert, d = new Date(a.date * 1000);
+  $('#dlInfo').textContent = `${camName(a.camera)} \u00b7 ${d.toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', second:'2-digit' })} \u00b7 about ${fmtDur(durMs(a.filesize))} long`;
+  renderDlSheet(); $('#dlSheet').hidden = false;
+});
+$('#dlModes').addEventListener('click', e => { const b = e.target.closest('[data-r]'); if(b){ DL.opts.reencode = b.dataset.r === '1'; saveDlOpts(); } });
+$('#dlProfs').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if(b){ DL.opts.profile = +b.dataset.p; saveDlOpts(); } });
+$('#dlAudio').addEventListener('click', () => { DL.opts.audio = !DL.opts.audio; saveDlOpts(); });
+$('#dlOverlay').addEventListener('click', () => { DL.opts.overlay = !DL.opts.overlay; saveDlOpts(); });
+$('#dlSheet').addEventListener('click', e => { if(e.target.id === 'dlSheet') $('#dlSheet').hidden = true; });
+$('#dlGo').addEventListener('click', () => { $('#dlSheet').hidden = true; if(V.alert && canExport(V.alert)) downloadAlert(V.alert); });
 
 /* ---- frame pipeline: one request in flight, newest request wins ---- */
 const FL = { busy:false, want:null, gen:0 };
@@ -1924,7 +2046,9 @@ function pullFrame(){
   };
   im.src = w.url;
 }
-function frameWidth(){ return Math.min(targetSize().w, screenFit().w); }   // stills stay screen-sized
+function frameSize(){ const t = targetSize(), f = screenFit(); return t.w <= f.w ? t : f; }   // stills stay screen-sized
+function frameWidth(){ return frameSize().w; }
+const frameArgs = () => { const f = frameSize(); return `w=${f.w}&h=${f.h}`; };
 
 function onFrame(ok, meta){
   if(meta.live){
@@ -1942,8 +2066,10 @@ function onFrame(ok, meta){
     if(V.playing && !V.dragging && !VS.ctrl) tick();
   } else {
     // First failure on an alert: fall back to reading frames straight from the clip file
-    if(V.alert && V.clip && !V.clip.useClip && V.pos >= V.clip.start){
-      V.clip.useClip = true; requestRecFrame(); return;
+    if(V.alert && V.clip && !V.clip.useClip && V.pos >= V.clip.start && /\.bvr$/i.test(V.clip.path)){   // other files answer "Not BVR"
+      V.clip.useClip = true; requestRecFrame();
+      if(V.playing && useVideo() && !VS.started) vsStart('rec', recVideoUrl(), V.speed);   // video from the clip file too
+      return;
     }
     V.errs++;
     showMsg('No recording at this moment');
@@ -1955,7 +2081,7 @@ function onFrame(ok, meta){
 /* ---- live ---- */
 function requestLiveFrame(){
   if(!V.open || V.mode !== 'live' || document.visibilityState !== 'visible') return;
-  wantFrame(`image/${camEnc(V.cam)}?w=${frameWidth()}&q=70&${sq()}&t=${Date.now()}`, { live:true });
+  wantFrame(`image/${camEnc(V.cam)}?${frameArgs()}&q=70&${sq()}&t=${Date.now()}`, { live:true });
 }
 function goLive(){
   resetFrames();
@@ -1970,12 +2096,12 @@ function goLive(){
 
 /* ---- recorded ---- */
 function recUrl(){
-  const w = frameWidth(), pos = Math.floor(V.pos);
+  const fa = frameArgs(), pos = Math.floor(V.pos);
   if(V.clip && V.clip.useClip){
     const t = Math.max(0, pos - V.clip.start);
-    return `file/clips/${V.clip.path}?time=${t}&w=${w}&q=70&${sq()}`;
+    return `file/clips/${V.clip.path}?time=${t}&${fa}&q=70&${sq()}`;
   }
-  return `time/${camEnc(V.cam)}?jpeg&isolate&pos=${pos}&w=${w}&q=70&${sq()}`;
+  return `time/${camEnc(V.cam)}?jpeg&isolate&pos=${pos}&${fa}&q=70&${sq()}`;
 }
 function requestRecFrame(){ if(V.open && V.mode === 'rec') wantFrame(recUrl(), { pos:V.pos }); }
 function enterRec(pos, play){
@@ -2132,8 +2258,20 @@ function liveVideoUrl(){
   const z = vsSize();
   return `video/${camEnc(V.cam)}/2.0?${sq()}&audio=${AU.on ? 1 : 0}&stream=0&w=${z.w}&h=${z.h}${streamArgs()}&extend=2`;
 }
+// The alert's clip file is used when Blue Iris's timeline has nothing at this moment (see onFrame)
+// Alerts play straight from their recording file, as UI3's Clips list does. On some cameras Blue Iris's timeline
+// stream of an alert comes out cropped to a magnified corner; the recording file plays correctly. Outside the alert,
+// or once the file has ended, playback carries on from the timeline.
+const clipPlay = () => !!(V.alert && V.clip && /\.bvr$/i.test(V.clip.path) && V.pos >= V.clip.start &&
+  (V.clip.useClip || V.pos < V.clip.end) && !(V.clip.endedAt && V.pos >= V.clip.endedAt - 1000));
 function recVideoUrl(){
   const z = vsSize();
+  if(clipPlay()){
+    const t = Math.max(0, Math.floor(V.pos - V.clip.start));
+    VS.nextClipBase = V.clip.start + t;
+    return `file/clips/${V.clip.path}?${sq()}&speed=${Math.round(V.speed * 100)}&audio=${AU.on && V.speed === 1 ? 1 : 0}` +
+      `&stream=0&w=${z.w}&h=${z.h}${streamArgs()}&extend=2&time=${t}`;
+  }
   return `time/${camEnc(V.cam)}?${sq()}&opaque=${OPAQUE}&pos=${Math.floor(V.pos)}&speed=${Math.round(V.speed * 100)}` +
     `&audio=${AU.on && V.speed === 1 ? 1 : 0}&stream=0&w=${z.w}&h=${z.h}${streamArgs()}&extend=2`;
 }
@@ -2155,7 +2293,9 @@ function vsTeardown(){
 function vsStart(kind, url, speed){
   vsStop(false);
   const gen = VS.gen;
-  Object.assign(VS, { kind, speed, started:false, fed:false, last:null, frames:[], fedMs:0, t0:0, gotKey:false, aud:null, wrap:0, lastRaw:-1 });
+  VS.url = url;
+  VS.clipBase = VS.nextClipBase || 0; VS.nextClipBase = 0; VS.raw0 = null;
+  Object.assign(VS, { kind, speed, started:false, fed:false, last:null, frames:[], fedMs:0, t0:0, gotKey:false, aud:null, wrap:0, lastRaw:-1, sps:null });
   const ctrl = new AbortController(); VS.ctrl = ctrl;
   vEl.hidden = false;                          // underneath any still until real video is playing
   VS.watchdog = setTimeout(() => { if(gen === VS.gen && !VS.started) vsFail('no video received', true); }, 8000);
@@ -2257,8 +2397,38 @@ function isKeyframe(buf, h265){
   return false;
 }
 
+// The SPS (sequence parameter set) NAL carries the picture size; returns its bytes or null
+function spsOf(buf, h265){
+  for(let i = 0; i + 4 < buf.length && i < 4000; i++){
+    if(buf[i] === 0 && buf[i+1] === 0 && buf[i+2] === 1){
+      const nal = buf[i+3], t = h265 ? (nal >> 1) & 0x3f : nal & 0x1f;
+      if(t === (h265 ? 33 : 7)){
+        let e = i + 3; while(e + 2 < buf.length && !(buf[e] === 0 && buf[e+1] === 0 && (buf[e+2] === 1 || buf[e+2] === 0))) e++;
+        return buf.subarray(i + 3, e);
+      }
+      i += 2;
+    }
+  }
+  return null;
+}
+const sameBytes = (a, b) => a && b && a.length === b.length && a.every((v, i) => v === b[i]);
+
 function vsVideoFrame(data, m){
-  if(!VS.gotKey){ if(!isKeyframe(data, VS.codec === 'H265')) return; VS.gotKey = true; }
+  const h265 = VS.codec === 'H265';
+  if(!VS.gotKey){ if(!isKeyframe(data, h265)) return; VS.gotKey = true; }
+  // Some cameras record the sub stream until something happens and the main stream after, so a recording
+  // can change picture size part-way through. The browser's player keeps the first size and would show only
+  // a corner of the bigger picture, so start a fresh player at the new size (same connection, no gap).
+  if(isKeyframe(data, h265)){
+    const sps = spsOf(data, h265);
+    if(sps){
+      if(VS.jm && VS.sps && !sameBytes(sps, VS.sps)){
+        try{ VS.jm.destroy(); }catch(e){}
+        VS.jm = null; VS.fed = false; VS.last = null; VS.frames = []; VS.fedMs = 0; VS.t0 = 0;
+      }
+      VS.sps = sps.slice();
+    }
+  }
   if(!VS.jm){
     const gen = VS.gen;
     VS.jm = new JMuxer({
@@ -2275,6 +2445,7 @@ function vsVideoFrame(data, m){
     else if(VS.lastRaw + 1e9 < t) VS.wrap -= 4294967296;
   }
   VS.lastRaw = m.raw; t += VS.wrap;
+  if(VS.clipBase && !(m.utc > 1e12)){ if(VS.raw0 == null) VS.raw0 = t; m.utc = VS.clipBase + (t - VS.raw0); }   // clip streams may not carry a date
   const f = { data, t, utc: m.utc };
   if(VS.last){
     // Feed the previous frame now that we know how long it lasts. Recorded streams at 2x+ carry
@@ -2330,6 +2501,7 @@ function vsEnded(){
     VS.retryTimer = setTimeout(() => { if(V.open && V.mode === 'live') goLive(); }, 1500);
   } else if(kind === 'rec' && V.mode === 'rec' && V.playing){
     const t = vsShownUtc(); if(t) V.pos = t;
+    if(/^file\//.test(VS.url || '') && V.clip){ V.clip.endedAt = V.pos; startPlayback(); return; }   // end of the alert's file: on along the timeline
     if(V.pos > Date.now() - 60000) goLive();     // caught up with the present
     else { V.playing = false; updateUI(); }
   }
@@ -2344,6 +2516,13 @@ function vsFail(why, permanent){
     const t = vsShownUtc(); if(t && V.mode === 'rec') V.pos = t;
     vsStop(true);
     VS.retryTimer = setTimeout(() => { if(!V.open) return; if(V.mode === 'live') goLive(); else if(V.playing) startPlayback(); }, 1000);
+    return;
+  }
+  // An alert the timeline can't stream: play it from its clip file instead, as UI3 does
+  if(kind === 'rec' && V.mode === 'rec' && V.playing && V.alert && V.clip && /\.bvr$/i.test(V.clip.path) && !/^file\//.test(VS.url || '')){
+    V.clip.useClip = true;
+    if(V.pos < V.clip.start) V.pos = V.clip.start;
+    vsStart('rec', recVideoUrl(), V.speed); requestRecFrame();
     return;
   }
   VS.failed[V.cam] = true;
@@ -2690,11 +2869,11 @@ function jumpAlert(dir){
   else { for(const x of V.camAlerts) if(x.t > ref + 1500){ target = x; break; } }
   if(!target) return;
   V.alert = target.a;
-  V.clip = { path: target.a.clip && !/^@-1\./.test(target.a.clip) ? target.a.clip : target.a.path, start: target.t - (target.a.offset || 0), useClip:false };
+  V.clip = { path: target.a.clip && !/^@-1\./.test(target.a.clip) ? target.a.clip : target.a.path, start: target.t - (target.a.offset || 0), end: target.t + durMs(target.a.filesize), useClip:false };
   setCamTitle();
   if(V.W > 900000) setZoom(120000, false);
   if(V.mode === 'live') resetFrames();
-  enterRec(target.t - 2000, true);
+  enterRec(Math.max(target.t - 2000, V.clip.start), true);
 }
 
 /* ---- scrub bar ---- */
@@ -3007,6 +3186,7 @@ function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&l
 document.addEventListener('keydown', e => {
   if((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '')){ toggleFs(V.open); return; }
   if(!V.open) return;
+  if(e.key === 'Escape' && !$('#dlSheet').hidden){ $('#dlSheet').hidden = true; return; }
   if(e.key === 'Escape') closeViewer(false);
   else if(e.key === ' '){ e.preventDefault(); $('#playBtn').click(); }
   else if(e.key === 'ArrowLeft') $('#back10').click();
