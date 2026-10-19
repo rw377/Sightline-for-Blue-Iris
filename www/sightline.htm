@@ -2221,7 +2221,7 @@ function tick(){
   if(V.lastTick) V.pos += Math.min(now - V.lastTick, 3000) * V.speed;
   V.lastTick = now;
   if(V.pos > Date.now() - KEEP_OUT){ goLive(); return; }
-  if(V.pos > V.winStart + V.W * 0.88) centerWindow(V.pos + V.W * 0.3);
+  if(V.pos > V.winStart + V.W * 0.88 && V.winEnd < Date.now() + V.W * 0.02) centerWindow(V.pos + V.W * 0.3);   // only if the window can still move
   updateUI();
   requestRecFrame();
 }
@@ -2579,7 +2579,7 @@ setInterval(() => {
   const t = vsShownUtc(); if(!t) return;
   V.pos = t;
   if(V.pos > Date.now() - KEEP_OUT){ goLive(); return; }
-  if(V.pos > V.winStart + V.W * 0.88) centerWindow(V.pos + V.W * 0.3);
+  if(V.pos > V.winStart + V.W * 0.88 && V.winEnd < Date.now() + V.W * 0.02) centerWindow(V.pos + V.W * 0.3);   // only if the window can still move
   updateUI();
 }, 250);
 
@@ -2921,10 +2921,15 @@ setInterval(() => { if(V.open && V.mode === 'live' && !V.dragging){ updateWindow
 $('#zoom').addEventListener('click', e => { const b = e.target.closest('button'); if(b) setZoom(+b.dataset.w); });
 
 /* ---- timeline data (recording coverage + alert markers) ---- */
-let tlTimer;
+let tlTimer, tlPending = '';
 function loadTimeline(){
+  // Asked again for the window that's already loaded or about to load: leave the pending request alone
+  const want = V.cam + ':' + Math.floor(V.winStart / 1000) + ':' + Math.ceil(V.winEnd / 1000);
+  if(want === V.tlKey || want === tlPending) return;
+  tlPending = want;
   clearTimeout(tlTimer);
   tlTimer = setTimeout(async () => {
+    tlPending = '';
     const cam = V.cam, start = Math.floor(V.winStart / 1000), end = Math.ceil(V.winEnd / 1000);
     const msecpp = Math.pow(2, Math.max(6, Math.round(Math.log2(V.W / 500))));
     const key = cam + ':' + start + ':' + end;
