@@ -2,6 +2,10 @@
 
 All notable changes to Sightline for Blue Iris. Released versions match what **Settings → About** shows; a version ending in `-dev` is a work-in-progress copy from `main`.
 
+## Unreleased (next: 0.14.0)
+
+- **Zoom the timeline in and out of time, like UI3.** Scroll the mouse wheel over the timeline (or pinch a trackpad) to zoom around the moment under the pointer; Shift + wheel or a sideways swipe moves along. On a phone, pinch with two fingers on the timeline. The span can be anything from 30 seconds to 7 days; the 2m to 48h buttons still jump to their spans. In live view, "now" stays at the right edge. Dragging with one finger or the mouse still moves the playhead.
+
 ## 0.13.0 — 2026-10-19
 
 - **Sharper video, matching UI3.** Sightline now asks Blue Iris for video the way UI3 does: a size plus UI3's quality and bitrate settings for that size. Before, Blue Iris fell back to its web server defaults, which looked softer and took longer to sharpen after movement. **Auto** picks the size from the pixels the player covers, with a margin: a full-screen browser on a computer gets the camera's full picture (for example 2560×1440 at up to 4 Mbps on a 4MP camera, the same as UI3's 4MP setting), while a phone held upright gets 720p at up to 1 Mbps. Fixed choices (480p to 4K) use UI3's settings for that size. The quality menu shows the data rate for each choice and the live rate being received. Viewing on a computer away from home can now use more data than before.

@@ -52,7 +52,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 
 ### Player
 - **Smooth video with audio**, both live and recorded. It falls back to still frames on browsers that can't play the stream.
-- **A scrubbable timeline** with colored alert markers and zoom levels from 2 minutes to 48 hours. Longer views mark each midnight with the day's name.
+- **A scrubbable timeline** with colored alert markers. Zoom it in and out of time like UI3: scroll the mouse wheel (or pinch a trackpad) over it, or pinch with two fingers on a phone, from 30 seconds to 7 days; Shift + wheel moves along. Buttons jump to 2 minutes through 48 hours. Longer views mark each midnight with the day's name.
 - **Quick controls:** previous / next alert, ±10 seconds, playback up to 16× speed, and a one-tap jump to live. On a computer they fit in one row under a slim timeline, leaving more room for the video.
 - **Swipe between cameras.**
 - **Click or tap the video, like UI3:** it pauses or resumes a recording, and closes a live camera back to the camera grid. Double-click to switch between fit and fill. When the controls float over the video (phone sideways, or full screen on a touch screen), a tap shows or hides them instead.

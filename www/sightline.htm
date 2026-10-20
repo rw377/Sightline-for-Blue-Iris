@@ -688,7 +688,7 @@ body.isfs #viewer.hideui{cursor:none}
 'use strict';
 /* Values filled in by the Blue Iris web server when it serves this .htm file */
 const INJECTED_SESSION = "%%SESSION%%";
-const APP = { name: 'Sightline', version: '0.13.0' };   // bump the version with every change you copy to the www folder
+const APP = { name: 'Sightline', version: '0.14.0-dev' };   // bump the version with every change you copy to the www folder
 const INJECTED_SYSNAME = "%%SYSNAME%%";
 /* Note: never write two percent signs together anywhere else in this file \u2014 Blue Iris treats the
    text between them as a placeholder and blanks it out when serving the page. */
@@ -2975,9 +2975,9 @@ function jumpAlert(dir){
 const scrub = $('#scrub'), canvas = $('#scrubCanvas'), head = $('#head'), bubble = $('#bubble');
 const COLORS = { person:'#ffb547', vehicle:'#5aa9ff', animal:'#7bd88f', delivery:'#c792ea', motion:'#9aa5b1' };
 function niceStep(W){
-  const steps = [5e3,1e4,15e3,3e4,6e4,12e4,3e5,6e5,9e5,18e5,36e5,72e5,108e5,216e5];
+  const steps = [5e3,1e4,15e3,3e4,6e4,12e4,3e5,6e5,9e5,18e5,36e5,72e5,108e5,216e5,432e5,864e5];
   for(const s of steps) if(W / s <= 6) return s;
-  return 432e5;
+  return 1728e5;
 }
 // Timeline marks only carry flag bits; the alert list's AI label (e.g. "dog 94") is more specific, so prefer it
 function markClass(a){
@@ -3051,15 +3051,65 @@ function trimHit(e){
   if(Math.abs(ds - de) < 2) return x < xs ? 's' : 'e';     // handles on top of each other: go by side
   return ds < de ? 's' : 'e';
 }
+/* ---- zoom the timeline in and out of time, like UI3: wheel / trackpad pinch, or pinch with two fingers ----
+   The moment under the pointer (or between the fingers) stays put; Shift+wheel or a sideways swipe moves along. */
+const TL_MIN = 30000, TL_MAX = 7 * 864e5;
+function zoomTimeline(W, anchorT, anchorX){
+  V.W = Math.max(TL_MIN, Math.min(TL_MAX, W));
+  if(V.mode === 'live') updateWindow(true);          // live keeps "now" at the right edge
+  else {
+    const w = scrub.clientWidth || 1, maxEnd = Date.now() + V.W * 0.04;
+    let start = anchorT - (anchorX / w) * V.W, end = start + V.W;
+    if(end > maxEnd){ end = maxEnd; start = end - V.W; }
+    V.winStart = start; V.winEnd = end; loadTimeline();
+  }
+  document.querySelectorAll('#zoom button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.w === V.W));
+  updateUI();
+}
+function panTimeline(dt){
+  if(V.mode === 'live') return;
+  const maxEnd = Date.now() + V.W * 0.04;
+  let start = V.winStart + dt, end = start + V.W;
+  if(end > maxEnd){ end = maxEnd; start = end - V.W; }
+  V.winStart = start; V.winEnd = end; loadTimeline(); updateUI();
+}
+scrub.addEventListener('wheel', e => {
+  e.preventDefault();
+  const r = scrub.getBoundingClientRect(), x = Math.max(0, Math.min(r.width, e.clientX - r.left));
+  const unit = e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1, dx = e.deltaX * unit, dy = e.deltaY * unit;
+  if(e.shiftKey || Math.abs(dx) > Math.abs(dy)){ panTimeline((e.shiftKey && !dx ? dy : dx) / r.width * V.W); return; }
+  zoomTimeline(V.W * Math.exp(dy * (e.ctrlKey ? 0.01 : 0.002)), xToPos(x), x);   // trackpad pinch arrives as ctrl+wheel
+}, { passive: false });
+const TP = new Map();                            // pointers down on the timeline
+let tlPinch = null;
+const tpMid = () => { const [a, b] = [...TP.values()]; return { x: (a + b) / 2 - scrub.getBoundingClientRect().left, d: Math.max(20, Math.abs(a - b)) }; };
+function tlPinchStart(){
+  const st = dragState;
+  if(st){                                        // the first finger started a seek: undo it and carry on as before
+    dragState = null; V.dragging = false; bubble.hidden = true;
+    if(st.trim && V.trim) V.trim[st.trim] = st.trimWas, trimShow();
+    if(st.wasLive) goLive();
+    else { V.pos = st.startPos; V.playing = st.wasPlaying; V.lastTick = 0; updateUI(); if(V.playing) startPlayback(); else requestRecFrame(); }
+  }
+  const m = tpMid(); tlPinch = { d0: m.d, W0: V.W, t: xToPos(m.x) };
+}
 scrub.addEventListener('pointerdown', e => {
   scrub.setPointerCapture(e.pointerId);
-  dragState = { wasLive: V.mode === 'live', wasPlaying: V.playing || V.mode === 'live', x: e.clientX, trim: trimHit(e) };
+  TP.set(e.pointerId, e.clientX);
+  if(TP.size === 2){ tlPinchStart(); return; }
+  if(TP.size > 2 || tlPinch) return;
+  dragState = { wasLive: V.mode === 'live', wasPlaying: V.playing || V.mode === 'live', x: e.clientX, trim: trimHit(e), startPos: V.pos };
+  if(dragState.trim) dragState.trimWas = V.trim[dragState.trim];
   V.dragging = true;
   vsStop(true);                                  // keep the current picture until the first still arrives
   if(V.mode === 'live'){ resetFrames(); V.mode = 'rec'; V.playing = false; }
   dragTo(e);
 });
-scrub.addEventListener('pointermove', e => { if(dragState) dragTo(e); else if(e.pointerType === 'mouse') scrub.style.cursor = trimHit(e) ? 'ew-resize' : ''; });
+scrub.addEventListener('pointermove', e => {
+  if(TP.has(e.pointerId)) TP.set(e.pointerId, e.clientX);
+  if(tlPinch){ if(TP.size >= 2){ const m = tpMid(); zoomTimeline(tlPinch.W0 * tlPinch.d0 / m.d, tlPinch.t, m.x); } return; }
+  if(dragState) dragTo(e); else if(e.pointerType === 'mouse') scrub.style.cursor = trimHit(e) ? 'ew-resize' : '';
+});
 const endDrag = e => {
   if(!dragState) return;
   const st = dragState; dragState = null; V.dragging = false;
@@ -3070,8 +3120,13 @@ const endDrag = e => {
   updateUI();
   if(V.playing) startPlayback(); else requestRecFrame();
 };
-scrub.addEventListener('pointerup', endDrag);
-scrub.addEventListener('pointercancel', endDrag);
+const tlUp = e => {
+  TP.delete(e.pointerId);
+  if(tlPinch){ if(TP.size < 2) tlPinch = TP.size ? tlPinch : null; if(!TP.size) tlPinch = null; return; }   // the finger left after a pinch does nothing
+  endDrag(e);
+};
+scrub.addEventListener('pointerup', tlUp);
+scrub.addEventListener('pointercancel', tlUp);
 function dragTo(e){
   const r = scrub.getBoundingClientRect();
   const x = Math.max(0, Math.min(r.width, e.clientX - r.left));
