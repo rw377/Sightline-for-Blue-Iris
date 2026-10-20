@@ -34,6 +34,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 ## Features
 
 ### Live view
+- **Live video in every tile.** The grid plays one stream of the whole Blue Iris group and each tile shows its own camera's part of it: real motion, using one connection however many cameras there are. Prefer lighter snapshots? Turn it off in Settings.
 - **A camera grid that fits your screen.** Tiles size themselves so the whole group fits (2 + 2, not 3 + 1), or pick Large / Medium / Small. The choice is remembered for each group.
 - **Your Blue Iris groups as buttons** (Outdoor, Indoor and so on). Choose which ones appear.
 - **Drag to reorder** cameras, with a separate order for each group.
@@ -68,7 +69,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **Optional "Stay signed in"** keeps you signed in through Blue Iris session timeouts. It's off by default; tick it when signing in or turn it on in Settings.
 - **Settings for each device and browser,** so everyone who uses it can set it up their own way.
 - **Add to your home screen** and it opens full-screen like an app.
-- A built-in **color legend** and an **About** screen showing the Sightline and Blue Iris versions, with links to this project, its releases and its issue tracker.
+- A built-in **color legend** and an **About** screen showing the Sightline and Blue Iris versions, with links to this project, its releases and its issue tracker, and a **Copy diagnostics** button for bug reports.
 
 ## Screenshots
 
@@ -169,7 +170,9 @@ Sightline is a viewer. **Blue Iris does all the heavy lifting:**
   - Filters alerts by label.
   - Handles layout and settings.
 
-While the Live screen is open, Sightline checks Blue Iris for motion / trigger status every 2 seconds and for new alerts every 4 seconds. Each check is very small. With motion boxes on, tiles refresh more often (every 0.6 s instead of 1.5 s), which asks Blue Iris for more snapshots.
+While the Live screen is open, Sightline checks Blue Iris for motion / trigger status every 2 seconds and for new alerts every 4 seconds. Each check is very small.
+
+**Live tiles** play one video stream of the current Blue Iris group: the same combined picture UI3 shows for a group, which Blue Iris encodes. Sightline decodes it once and cuts each camera's area out for its tile, using the layout Blue Iris reports for the group. That keeps it to one connection (browsers only allow about six to the same server) and lets the grid keep its own order and sizes. The stream size follows the grid's width, from UI3's 720p to 1440p settings (up to 4 Mbps). It stops while the player is open or the page is in the background. With the setting off, tiles are snapshots refreshed every 1.5 s (0.6 s with motion boxes on).
 
 ## Limitations
 
@@ -189,6 +192,8 @@ While the Live screen is open, Sightline checks Blue Iris for motion / trigger s
 | **Changes don't appear after updating** | Check Settings → About for the version, then hard-refresh or clear the site's cached files. |
 | **Odd characters such as `Ã—` in the page** | The file was saved with non-ASCII characters. Re-download it from this repository. |
 | **A camera tile stays dark with a grey dot** | Blue Iris reports that camera as offline or with no signal. |
+| **Camera tiles show snapshots instead of live video** | Check Settings → Live view → Live video in camera tiles. Tiles use snapshots for a group Blue Iris has no layout for, a camera that isn't in the group's picture in Blue Iris, or if the browser can't play the stream; Copy diagnostics shows which. |
+| **Reporting a problem** | First check whether it also happens in UI3; if it does, it's on the Blue Iris side. Then [open an issue](https://github.com/rw377/Sightline-for-Blue-Iris/issues/new/choose) and paste the text from **Settings → About → Copy diagnostics**. It contains no camera names, user name, password or server address, but does include your browser's version string; look it over before posting. |
 
 ## Development
 

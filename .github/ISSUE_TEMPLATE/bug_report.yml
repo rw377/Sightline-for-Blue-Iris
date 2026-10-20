@@ -1,0 +1,76 @@
+name: Bug report
+description: Something in Sightline doesn't work or looks wrong
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. The details below make it much quicker to track down.
+        Please don't include passwords, camera footage you'd rather keep private, or your Blue Iris address.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did Sightline do instead?
+      placeholder: "Example: I tap an alert and the player shows a spinner, but nothing plays."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the Alerts tab
+        2. Tap a Driveway alert
+        3. ...
+  - type: dropdown
+    id: ui3
+    attributes:
+      label: Does the same thing work in UI3?
+      description: Signed in to UI3 as the same Blue Iris user, on the same device.
+      options:
+        - "Yes, it works in UI3"
+        - "No, UI3 has the same problem"
+        - "I haven't tried"
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: In Sightline, open Settings → About → **Copy diagnostics** and paste the result here. It lists versions, the browser, camera counts and recent video errors, with no camera names, addresses or passwords.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: bi_version
+    attributes:
+      label: Blue Iris version
+      description: If the diagnostics say "not reported", from Blue Iris → Help → About.
+      placeholder: "e.g. 5.8.1.5"
+  - type: dropdown
+    id: connection
+    attributes:
+      label: How do you reach Blue Iris?
+      options:
+        - Home network (same Wi-Fi / LAN)
+        - VPN or Tailscale
+        - Reverse proxy or HTTPS front end (nginx, Caddy, Cloudflare...)
+        - Port forwarded straight to Blue Iris
+        - Other / not sure
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      options:
+        - Android phone or tablet
+        - iPhone or iPad
+        - Windows PC
+        - Mac
+        - Linux
+        - Other
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Screenshots or a short screen recording help a lot. Errors shown in the browser console (F12 → Console) are useful too.

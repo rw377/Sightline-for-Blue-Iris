@@ -112,7 +112,10 @@ main{flex:1;overflow:hidden;position:relative}
 .dot{width:7px;height:7px;border-radius:50%;background:#6fdc8c;flex:none}
 .tile.trig .dot{background:var(--live);box-shadow:0 0 0 3px rgba(255,77,77,.25)}
 .tile.off .dot{background:var(--faint)}
-.tile.off img{opacity:.35}
+.tile.off img,.tile.off canvas.tlive{opacity:.35}
+.tile canvas.tlive{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.tile.live img{visibility:hidden}
+.gvvid{position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none;z-index:-1}
 .tile .offmsg{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:12px}
 
 /* ---------- alerts ---------- */
@@ -228,6 +231,7 @@ body.isfs #viewer.hideui{cursor:none}
 .about-links a span:last-child{color:var(--accent)}
 .about-links a:active{background:var(--surface)}
 @media (hover:hover){.about-links a:hover{background:var(--surface)}}
+.diagtext{display:block;width:calc(100% - 28px);margin:6px 14px 0;height:150px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--text);font:12px/1.4 ui-monospace,Consolas,monospace;resize:vertical}
 .about-text{margin:14px 14px 0;color:var(--muted);font-size:13px;line-height:1.45}
 .about-text p{margin:0 0 10px}
 .about-text b{color:var(--text);font-weight:650}
@@ -605,6 +609,7 @@ body.isfs #viewer.hideui{cursor:none}
     <div class="sect">Live view</div>
     <button id="hlBtn" class="tgl" role="switch" aria-checked="true"><span class="lbl">Highlight active cameras<small>Colored border on tiles with motion or a detection</small></span><span class="tog"></span></button>
     <button id="tlBtn" class="tgl" role="switch" aria-checked="true"><span class="lbl">AI labels on cameras<small>Show what the AI saw on the tile, e.g. &#8220;Dog 82%&#8221;</small></span><span class="tog"></span></button>
+    <button id="tvBtn" class="tgl" role="switch" aria-checked="true"><span class="lbl">Live video in camera tiles<small>Off shows snapshots every 1.5 seconds instead, which uses less data</small></span><span class="tog"></span></button>
     <button id="hidBtn" class="tgl" role="switch" aria-checked="false"><span class="lbl">Show hidden cameras<small>Cameras marked Hidden in Blue Iris. Disabled cameras are never shown.</small></span><span class="tog"></span></button>
     <button id="resetOrderBtn">Reset camera order for this view</button>
     <div class="sect">Interface</div>
@@ -652,6 +657,9 @@ body.isfs #viewer.hideui{cursor:none}
       <a href="https://github.com/rw377/Sightline-for-Blue-Iris/releases" target="_blank" rel="noopener noreferrer"><span>What&#8217;s new</span><span>Releases &#8599;</span></a>
       <a href="https://github.com/rw377/Sightline-for-Blue-Iris/issues" target="_blank" rel="noopener noreferrer"><span>Report a problem</span><span>Issues &#8599;</span></a>
     </div>
+    <div class="btnrow"><button class="primary" id="diagBtn" style="background:var(--surface2);color:var(--text)">Copy diagnostics</button></div>
+    <div class="meta" id="diagNote">For reporting a problem: versions, browser, camera counts and recent video errors. No camera names, addresses or passwords.</div>
+    <textarea id="diagText" class="diagtext" readonly hidden></textarea>
     <div class="about-text">
       <p><b>Unofficial.</b> An independent viewer for Blue Iris. It is not affiliated with, endorsed by or supported by Perspective Software, the maker of Blue Iris. Blue Iris is a trademark of its owner. Please don&#8217;t contact Blue Iris support about problems with this page.</p>
       <p><b>Private.</b> This page talks only to your own Blue Iris server. No accounts, cloud services, tracking or analytics. Settings are saved in this browser on this device.</p>
@@ -904,6 +912,16 @@ async function loadCams(){
   const list = (r.data || []).filter(c => !c.group && c.isEnabled !== false && c.webcast !== false && !/^[@+]/.test(c.optionValue || '')
     && (LV.hidden || !c.hidden));
   const camIds = new Set(list.map(c => c.optionValue));
+  // Group layouts from Blue Iris (where each camera sits in the group's combined picture) for live tiles
+  S.groupRaw = {};
+  (r.data || []).forEach(g => {
+    if(Array.isArray(g.group) && Array.isArray(g.rects) && g.rects.length === g.group.length && g.width > 0 && g.height > 0)
+      S.groupRaw[String(g.optionValue).toLowerCase()] = { id: g.optionValue, cams: g.group, rects: g.rects, w: g.width, h: g.height };
+  });
+  { const all = (r.data || []).filter(c => !c.group && !/^[@+]/.test(c.optionValue || ''));
+    S.camStats = { total: all.length, shown: list.length, hidden: all.filter(c => c.hidden).length, disabled: all.filter(c => c.isEnabled === false).length,
+      noWeb: all.filter(c => c.webcast === false).length, offline: all.filter(c => c.isOnline === false || c.isNoSignal).length,
+      groups: (r.data || []).filter(g => Array.isArray(g.group)).length, layouts: Object.keys(S.groupRaw).length }; }
   S.groups = (r.data || [])
     .filter(g => Array.isArray(g.group) && g.group.length && String(g.optionValue).toLowerCase() !== 'index' && !String(g.optionValue).startsWith('@'))
     .map(g => ({ id: g.optionValue, name: String(g.optionDisplay || g.optionValue).replace(/^\++/, ''), cams: g.group.filter(id => camIds.has(id)) }))
@@ -964,6 +982,7 @@ $('#groupChips').addEventListener('click', e => {
   document.querySelectorAll('#groupChips .chip').forEach(c => c.setAttribute('aria-pressed', c === b));
   updateSizeBtn();
   buildGrid();
+  gvSync();                                              // switch the grid video to this group's stream straight away
   $('#liveView').scrollTop = 0;
 });
 // Tile size is remembered per group: 'auto' or a fixed column count
@@ -1153,8 +1172,39 @@ $('#aboutBtn').addEventListener('click', () => {
   $('#aboutRows').innerHTML = rows.map(([k, v]) => `<div><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join('');
   $('#aboutSheet').hidden = false;
 });
+function diagText(){
+  const st = S.camStats || {}, mse = t => { try{ return !!(window.MediaSource && MediaSource.isTypeSupported(t)); }catch(e){ return false; } };
+  const yn = b => b ? 'yes' : 'no', g = gvGroup();
+  const lines = [
+    `Sightline ${APP.version} \u00b7 Blue Iris ${S.biVersion || 'not reported'}`,
+    `Browser: ${navigator.userAgent}`,
+    `Screen: ${innerWidth}x${innerHeight} @${devicePixelRatio || 1}x \u00b7 touch ${yn(navigator.maxTouchPoints > 0)} \u00b7 home-screen app ${yn(matchMedia('(display-mode: standalone)').matches)} \u00b7 ${location.protocol.replace(':', '')}`,
+    `Video support: H.264 ${yn(mse('video/mp4; codecs="avc1.42E01E"'))} \u00b7 H.265 ${yn(mse('video/mp4; codecs="hvc1.1.6.L93.B0"'))} \u00b7 streaming ${yn(VS_OK)}`,
+    `Cameras: ${st.total ?? '?'} in Blue Iris \u00b7 ${st.shown ?? '?'} shown \u00b7 ${st.hidden ?? 0} hidden \u00b7 ${st.disabled ?? 0} disabled \u00b7 ${st.noWeb ?? 0} web access off \u00b7 ${st.offline ?? 0} offline`,
+    `Groups: ${st.groups ?? '?'} \u00b7 with a layout for live tiles: ${st.layouts ?? '?'} \u00b7 this group: ${g ? 'yes' : 'no'}`,
+    `Live tiles: ${GV.on ? (GV.started ? 'live video (playing)' : GV.retryAt === Infinity ? 'snapshots (this browser can\u2019t play the live video)' : GV.retryAt > Date.now() ? 'live video (waiting to retry; snapshots now)' : 'live video (not playing)') : 'snapshots'}`,
+    `Alert recordings seen: ${Object.entries(DIAG.rec).map(([k, n]) => `${k} ${n}`).join(', ') || 'none loaded yet'}`,
+    `Settings: quality ${S.quality} \u00b7 highlights ${yn(LV.hl)} \u00b7 AI labels ${yn(LV.labels)} \u00b7 show hidden ${yn(LV.hidden)} \u00b7 motion boxes ${yn(MB.on)} (sensitivity ${MB.sens}) \u00b7 stay signed in ${yn(staySignedIn())}`,
+    `Recent errors:${DIAG.errs.length ? '' : ' none'}`,
+    ...DIAG.errs.map(([t, m]) => `  ${new Date(t).toLocaleTimeString()} ${m}`)
+  ];
+  return lines.join('\n');
+}
+$('#diagBtn').addEventListener('click', async () => {
+  const text = diagText(), ta = $('#diagText');
+  ta.value = text; ta.hidden = false;
+  let ok = false;
+  try{ if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(text); ok = true; } }catch(e){}
+  if(!ok){ try{ ta.focus(); ta.select(); ok = document.execCommand('copy'); }catch(e){} }
+  toast(ok ? 'Diagnostics copied. Paste them into your GitHub issue.' : 'Select the text below and copy it', 4000);
+});
 $('#aboutSheet').addEventListener('click', e => { if(e.target.id === 'aboutSheet' || e.target.id === 'aboutDone') $('#aboutSheet').hidden = true; });
 /* ---- Live view switches: tile highlight borders and AI labels ---- */
+const DIAG = { errs: [], rec: {} };
+function diagNote(msg){
+  DIAG.errs.push([Date.now(), String(msg).replace(/session=[^&\s]*/g, 'session=x').slice(0, 160)]);
+  if(DIAG.errs.length > 10) DIAG.errs.shift();
+}
 const LV = { hl: store.get('bis_hl') !== '0', labels: store.get('bis_tlabels') !== '0', hidden: store.get('bis_showhidden') === '1' };
 // Alerts only from cameras Sightline shows (skips hidden and disabled cameras). Until the camera list loads, allow all.
 const camShown = id => !S.camKeys || !S.camKeys.size || S.camKeys.has(String(id || '').toLowerCase());
@@ -1162,6 +1212,7 @@ function applyLiveOpts(){
   $('#hlBtn').setAttribute('aria-checked', LV.hl);
   $('#tlBtn').setAttribute('aria-checked', LV.labels);
   $('#hidBtn').setAttribute('aria-checked', LV.hidden);
+  $('#tvBtn').setAttribute('aria-checked', GV.on);
   $('#grid').classList.toggle('nohl', !LV.hl);
   tileLabels();
 }
@@ -1169,6 +1220,7 @@ $('#hlBtn').addEventListener('click', () => {
   LV.hl = !LV.hl; store.set('bis_hl', LV.hl ? '1' : '0'); applyLiveOpts();
   if(LV.hl){ refreshStatus(); pollRecentAlerts(); }
 });
+$('#tvBtn').addEventListener('click', () => { GV.on = !GV.on; GV.retryAt = 0; GV.fails = 0; store.set('bis_tiles', GV.on ? 'live' : 'snap'); applyLiveOpts(); gvSync(); });
 $('#hidBtn').addEventListener('click', async () => {
   LV.hidden = !LV.hidden; store.set('bis_showhidden', LV.hidden ? '1' : '0'); applyLiveOpts();
   await loadCams();
@@ -1271,7 +1323,7 @@ $('#resetOrderBtn').addEventListener('click', () => {
 
 const canRefreshTiles = () => S.tab === 'live' && !V.open && document.visibilityState === 'visible';
 function pumpTile(t){
-  if(t.busy || t.timer || !t.visible || !canRefreshTiles()) return;
+  if(t.busy || t.timer || t.live || !t.visible || !canRefreshTiles()) return;
   t.busy = true;
   const w = Math.min(1280, Math.round(t.el.clientWidth * Math.min(2, devicePixelRatio || 1)) || 320);
   const im = new Image();
@@ -1287,6 +1339,145 @@ function pumpTile(t){
   im.src = `image/${camEnc(t.cam)}?w=${w}&q=55&${sq()}&t=${Date.now()}`;
 }
 function pumpAllTiles(){ tiles.forEach(pumpTile); }
+
+/* ---- live video in the camera tiles ----
+   One H.264 stream of the whole Blue Iris group (what UI3's group view plays), decoded once; each tile draws its own
+   camera's area of it, so the grid keeps Sightline's order, sizes and labels. One connection however many cameras
+   (browsers allow only about 6 per server). A camera that isn't in Blue Iris's group picture, a group without a
+   layout, or a browser that can't play the stream keeps using snapshots. */
+const GV = { on: store.get('bis_tiles') !== 'snap', ctrl:null, gen:0, key:'', jm:null, vid:null, last:null, wrap:0, lastRaw:-1,
+  gotKey:false, fed:false, started:false, fails:0, retryAt:0, layout:null, lastDet:0, codec:'H264', watch:0 };
+const gvGroup = () => S.groupRaw && S.groupRaw[String(S.group).toLowerCase()];
+const gvWanted = () => GV.on && VS_OK && started && S.tab === 'live' && !V.open && document.visibilityState === 'visible' && !!gvGroup() && Date.now() >= GV.retryAt;
+function gvSize(g){
+  const need = (gridEl.clientWidth || 800) * Math.min(2, devicePixelRatio || 1) * 1.25;
+  let i = TIERS.findIndex(t => t.w >= need); if(i < 0 || i > 3) i = 3;          // up to the 1440p tier
+  i = Math.max(1, i); const t = TIERS[i];
+  const sc = Math.min(1, t.w / g.w, t.h / g.h);
+  return { w: r8(g.w * sc), h: r8(g.h * sc), q: t.q, kbps: t.kbps };
+}
+function gvSync(){
+  const g = gvWanted() ? gvGroup() : null;
+  const key = g ? g.id + '|' + JSON.stringify(gvSize(g)) : '';
+  if(key === GV.key) return;
+  gvStop();
+  if(g){ GV.key = key; gvStart(g); }
+}
+setInterval(gvSync, 1000);
+function gvStop(){
+  GV.gen++; GV.key = ''; clearTimeout(GV.watch);
+  if(GV.ctrl){ try{ GV.ctrl.abort(); }catch(e){} GV.ctrl = null; }
+  if(GV.jm){ try{ GV.jm.destroy(); }catch(e){} GV.jm = null; }
+  // Throw the hidden player away: it would otherwise play out the old stream's buffered frames, which would then be
+  // cut up with the next group's layout (a brief jumble of the wrong cameras when switching groups)
+  if(GV.vid){ const v = GV.vid; GV.vid = null; try{ v.pause(); v.removeAttribute('src'); v.load(); }catch(e){} v.remove(); }
+  GV.layout = null;
+  let back = false;
+  tiles.forEach(t => { if(t.live){ t.live = false; back = true; t.el.classList.remove('live'); if(t.lc){ t.lc.remove(); t.lc = null; } } });
+  if(back) pumpAllTiles();
+}
+function gvFail(gen, why, permanent){
+  if(gen !== GV.gen) return;
+  diagNote('grid video: ' + why);
+  GV.fails++; gvStop();
+  GV.retryAt = permanent ? Infinity : Date.now() + Math.min(300000, 15000 * GV.fails);   // snapshots meanwhile; try video again later
+}
+function gvStart(g){
+  const z = gvSize(g), gen = GV.gen, ctrl = new AbortController();
+  Object.assign(GV, { ctrl, layout: g, last:null, wrap:0, lastRaw:-1, gotKey:false, fed:false, started:false, codec:'H264' });
+  const v = document.createElement('video');            // a fresh player for every stream (see gvStop)
+  v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.className = 'gvvid'; document.body.appendChild(v);
+  GV.vid = v;
+  GV.watch = setTimeout(() => { if(gen === GV.gen && !GV.started) gvFail(gen, 'no picture after 10 s'); }, 10000);
+  const url = `video/${encodeURIComponent(g.id)}/2.0?${sq()}&audio=0&stream=0&w=${z.w}&h=${z.h}&q=${z.q}&kbps=${z.kbps}&extend=2`;
+  fetch(url, { signal: ctrl.signal, cache:'no-store', credentials:'same-origin' })
+    .then(res => {
+      if(gen !== GV.gen) return;
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      if(/image\//i.test(res.headers.get('Content-Type') || '')) throw new Error('server sent a still image');
+      return gvPump(res.body.getReader(), gen);
+    })
+    .catch(e => { if(gen === GV.gen && !(e && e.name === 'AbortError')) gvFail(gen, (e && e.message) || String(e)); });
+  gvLoop(gen);
+}
+async function gvPump(reader, gen){
+  const q = new ByteQueue();
+  let state = 0, hdrLen = 0, type = -1, need = 0, raw = 0;
+  const isBlue = (b, upper) => b[0] === (upper ? 66 : 98) && b[1] === 108 && b[2] === 117 && b[3] === 101;
+  for(;;){
+    const r = await reader.read();
+    if(gen !== GV.gen){ try{ reader.cancel(); }catch(e){} return; }
+    if(r.done){ gvFail(gen, 'stream ended'); return; }
+    q.push(r.value);
+    for(;;){
+      if(state === 0){ const b = q.take(6); if(!b) break; if(!isBlue(b, false)) throw new Error('not a Blue Iris video stream'); hdrLen = b[5]; state = 1; }
+      else if(state === 1){
+        const b = q.take(hdrLen); if(!b) break;
+        if(hdrLen >= 20 && String.fromCharCode(b[16], b[17], b[18], b[19]).toUpperCase() === 'H265') GV.codec = 'H265';
+        state = 2;
+      } else if(state === 2){ const b = q.take(5); if(!b) break; if(!isBlue(b, true)) throw new Error('stream out of sync'); type = b[4]; if(type === 4){ gvFail(gen, 'stream ended'); return; } state = 3; }
+      else if(state === 3){
+        if(type === 0){ const b = q.take(18); if(!b) break; const dv = new DataView(b.buffer, b.byteOffset, 18); raw = dv.getUint32(2, false); need = dv.getUint32(14, false); if(need > 10000000) throw new Error('bad video frame size'); }
+        else if(type === 1){ const b = q.take(4); if(!b) break; need = new DataView(b.buffer, b.byteOffset, 4).getInt32(0, false); if(need < 0 || need > 2000000) throw new Error('bad audio frame size'); }
+        else if(type === 2){ const b = q.take(1); if(!b) break; need = Math.max(0, b[0] - 6); }
+        else throw new Error('unknown block type ' + type);
+        state = 4;
+      } else { const b = q.take(need); if(!b) break; if(type === 0) gvFrame(b, raw, gen); state = 2; }
+    }
+  }
+}
+function gvFrame(data, raw, gen){
+  const h265 = GV.codec === 'H265';
+  if(!GV.gotKey){ if(!isKeyframe(data, h265)) return; GV.gotKey = true; }
+  if(!GV.jm){
+    GV.jm = new JMuxer({ node: GV.vid, mode: 'video', videoCodec: GV.codec, flushingTime: 0, clearBuffer: true, fps: 30, maxDelay: 1500,
+      onError: m => gvFail(gen, 'player error: ' + m), onUnsupportedCodec: c => gvFail(gen, 'browser can\u2019t play ' + c, true) });
+  }
+  let t = raw;
+  if(GV.lastRaw >= 0){ if(GV.lastRaw - 1e9 > t) GV.wrap += 4294967296; else if(GV.lastRaw + 1e9 < t) GV.wrap -= 4294967296; }
+  GV.lastRaw = raw; t += GV.wrap;
+  if(GV.last){
+    GV.jm.feed({ video: GV.last.data, duration: Math.max(1, Math.min(1000, Math.round(t - GV.last.t))) });
+    if(!GV.fed){ GV.fed = true; const p = GV.vid.play(); if(p && p.catch) p.catch(() => {}); }
+  }
+  GV.last = { data, t };
+}
+function gvLoop(gen){
+  const v = GV.vid;
+  const step = () => { if(gen !== GV.gen) return; gvDraw(); if(v.requestVideoFrameCallback) v.requestVideoFrameCallback(step); else requestAnimationFrame(step); };
+  if(v.requestVideoFrameCallback) v.requestVideoFrameCallback(step); else requestAnimationFrame(step);
+}
+function gvDraw(){
+  const v = GV.vid, g = GV.layout;
+  if(!v || !g || !GV.fed || !v.videoWidth || v.readyState < 2) return;   // only pictures from this group's own stream
+  if(!GV.started){ GV.started = true; GV.fails = 0; clearTimeout(GV.watch); }
+  const kx = v.videoWidth / g.w, ky = v.videoHeight / g.h, dpr = Math.min(2, devicePixelRatio || 1), now = performance.now();
+  const detect = MB.on && now - GV.lastDet > 600; if(detect) GV.lastDet = now;
+  g.cams.forEach((id, j) => {
+    const t = tiles.get(id), r = g.rects[j];
+    if(!t || !t.visible || !r) return;
+    if(!t.live){
+      t.live = true; clearTimeout(t.timer); t.timer = null;
+      t.lc = document.createElement('canvas'); t.lc.className = 'tlive';
+      t.el.insertBefore(t.lc, t.el.querySelector('canvas.tbox')); t.el.classList.add('live');
+    }
+    const W = t.el.clientWidth, H = t.el.clientHeight; if(!W || !H) return;
+    const cw = Math.round(W * dpr), ch = Math.round(H * dpr), cnv = t.lc;
+    if(cnv.width !== cw || cnv.height !== ch){ cnv.width = cw; cnv.height = ch; }
+    let sx = r[0] * kx, sy = r[1] * ky, sw = (r[2] - r[0]) * kx, sh = (r[3] - r[1]) * ky;
+    if(sw < 2 || sh < 2) return;
+    const ctx = cnv.getContext('2d');
+    if(!t.el.classList.contains('portrait')){             // fill the tile, like the snapshots
+      const a = cw / ch;
+      if(sw / sh > a){ const nw = sh * a; sx += (sw - nw) / 2; sw = nw; } else { const nh = sw / a; sy += (sh - nh) / 2; sh = nh; }
+      ctx.drawImage(v, sx, sy, sw, sh, 0, 0, cw, ch);
+    } else {                                               // portrait cameras are letterboxed
+      const sc = Math.min(cw / sw, ch / sh), dw = sw * sc, dh = sh * sc;
+      ctx.clearRect(0, 0, cw, ch); ctx.drawImage(v, sx, sy, sw, sh, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+    }
+    if(detect) tileDetect(t, cnv, cw, ch);
+  });
+}
 let hiddenAt = 0;
 // Coming back to the app: make sure the session is good (silently signing back in if needed) before restarting video
 async function resumeSession(force){
@@ -1302,6 +1493,7 @@ async function resumeSession(force){
 // Keep the Blue Iris session from idling out while the page is open
 setInterval(() => { if(started && S.session && document.visibilityState === 'visible') api({cmd:'status'}).catch(() => {}); }, 40000);
 document.addEventListener('visibilitychange', () => {
+  gvSync();
   if(document.visibilityState === 'visible'){
     resumeSession(false);
   } else if((hiddenAt = Date.now()) && V.open && VS.ctrl){
@@ -1365,6 +1557,7 @@ function setTab(tab){
   $('#liveView').hidden = tab !== 'live';
   $('#alertsView').hidden = tab !== 'alerts';
   if(tab === 'live'){ layoutGrid(); updateSizeBtn(); pumpAllTiles(); }
+  gvSync();
   if(tab === 'alerts' && (!A.loadedAt || Date.now() - A.loadedAt > 60000)) loadAlerts(true);
 }
 $('#refreshBtn').addEventListener('click', async () => {
@@ -1661,6 +1854,7 @@ async function loadAlerts(reset){
       if(gen !== A.gen) return;
       if(r.result !== 'success') throw new Error((r.data && r.data.reason) || 'Could not load alerts');
       const raw = (r.data || []).filter(x => !A.seen.has(x.path)).sort((a,b) => b.date - a.date);
+      raw.forEach(x => { const k = !x.clip || /^@-1\./.test(x.clip) ? 'snapshot only' : ((/\.(\w+)$/.exec(x.clip) || [])[1] || 'unknown').toLowerCase(); DIAG.rec[k] = (DIAG.rec[k] || 0) + 1; });
       // If Blue Iris capped the result size, continue from the oldest item; otherwise the whole day is covered
       A.end = raw.length >= 100 ? Math.max(start, raw[raw.length-1].date) : start;
       raw.forEach(it => A.seen.add(it.path));
@@ -1862,6 +2056,7 @@ $('#zoomBadge').addEventListener('click', e => { e.stopPropagation(); zReset(); 
 addEventListener('resize', () => { if(Z.s > 1) zApply(); });
 
 function openViewer(cam, opts = {}){
+  gvStop();                                       // free the connection and the decoder for the player
   V.open = true; V.cam = cam; V.alert = opts.alert || null; V.clip = null; V.speed = 1; V.errs = 0;
   $('#speedBtn').textContent = '1\u00d7';
   $('#viewer').hidden = false;
@@ -1894,7 +2089,7 @@ function closeViewer(fromPop){
   if(FS.fromViewer && fsEl()) toggleFs();          // full screen that started in the player ends with it
   releaseWake();
   if(!fromPop && history.state && history.state.viewer) history.back();
-  pumpAllTiles();
+  pumpAllTiles(); setTimeout(gvSync, 0);
 }
 $('#vBack').addEventListener('click', () => closeViewer(false));
 /* ---- full screen (the whole page, so sheets like Quality still work). Not available on iPhone Safari. ---- */
@@ -2016,7 +2211,7 @@ async function downloadAlert(a, range){
     dlShow(''); toast('Download started: ' + job.name, 4000);
   }catch(e){
     dlShow('');
-    if(e.message !== 'session') toast(e.message || 'Download failed', 6000);
+    if(e.message !== 'session'){ toast(e.message || 'Download failed', 6000); diagNote('download: ' + (e.message || 'failed')); }
   }finally{ DL.job = null; }
 }
 const DL_RANGES = [[false, 'Whole alert', ''], [true, 'Choose start and end', 'Mark them on the timeline, then download']];
@@ -2597,6 +2792,7 @@ function vsEnded(){
   }
 }
 function vsFail(why, permanent){
+  diagNote(`player video (${VS.kind || '?'}): ${why}`);
   const kind = VS.kind;
   console.warn('Video stream failed:', why);
   if(why === 'session'){ vsStop(false); reauth().then(ok => { if(ok && V.open){ if(V.mode === 'live') goLive(); else if(V.playing) startPlayback(); } }); return; }
@@ -2864,11 +3060,11 @@ $('#tileMotionBtn').addEventListener('click', () => { mbSet(!MB.on); toast(MB.on
 const tileSample = document.createElement('canvas'), tileSampleCtx = tileSample.getContext('2d', { willReadFrequently: true });
 const TILE_LINGER = 2200;
 function tileRefreshMs(){ return MB.on ? 600 : TILE_REFRESH; }   // faster snapshots while boxes are on
-function tileDetect(t, im){
-  const s = mbGray(im, im.naturalWidth, im.naturalHeight, tileSample, tileSampleCtx);
+function tileDetect(t, im, iw = im.naturalWidth, ih = im.naturalHeight){
+  const s = mbGray(im, iw, ih, tileSample, tileSampleCtx);
   if(!s) return;
   if(t.det.prev && t.det.prev.length === s.g.length) mbDetect(t.det.prev, s.g, s.SW, s.SH, t.det);
-  t.det.prev = s.g; t.det.iw = im.naturalWidth; t.det.ih = im.naturalHeight;
+  t.det.prev = s.g; t.det.iw = iw; t.det.ih = ih;
   tileDrawBoxes(t);
 }
 function tileDrawBoxes(t){

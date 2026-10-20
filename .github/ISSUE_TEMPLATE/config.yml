@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Blue Iris itself (recording, AI, camera setup)
+    url: https://blueirissoftware.com/
+    about: Sightline is an unofficial viewer. For problems with Blue Iris itself, please use Blue Iris's own support channels.

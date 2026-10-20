@@ -1,0 +1,25 @@
+name: Feature request
+description: Suggest something new or a change to how Sightline works
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like Sightline to do?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would it help?
+      description: What are you trying to do today, and what gets in the way? If UI3 or another app already does this, say how.
+  - type: dropdown
+    id: device
+    attributes:
+      label: Where would you mostly use it?
+      options:
+        - Phone
+        - Tablet
+        - Computer
+        - Wall display / always-on screen
+        - All of these
