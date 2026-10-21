@@ -48,6 +48,8 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **Labels picked from real data.** Sightline scans the last 14 days of alerts and lists every label your cameras have actually reported, with counts. You can also type your own. Capitalization and plurals don't matter.
 - **Date and time ranges:** last hour, today, yesterday, last night (8 PM–6 AM), or any custom day and time window.
 - **Filter by camera or group.**
+- **Preview alerts on a computer.** Point at an alert and a large panel beside the list plays it as a quick flip-book of 8 frames, like UI3's mouse-over preview but bigger. Click the picture to open it. Turn it off in Settings; phones are unchanged.
+- **Flag or protect alerts, like UI3.** Flag one to come back to (the Flagged filter shows just those), or protect it so Blue Iris keeps it when clearing out old alerts and recordings. Use the flag button in the player (the "⋯" button on a phone, which also holds the download), or right-click an alert in the list (long-press on Android). It's saved in Blue Iris, so UI3 shows it too, and flagged and protected alerts are marked in the list.
 - **Tap an alert to play it** from the moment it happened. Alerts play straight from their recording file, as in UI3's Clips list.
 - **Download an alert as an MP4** with the download button in the player. Blue Iris prepares the clip (the same export UI3 uses) and your browser saves it with a readable name such as `Driveway 2026-10-18 4-39-56 PM.mp4`. By default it's re-encoded to H.264, which plays smoothly in any player, with the camera's overlay and audio; you can choose the Blue Iris encoder profile, or the original recording instead (fastest, nothing lost, but some players show it choppy). Download the whole alert, or choose the start and end: drag the blue handles on the timeline or set them at the playhead (up to 15 minutes, within the alert's recording).
 
@@ -62,7 +64,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **PTZ controls** for cameras Blue Iris marks as PTZ: hold an arrow or + / − to move or zoom, let go to stop; Home; and a list of your saved presets. Live view only.
 - **Quality picker** (Auto, 480p to 4K) and a **volume slider**. Video is requested with the same quality and bitrate settings as UI3's built-in profiles, so the picture matches UI3. Auto gives a computer the full camera picture and a phone a lighter 720p stream.
 - **Motion boxes** with a **1–10 sensitivity** setting.
-- Keyboard shortcuts on desktop: space to play / pause, ← → to skip 10 s, ↑ ↓ to switch camera, `+` `−` `0` to zoom, `F` for full screen, Esc to close.
+- Keyboard shortcuts on desktop: space to play / pause, `,` `.` to step one frame back / forward (like UI3), ← → to skip 10 s, ↑ ↓ to switch camera, `+` `−` `0` to zoom, `F` for full screen, Esc to close.
 
 ### Everyday comfort
 - **Handles dropped connections:** a network blip shows a banner instead of a login screen.
@@ -213,7 +215,7 @@ Sightline is deliberately simple: **one HTML file with inline CSS and JavaScript
 
 Small fixes bump the last number (0.12.1), new features the middle one (0.13.0).
 
-**Blue Iris API used:** the JSON API (`login`, `camlist`, `alertlist`, `timeline`, `status`, `ptz`, `export`, `logout`), plus `/image/`, `/thumbs/`, `/file/clips/`, `/time/` and `/video/` for pictures and streams, and `/clips/` for downloads.
+**Blue Iris API used:** the JSON API (`login`, `camlist`, `alertlist`, `timeline`, `status`, `ptz`, `export`, `update` for flag / protect, `logout`), plus `/image/`, `/thumbs/`, `/file/clips/`, `/time/` and `/video/` for pictures and streams, and `/clips/` for downloads.
 
 ## Credits and license
 

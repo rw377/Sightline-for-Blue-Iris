@@ -48,6 +48,7 @@ svg{display:block}
 #app{display:flex;flex-direction:column;height:100%}
 .top{display:flex;align-items:center;gap:8px;padding:calc(10px + var(--safe-t)) calc(12px + var(--safe-r)) 10px calc(16px + var(--safe-l));
   background:var(--bg);border-bottom:1px solid var(--line)}
+.toplogo{flex:none;display:block;margin-left:-2px}
 .top h1{flex:1;margin:0;font-size:19px;font-weight:650;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .iconbtn{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--muted)}
 .iconbtn:active{background:var(--surface2)}
@@ -144,7 +145,46 @@ main{flex:1;overflow:hidden;position:relative}
 .selectwrap.active select{background:var(--text);border-color:var(--text);color:var(--bg)}
 .selectwrap.active svg{color:var(--bg)}
 .acam{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.atime{color:var(--muted);font-size:13px}
+.atime{color:var(--muted);font-size:13px;display:flex;align-items:center;gap:6px}
+.aflags{display:inline-flex;gap:4px;align-items:center}
+/* alert preview panel: computers with a mouse and room beside the list */
+@media (min-width:900px) and (hover:hover) and (pointer:fine){
+  body.apv-on #alertList,body.apv-on #alertMore{max-width:560px}
+  body.apv-on #alertList .alert{border-radius:10px}
+  body.apv-on #alertList .alert.apv-cur{background:var(--surface)}
+  #alertPrev{position:absolute;top:60px;left:584px;right:24px;max-width:1000px;z-index:4}
+}
+.apv-frame{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:var(--surface);cursor:pointer}
+.apv-frame img{width:100%;height:100%;object-fit:contain;display:block;background:#000}
+.apv-frame img:not([src]){visibility:hidden}
+.apv-empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:14px}
+.apv-clock{position:absolute;left:10px;bottom:12px;padding:2px 7px;border-radius:6px;background:rgba(0,0,0,.65);font-size:12px;font-weight:600}
+.apv-clock:empty{display:none}
+.apv-bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.15)}
+.apv-bar span{display:block;height:100%;width:0;background:var(--accent, #4cc2ff);transition:width .15s linear}
+.apv-info{padding:12px 4px;display:flex;flex-direction:column;gap:4px}
+.apv-cam{font-weight:650;font-size:18px}
+.apv-time{color:var(--muted);font-size:14px}
+.apv-hint{color:var(--muted);font-size:12px;margin-top:4px}
+.aflags svg{display:block}
+.aflags .af-f{color:#f5a524}
+.aflags .af-p{color:#8ab4ff}
+#vMark{position:relative}
+#vMark .mkl,#vMark .mk-narrow,#vMark .mkdot{display:none}
+#vMark .mkdot{position:absolute;top:7px;right:4px;width:8px;height:8px;border-radius:50%;background:#f5a524}
+#vMark.prot .mkdot{background:#8ab4ff}
+#vMark.flagged.prot .mkdot{background:linear-gradient(90deg,#f5a524 50%,#8ab4ff 50%)}
+/* phones: download, flag and protect share one button ("...") so the camera name keeps its room */
+@media (max-width:420px){
+  #viewer .vtop #vDl{display:none}
+  #vMark .mk-wide{display:none}
+  #vMark .mk-narrow{display:block}
+  #vMark.flagged .mkdot,#vMark.prot .mkdot{display:block}
+}
+#markDl{width:100%;margin-top:10px}
+#vMark.flagged .mkf{fill:#f5a524;stroke:#f5a524}
+#vMark.prot .mkl{display:inline;stroke:#8ab4ff;fill:#000}
+#vMark[aria-busy="true"]{opacity:.5}
 .more{padding:22px 16px;text-align:center;color:var(--muted);font-size:13px}
 .more button{padding:9px 16px;border-radius:10px;background:var(--surface2);color:var(--text);font-weight:600}
 .empty{padding:60px 24px;text-align:center;color:var(--muted)}
@@ -398,6 +438,7 @@ body.isfs #viewer.hideui{cursor:none}
 <body>
 <div id="app" hidden>
   <header class="top">
+    <svg class="toplogo" width="24" height="24" viewBox="4 4 16 16" aria-hidden="true"><circle cx="12" cy="12" r="6.56" fill="none" stroke="#4cc2ff" stroke-width="1.36"/><circle cx="12" cy="12" r="2.69" fill="#e8edf2"/></svg>
     <h1 id="title">Sightline</h1>
     <button class="iconbtn fsbtn" id="fsBtn" aria-label="Full screen" title="Full screen (F)"><svg class="fs-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="fs-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>
     <button class="iconbtn" id="refreshBtn" aria-label="Refresh"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
@@ -422,6 +463,20 @@ body.isfs #viewer.hideui{cursor:none}
       <div id="alertList"></div>
       <div id="alertMore" class="more"></div>
     </section>
+    <aside id="alertPrev" hidden aria-label="Alert preview">
+      <div class="apv-frame" id="apvFrame" title="Open this alert">
+        <img id="apvImg" alt="">
+        <div class="apv-empty" id="apvEmpty">Point at an alert to preview it</div>
+        <span class="apv-clock num" id="apvClock"></span>
+        <div class="apv-bar"><span id="apvBarIn"></span></div>
+      </div>
+      <div class="apv-info">
+        <div class="tags" id="apvTags"></div>
+        <div class="apv-cam" id="apvCam"></div>
+        <div class="apv-time num" id="apvTime"></div>
+        <div class="apv-hint" id="apvHint">Click the picture to open the alert</div>
+      </div>
+    </aside>
   </main>
   <nav class="tabs">
     <button data-tab="live" aria-selected="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>Live</button>
@@ -438,6 +493,7 @@ body.isfs #viewer.hideui{cursor:none}
     <button class="iconbtn fsbtn" id="vFs" aria-label="Full screen" title="Full screen (F)"><svg class="fs-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="fs-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>
     <button class="iconbtn" id="vMotion" aria-label="Motion boxes" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><rect x="9" y="9" width="6" height="6" rx="1" stroke-dasharray="2 2"/></svg></button>
     <button class="iconbtn" id="vDl" aria-label="Download this alert" title="Download this alert (MP4)" hidden><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"/></svg></button>
+    <button class="iconbtn" id="vMark" aria-label="Flag or protect this alert" title="Flag or protect this alert" aria-pressed="false" hidden><svg class="mk-wide" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="mkf" d="M5 21V4h11l-2 4 2 4H5"/><g class="mkl"><rect x="13" y="14" width="9" height="7" rx="1.5"/><path d="M15 14v-2a2.5 2.5 0 0 1 5 0v2"/></g></svg><svg class="mk-narrow" width="20" height="20" viewBox="0 0 24 24" fill="#fff"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg><span class="mkdot"></span></button>
     <button id="vQual" class="badge q" aria-label="Video quality">AUTO</button>
     <a id="vUi3" class="badge ui3" target="_blank" rel="noopener" hidden>UI3</a>
     <span id="vBadge" class="badge live">LIVE</span>
@@ -616,6 +672,7 @@ body.isfs #viewer.hideui{cursor:none}
     <button id="groupsBtn" class="opt"><span>Groups on Live screen</span><span class="sub" id="groupsCur"></span></button>
     <button id="afBtn" class="opt"><span>Alert filters</span><span class="sub" id="afCur"></span></button>
     <button id="sensBtn" class="opt"><span>Motion box sensitivity</span><span class="sub" id="sensCur">Medium</span></button>
+    <button id="apvBtn" class="tgl" role="switch" aria-checked="true" hidden><span class="lbl">Alert preview panel<small>On a computer, point at an alert to watch a quick preview beside the list</small></span><span class="tog"></span></button>
     <button id="legendBtn">Color legend</button>
     <div class="sect">Account</div>
     <button id="stayBtn" class="opt"><span>Stay signed in</span><span class="sub" id="stayCur">On</span></button>
@@ -637,6 +694,18 @@ body.isfs #viewer.hideui{cursor:none}
     <button id="dlOverlay" class="tgl" role="switch" aria-checked="true"><span class="lbl">Add the camera&#8217;s text and graphic overlay<small>Timestamp and other overlays the camera currently shows in Blue Iris</small></span><span class="tog"></span></button>
     <button id="dlAudio" class="tgl" role="switch" aria-checked="true"><span class="lbl">Include audio<small>The camera&#8217;s sound, if it records any</small></span><span class="tog"></span></button>
     <div class="btnrow"><button class="primary" id="dlGo">Download MP4</button></div>
+  </div>
+</div>
+
+<div id="markSheet" class="sheetbg" hidden>
+  <div class="sheet scroll">
+    <h3 id="markTitle">Flag or protect</h3>
+    <div class="meta" id="markInfo"></div>
+    <button id="markDl" hidden>Download this alert (MP4)&#8230;</button>
+    <button id="mkFlag" class="tgl" role="switch" aria-checked="false"><span class="lbl">Flagged<small>Marks the alert to come back to. The Flagged filter shows just these.</small></span><span class="tog"></span></button>
+    <button id="mkProt" class="tgl" role="switch" aria-checked="false"><span class="lbl">Protected<small>Blue Iris keeps it when it clears out old alerts and recordings, like Protect in UI3.</small></span><span class="tog"></span></button>
+    <div class="meta" id="markNote">Saved in Blue Iris, so UI3 and Blue Iris show it too.</div>
+    <div class="btnrow"><button class="primary" id="mkDone">Done</button></div>
   </div>
 </div>
 
@@ -929,7 +998,8 @@ async function loadCams(){
   S.cams = list.map(c => ({
     id: c.optionValue, name: c.optionDisplay || c.optionValue,
     w: c.width > 100 ? c.width : 1920, h: c.height > 100 ? c.height : 1080,
-    online: c.isOnline !== false && !c.isNoSignal, trig: !!(c.isTriggered || c.isAlerting), ptz: !!c.ptz
+    online: c.isOnline !== false && !c.isNoSignal, trig: !!(c.isTriggered || c.isAlerting), ptz: !!c.ptz,
+    fps: c.FPS > 0 ? Math.min(60, c.FPS) : 0
   }));
   S.camMap = Object.fromEntries(S.cams.map(c => [c.id, c]));
   S.camKeys = new Set(S.cams.map(c => String(c.id).toLowerCase()));
@@ -1556,6 +1626,7 @@ function setTab(tab){
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
   $('#liveView').hidden = tab !== 'live';
   $('#alertsView').hidden = tab !== 'alerts';
+  apvLayout();
   if(tab === 'live'){ layoutGrid(); updateSizeBtn(); pumpAllTiles(); }
   gvSync();
   if(tab === 'alerts' && (!A.loadedAt || Date.now() - A.loadedAt > 60000)) loadAlerts(true);
@@ -1593,9 +1664,10 @@ const FILTER_BUILTIN = {
   all:      { name:'All',      sub:'Every alert',                         view:'alerts' },
   people:   { name:'People',   sub:'Blue Iris person alerts',             view:'people',   noun:'person' },
   vehicles: { name:'Vehicles', sub:'Blue Iris vehicle alerts',            view:'vehicles', noun:'vehicle' },
-  animals:  { name:'Animals',  sub:'Any animal: dog, cat, bear, bird\u2026', view:'alerts', match:'animal', noun:'animal' }
+  animals:  { name:'Animals',  sub:'Any animal: dog, cat, bear, bird\u2026', view:'alerts', match:'animal', noun:'animal' },
+  flagged:  { name:'Flagged',  sub:'Alerts flagged here, in UI3 or in Blue Iris', view:'alerts', match:'flagged', noun:'flagged' }
 };
-const BUILTIN_ORDER = ['all', 'people', 'vehicles', 'animals'];
+const BUILTIN_ORDER = ['all', 'people', 'vehicles', 'animals', 'flagged'];
 // "Dog", "dogs", "DOGS" -> "dog"; "Fed Ex"/"FedEx" -> "fedex"
 function normLabel(x){
   let k = String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
@@ -1642,6 +1714,7 @@ function filterMatcher(id){
 function matcherFor(match){
   if(match === 'multi'){ const ms = A.sel.map(filterMatcher); return it => ms.some(m => m(it)); }
   if(match === 'animal') return it => ANIMALS.test(memoOf(it)) || hasBit(it.flags, 31);
+  if(match === 'flagged') return it => hasBit(flagsOf(it), 1);
   if(String(match).startsWith('label:')){ const k = normLabel(match.slice(6)); return it => memoKeys(it).has(k); }
   return () => true;
 }
@@ -1948,11 +2021,12 @@ function renderAlert(it){
     const h = document.createElement('div'); h.className = 'day'; h.textContent = day; list.appendChild(h);
   }
   const b = document.createElement('button');
-  b.className = 'alert';
+  b.className = 'alert'; b.dataset.rec = recIdOf(it.path); b._it = it;
   const tags = alertTags(it).map(t => `<span class="tag ${t.cls}">${esc(t.text)}</span>`).join('');
   b.innerHTML = `<div class="thumb"><img loading="lazy" alt="" src="thumbs/@${recIdOf(it.path)}?${sq()}"><span class="dur num">${fmtDur(durMs(it.filesize))}</span></div>
-    <div class="ainfo"><div class="tags">${tags}</div><div class="acam">${esc(camName(it.camera))}</div><div class="atime num">${fmtClock(d)}</div></div>`;
+    <div class="ainfo"><div class="tags">${tags}</div><div class="acam">${esc(camName(it.camera))}</div><div class="atime num">${fmtClock(d)}<span class="aflags">${markIcons(it)}</span></div></div>`;
   b.addEventListener('click', () => openViewer(it.camera, { alert: it }));
+  b.addEventListener('contextmenu', e => { e.preventDefault(); markOpen(it); });   // right-click, or long-press on Android
   list.appendChild(b);
 }
 
@@ -2089,7 +2163,7 @@ function closeViewer(fromPop){
   if(FS.fromViewer && fsEl()) toggleFs();          // full screen that started in the player ends with it
   releaseWake();
   if(!fromPop && history.state && history.state.viewer) history.back();
-  pumpAllTiles(); setTimeout(gvSync, 0);
+  pumpAllTiles(); setTimeout(gvSync, 0); setTimeout(apvLayout, 0);
 }
 $('#vBack').addEventListener('click', () => closeViewer(false));
 /* ---- full screen (the whole page, so sheets like Quality still work). Not available on iPhone Safari. ---- */
@@ -2140,8 +2214,164 @@ function setCamTitle(){
     ui3.href = `ui3.htm?rec=@${recIdOf(V.alert.path)}-${V.alert.offset || 0}`;
   } else ui3.hidden = true;
   $('#vDl').hidden = !(V.alert && V.alert.camera === V.cam && canExport(V.alert));
+  markButton();
   if(V.trim && (V.trim.a !== V.alert || V.alert.camera !== V.cam)) trimEnd();
 }
+
+/* ---- flag or protect an alert, like UI3 ----
+   Blue Iris keeps both as bits in the alert's flags: flagged (bit 1) marks it to come back to, protected (bit 2) stops
+   Blue Iris deleting it in its clean-up. "update" sets the whole flags value, so only those bits are changed, with
+   arithmetic rather than | and ^ (flags can use bit 31, beyond JavaScript's 32-bit bit operators). */
+const MK = { FLAG: 1, PROT: 2, it: null, busy: false, flags: new Map() };    // flags: what we've set, by record id
+const flagsOf = it => { const k = recIdOf(it && it.path); return MK.flags.has(k) ? MK.flags.get(k) : Number((it && it.flags) || 0); };
+function withBit(n, bit, on){ const v = Math.pow(2, bit), has = hasBit(n, bit); return on ? (has ? n : n + v) : (has ? n - v : n); }
+const MK_FLAG_SVG = '<svg class="af-f" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-label="Flagged"><path d="M5 21V4h11l-2 4 2 4H5" /></svg>';
+const MK_LOCK_SVG = '<svg class="af-p" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-label="Protected"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+function markIcons(it){ const f = flagsOf(it); return (hasBit(f, MK.FLAG) ? MK_FLAG_SVG : '') + (hasBit(f, MK.PROT) ? MK_LOCK_SVG : ''); }
+const markable = it => !!(it && it.path && recIdOf(it.path));
+function markButton(){
+  const b = $('#vMark'), a = V.alert && V.alert.camera === V.cam ? V.alert : null;
+  b.hidden = !markable(a);
+  if(b.hidden) return;
+  const f = flagsOf(a), fl = hasBit(f, MK.FLAG), pr = hasBit(f, MK.PROT);
+  b.classList.toggle('flagged', fl); b.classList.toggle('prot', pr);
+  b.setAttribute('aria-pressed', fl || pr);
+  b.title = fl && pr ? 'Flagged and protected' : fl ? 'Flagged' : pr ? 'Protected' : 'Flag or protect this alert';
+  b.setAttribute('aria-label', (matchMedia('(max-width:420px)').matches ? 'This alert: download, flag or protect' : 'Flag or protect this alert') + (fl || pr ? ' (' + b.title.toLowerCase() + ')' : ''));
+}
+function markRender(){
+  const it = MK.it; if(!it) return;
+  const f = flagsOf(it);
+  $('#mkFlag').setAttribute('aria-checked', hasBit(f, MK.FLAG));
+  $('#mkProt').setAttribute('aria-checked', hasBit(f, MK.PROT));
+  $('#markSheet .sheet').setAttribute('aria-busy', MK.busy);
+}
+function markOpen(it){
+  if(!markable(it)) return;
+  MK.it = it;
+  const dl = V.open && it === V.alert && V.alert.camera === V.cam && canExport(it);   // the download lives here too on phones
+  $('#markDl').hidden = !dl;
+  $('#markTitle').textContent = dl ? 'This alert' : 'Flag or protect';
+  const d = new Date(it.date * 1000);
+  $('#markInfo').textContent = `${camName(it.camera)} \u00b7 ${d.toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' })}`;
+  markRender(); $('#markSheet').hidden = false;
+}
+// Everywhere this alert shows: its row in the list (icons), the player button
+function markShow(it){
+  const k = recIdOf(it.path);
+  document.querySelectorAll(`#alertList .alert[data-rec="${k}"] .aflags`).forEach(s => s.innerHTML = markIcons(it));
+  if(typeof APV !== 'undefined' && APV.it && recIdOf(APV.it.path) === k){ const s = $('#apvTags .aflags'); if(s) s.innerHTML = markIcons(it); }
+  markButton(); markRender();
+}
+async function markToggle(bit){
+  const it = MK.it; if(!it || MK.busy) return;
+  const before = flagsOf(it), want = !hasBit(before, bit), after = withBit(before, bit, want), k = recIdOf(it.path);
+  MK.busy = true; MK.flags.set(k, after); markShow(it);                 // show the change straight away
+  try{
+    const r = await api({ cmd:'update', path:'@' + k, flags: after });
+    if(r.result !== 'success') throw new Error((r.data && r.data.reason) || 'Blue Iris didn\u2019t accept the change');
+    toast(bit === MK.FLAG ? (want ? 'Flagged' : 'Flag removed') : (want ? 'Protected: Blue Iris will keep this alert' : 'No longer protected'), 2500);
+  }catch(e){
+    MK.flags.set(k, before); markShow(it);
+    if(e.message !== 'session'){
+      const m = /access|permission|denied|not allowed|admin/i.test(e.message) ? 'This Blue Iris user isn\u2019t allowed to change alerts' : e.message;
+      toast(m, 6000); diagNote((bit === MK.FLAG ? 'flag' : 'protect') + ': ' + e.message);
+    }
+  }finally{ MK.busy = false; markRender(); }
+}
+$('#vMark').addEventListener('click', () => { if(V.alert && V.alert.camera === V.cam) markOpen(V.alert); });
+$('#mkFlag').addEventListener('click', () => markToggle(MK.FLAG));
+$('#mkProt').addEventListener('click', () => markToggle(MK.PROT));
+$('#mkDone').addEventListener('click', () => { $('#markSheet').hidden = true; });
+$('#markDl').addEventListener('click', () => { $('#markSheet').hidden = true; $('#vDl').click(); });
+$('#markSheet').addEventListener('click', e => { if(e.target.id === 'markSheet') $('#markSheet').hidden = true; });
+
+/* ---- alert preview panel (computers only) ----
+   Point at an alert in the list and the panel beside it plays the alert as a flip-book: 8 still frames spread across
+   the alert, like UI3's mouse-over preview but larger. Frames load one at a time (light on Blue Iris) and are kept, so
+   the loop and going back to a recent alert cost nothing more. Click the picture to open the alert. */
+const APV = { on: store.get('bis_apv') !== '0', it: null, gen: 0, frames: [], idx: -1, timer: 0, hoverT: 0, cache: new Map(), N: 8, MS: 220, HOLD: 700 };
+const apvMq = matchMedia('(min-width:900px) and (hover:hover) and (pointer:fine)');
+const apvActive = () => APV.on && apvMq.matches && S.tab === 'alerts' && !V.open && document.visibilityState === 'visible';
+function apvLayout(){
+  document.body.classList.toggle('apv-on', APV.on && apvMq.matches);
+  $('#apvBtn').hidden = !apvMq.matches;
+  $('#apvBtn').setAttribute('aria-checked', APV.on);
+  $('#alertPrev').hidden = !(APV.on && apvMq.matches && S.tab === 'alerts');
+  clearTimeout(APV.timer); APV.timer = 0;
+  if(apvActive() && APV.it) apvStep();
+}
+function apvFrameUrl(it, i){
+  const dur = durMs(it.filesize), t = Math.round(dur * i / APV.N);
+  const c = S.camMap && S.camMap[it.camera], cw = c ? c.w : 1920, ch = c ? c.h : 1080;
+  const box = Math.min(1280, Math.round(($('#apvFrame').clientWidth || 640) * Math.min(2, devicePixelRatio || 1)));
+  let w = box, h = w * ch / cw;
+  if(h > box * 9 / 16){ h = box * 9 / 16; w = h * cw / ch; }
+  const sz = `w=${r8(w)}&h=${r8(h)}&q=60&${sq()}`;
+  const clip = it.clip && !/^@-1\./.test(it.clip) ? it.clip : '';
+  if(/\.bvr$/i.test(clip)) return `file/clips/${clip}?time=${(it.offset || 0) + t}&${sz}`;   // from the recording file, as the player does
+  return `time/${camEnc(it.camera)}?jpeg&isolate&pos=${it.date * 1000 + t}&${sz}`;
+}
+function apvShow(it){
+  if(it === APV.it) return;
+  APV.it = it; const gen = ++APV.gen, k = recIdOf(it.path);
+  document.querySelectorAll('#alertList .alert.apv-cur').forEach(b => b.classList.remove('apv-cur'));
+  document.querySelectorAll(`#alertList .alert[data-rec="${k}"]`).forEach(b => b.classList.add('apv-cur'));
+  const d = new Date(it.date * 1000);
+  $('#apvTags').innerHTML = alertTags(it).map(t => `<span class="tag ${t.cls}">${esc(t.text)}</span>`).join('') + `<span class="aflags">${markIcons(it)}</span>`;
+  $('#apvCam').textContent = camName(it.camera);
+  $('#apvTime').textContent = `${dayLabel(d)} \u00b7 ${fmtClock(d, true)} \u00b7 ${fmtDur(durMs(it.filesize))} long`;
+  $('#apvEmpty').hidden = true;
+  // until the first frame arrives, show the list's thumbnail
+  const img = $('#apvImg'); img.src = `thumbs/@${k}?${sq()}`; $('#apvClock').textContent = ''; $('#apvBarIn').style.width = '0';
+  clearTimeout(APV.timer); APV.timer = 0; APV.idx = -1;
+  // drop half-loaded frames of the alert before; keep the last few finished ones
+  if(APV.frames.length && !APV.frames.done) APV.frames.forEach(f => { if(f.img && !f.ok){ f.img.onerror = f.img.onload = null; f.img.src = ''; } });
+  let frames = APV.cache.get(k);
+  if(!frames){
+    frames = Array.from({ length: APV.N }, (_, i) => ({ i, img: null, ok: false, bad: false }));
+    frames.done = false;
+    const next = i => {
+      if(gen !== APV.gen || i >= APV.N){ if(i >= APV.N){ frames.done = true; APV.cache.set(k, frames); if(APV.cache.size > 6) APV.cache.delete(APV.cache.keys().next().value); } return; }
+      const f = frames[i], im = new Image(); f.img = im;
+      im.onload = () => { f.ok = true; if(gen === APV.gen && APV.idx < 0) apvStep(); next(i + 1); };
+      im.onerror = () => { f.bad = true; next(i + 1); };
+      im.src = apvFrameUrl(it, i);
+    };
+    next(0);
+  }
+  APV.frames = frames;
+  if(frames.done || frames.some(f => f.ok)) apvStep();
+}
+// Show the next frame that has loaded; wait at the end of each loop so the start is easy to see
+function apvStep(){
+  clearTimeout(APV.timer); APV.timer = 0;
+  if(!apvActive() || !APV.it) return;
+  const fr = APV.frames, n = fr.length;
+  let j = -1;
+  for(let s = 1; s <= n; s++){ const c = (APV.idx + s + n) % n; if(fr[c].ok){ j = c; break; } if(!fr[c].bad && !fr.done) break; }   // don't skip past a frame still loading
+  if(j >= 0){
+    const wrapped = j <= APV.idx;
+    if(wrapped && APV.idx >= 0 && !APV.holding){ APV.holding = true; APV.timer = setTimeout(apvStep, APV.HOLD); return; }
+    APV.holding = false; APV.idx = j;
+    const it = APV.it, t = Math.round(durMs(it.filesize) * j / APV.N);
+    $('#apvImg').src = fr[j].img.src;
+    $('#apvClock').textContent = fmtClock(new Date(it.date * 1000 + t), true);
+    $('#apvBarIn').style.width = ((j + 1) / n * 100) + '%';
+  }
+  APV.timer = setTimeout(apvStep, APV.MS);
+}
+$('#alertList').addEventListener('mouseover', e => {
+  if(!APV.on || !apvMq.matches) return;
+  const b = e.target.closest('.alert'); if(!b || !b._it) return;
+  clearTimeout(APV.hoverT);
+  APV.hoverT = setTimeout(() => apvShow(b._it), 120);       // sweeping the mouse down the list doesn't load every alert
+});
+$('#alertList').addEventListener('mouseleave', () => clearTimeout(APV.hoverT));
+$('#apvFrame').addEventListener('click', () => { if(APV.it) openViewer(APV.it.camera, { alert: APV.it }); });
+$('#apvBtn').addEventListener('click', () => { APV.on = !APV.on; store.set('bis_apv', APV.on ? '1' : '0'); apvLayout(); });
+apvMq.addEventListener ? apvMq.addEventListener('change', apvLayout) : apvMq.addListener(apvLayout);
+document.addEventListener('visibilitychange', () => apvLayout());
 
 /* ---- download an alert as an MP4 ----
    Uses Blue Iris's export queue, the same feature UI3's Export uses: Blue Iris copies the alert's part of the
@@ -2429,6 +2659,18 @@ function setPlaying(p){
   if(p){ ensureAudio(); startPlayback(); }
   else { const t = vsShownUtc(); if(t) V.pos = t; vsStop(true); }
   updateUI();
+}
+// Step one frame back or forward (keys , and .), like UI3: pause, then show the still one frame interval away.
+// The interval comes from the camera's frame rate in Blue Iris (10 fps if it doesn't say).
+function stepFrame(dir){
+  if(!V.open) return;
+  const c = S.camMap && S.camMap[V.cam], ms = 1000 / (c && c.fps ? c.fps : 10);
+  if(V.mode === 'live'){ if(dir > 0) return; setPlaying(false); }      // from live: pause on the frame shown, then step back
+  else if(V.playing) setPlaying(false);
+  if(V.mode !== 'rec') return;
+  const p = V.pos + dir * ms;
+  if(dir > 0 && p > Date.now() - KEEP_OUT) return;                     // don't step into live
+  seek(p);
 }
 function seek(pos){
   if(pos > Date.now() - KEEP_OUT){ goLive(); return; }
@@ -3557,12 +3799,15 @@ function releaseWake(){ try{ V.wake && V.wake.release(); }catch(e){} V.wake = nu
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 document.addEventListener('keydown', e => {
   if((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '')){ toggleFs(V.open); return; }
+  if(e.key === 'Escape' && !$('#markSheet').hidden){ $('#markSheet').hidden = true; return; }
   if(!V.open) return;
   if(e.key === 'Escape' && !$('#dlSheet').hidden){ $('#dlSheet').hidden = true; return; }
   if(e.key === 'Escape') closeViewer(false);
   else if(e.key === ' '){ e.preventDefault(); $('#playBtn').click(); }
   else if(e.key === 'ArrowLeft') $('#back10').click();
   else if(e.key === 'ArrowRight') $('#fwd10').click();
+  else if(e.key === ',' || e.key === '<'){ e.preventDefault(); stepFrame(-1); }
+  else if(e.key === '.' || e.key === '>'){ e.preventDefault(); stepFrame(1); }
   else if(e.key === 'ArrowUp') switchCam(-1);
   else if(e.key === 'ArrowDown') switchCam(1);
   else if(e.key === '+' || e.key === '=') zoomAt(stage.clientWidth / 2, stage.clientHeight / 2, Z.s * 1.4);
