@@ -428,6 +428,59 @@ body.isfs #viewer.hideui{cursor:none}
 .bigspin{width:38px;height:38px;margin:0 auto 18px;border-radius:50%;border:3px solid var(--surface2);border-top-color:var(--accent);animation:spin .8s linear infinite}
 .linkbtn{display:block;width:100%;margin-top:14px;padding:10px;color:var(--muted);font-size:14px}
 .sheet .pw{padding:6px 14px 0}
+/* server status + system log */
+.sheet.wide{max-width:760px}
+.sheethead{display:flex;align-items:center;justify-content:space-between;padding-right:6px}
+.sheet .sheethead .iconbtn{width:40px;padding:0;justify-content:center;color:var(--muted)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#63c35b;margin:6px 10px 0 0;box-shadow:0 0 0 0 rgba(99,195,91,.6);animation:livepulse 2s infinite}
+.live-dot.off{background:var(--faint);animation:none}
+@keyframes livepulse{0%{box-shadow:0 0 0 0 rgba(99,195,91,.55)}70%{box-shadow:0 0 0 7px rgba(99,195,91,0)}100%{box-shadow:0 0 0 0 rgba(99,195,91,0)}}
+.srv-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;padding:6px 14px 4px}
+.srv-tile{background:var(--surface2);border-radius:12px;padding:10px 12px;min-width:0}
+.srv-tile .k{font-size:12px;color:var(--muted);font-weight:600}
+.srv-tile .v{font-size:22px;font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srv-tile .v small{font-size:13px;color:var(--muted);font-weight:600;margin-left:3px}
+.srv-tile .s{font-size:12px;color:var(--faint);margin-top:2px;line-height:1.3}
+.srv-tile .bar{height:5px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:8px;overflow:hidden}
+.srv-tile .bar span{display:block;height:100%;border-radius:3px;background:var(--accent);transition:width .4s}
+.srv-tile .bar span.hi{background:#f5a524} .srv-tile .bar span.max{background:#ff4d4d}
+.srv-tile.warn .v{color:#f5c542}
+.sheet button.srv-tile{display:block;width:auto;text-align:left;padding:10px 12px;border-radius:12px;font-size:inherit;background:var(--surface2);cursor:pointer}
+.sheet button.srv-tile:hover,.sheet button.srv-tile:active{background:#252d36}
+.sheet.wide{scrollbar-color:#3a4552 transparent}
+.disk{padding:8px 14px 10px}
+.disk .dh{display:flex;justify-content:space-between;gap:10px;font-size:14px}
+.disk .dh b{font-size:15px}
+.disk .dh span{color:var(--muted)}
+.disk .dbar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:rgba(255,255,255,.06);margin:8px 0 6px}
+.disk .dbar i{display:block;height:100%}
+.disk .dleg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted)}
+.disk .dleg span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;background:var(--c);vertical-align:-1px}
+.disk .dnote{font-size:12px;color:#f5c542;margin-top:6px}
+.c-rec{--c:#0a84d6} .c-alloc{--c:#4cc2ff} .c-other{--c:#5d6875} .c-free{--c:#63c35b} .c-over{--c:#ff4d4d}
+.srv-cams{padding:2px 14px 4px;display:grid;grid-template-columns:1fr auto auto auto;gap:6px 14px;font-size:14px;align-items:center}
+.srv-cams .h{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--faint)}
+.srv-cams .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srv-cams .r{text-align:right;color:var(--muted)}
+.srv-cams .off{color:var(--faint)}
+.srv-cams .r.st{min-width:64px}
+.srv-cams .r.st sup{color:#f5c542;font-size:11px;margin-left:1px}
+.srv-note{padding:6px 14px 0;font-size:12px;color:var(--faint)}
+.log-tools{display:flex;gap:8px;align-items:center;padding:4px 14px 8px;flex-wrap:wrap}
+.log-tools .dlchips{display:flex;gap:6px;flex-wrap:wrap}
+.log-tools input{flex:1;min-width:140px;height:34px;border-radius:17px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:0 14px;font:14px system-ui,sans-serif}
+.log-list{padding:0 8px}
+.logrow{display:grid;grid-template-columns:22px 1fr;gap:2px 10px;padding:9px 6px;border-top:1px solid var(--line);align-items:start}
+.logrow:first-child{border-top:0}
+.logrow .li{width:18px;height:18px;margin-top:1px}
+.logrow .lh{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:13px}
+.logrow .lo{font-weight:700;color:var(--text)}
+.logrow .lt{color:var(--faint)}
+.logrow .lc{font-size:11px;font-weight:700;padding:0 6px;border-radius:8px;background:var(--surface2);color:var(--muted)}
+.logrow .lm{grid-column:2;font-size:14px;color:var(--muted);word-break:break-word}
+.logrow.l1 .lm,.logrow.l5 .lm{color:#f5d77a} .logrow.l2 .lm{color:#ff8a8a} .logrow.l3 .lm{color:#ffb070}
+.log-empty{padding:24px 14px;text-align:center;color:var(--muted);font-size:14px}
+@media (min-width:700px){ .sheetbg:has(.sheet.wide){align-items:center} .sheet.wide{border-radius:18px;max-height:86vh} }
 .sheetbg{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}
 .sheet{width:100%;max-width:480px;background:var(--surface);border-radius:18px 18px 0 0;padding:8px 8px calc(10px + var(--safe-b))}
 .sheet button,.sheet a{display:flex;align-items:center;gap:12px;width:100%;padding:14px 14px;border-radius:12px;color:var(--text);text-decoration:none;font-size:16px}
@@ -674,6 +727,9 @@ body.isfs #viewer.hideui{cursor:none}
     <button id="sensBtn" class="opt"><span>Motion box sensitivity</span><span class="sub" id="sensCur">Medium</span></button>
     <button id="apvBtn" class="tgl" role="switch" aria-checked="true" hidden><span class="lbl">Alert preview panel<small>On a computer, point at an alert to watch a quick preview beside the list</small></span><span class="tog"></span></button>
     <button id="legendBtn">Color legend</button>
+    <div class="sect">Server</div>
+    <button id="srvBtn" class="opt"><span>Server status</span><span class="sub" id="srvCur"></span></button>
+    <button id="logBtn" class="opt"><span>System log</span><span class="sub" id="logCur"></span></button>
     <div class="sect">Account</div>
     <button id="stayBtn" class="opt"><span>Stay signed in</span><span class="sub" id="stayCur">On</span></button>
     <a href="ui3.htm" target="_blank" rel="noopener">Open full Blue Iris UI (UI3)</a>
@@ -714,6 +770,33 @@ body.isfs #viewer.hideui{cursor:none}
     <h3>PTZ presets</h3>
     <div class="meta" id="ptzSheetCam"></div>
     <div id="ptzPresetList"></div>
+  </div>
+</div>
+
+<div id="srvSheet" class="sheetbg" hidden>
+  <div class="sheet scroll wide">
+    <div class="sheethead"><h3>Server status</h3><span class="live-dot" id="srvLive" title="Updates every 2 seconds"></span></div>
+    <div class="meta" id="srvMeta"></div>
+    <div class="srv-tiles" id="srvTiles"></div>
+    <div class="sect">Disk usage</div>
+    <div id="srvDisks"></div>
+    <div class="sect">Cameras</div>
+    <div class="srv-cams" id="srvCams"></div>
+    <div class="srv-note" id="srvCamNote"></div>
+    <div class="btnrow"><button class="primary" id="srvDone">Done</button></div>
+  </div>
+</div>
+
+<div id="logSheet" class="sheetbg" hidden>
+  <div class="sheet scroll wide">
+    <div class="sheethead"><h3>System log</h3><button class="iconbtn" id="logRefresh" aria-label="Refresh" title="Refresh"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button></div>
+    <div class="meta" id="logMeta"></div>
+    <div class="log-tools">
+      <div class="dlchips" id="logLevels"></div>
+      <input id="logFind" type="search" placeholder="Search" aria-label="Search the log" autocomplete="off">
+    </div>
+    <div class="log-list" id="logList"></div>
+    <div class="btnrow"><button class="primary" id="logDone">Done</button></div>
   </div>
 </div>
 
@@ -1268,6 +1351,213 @@ $('#diagBtn').addEventListener('click', async () => {
   if(!ok){ try{ ta.focus(); ta.select(); ok = document.execCommand('copy'); }catch(e){} }
   toast(ok ? 'Diagnostics copied. Paste them into your GitHub issue.' : 'Select the text below and copy it', 4000);
 });
+/* ---- Settings > Server: server status and system log, like UI3's ----
+   Server status reads Blue Iris's "status" (CPU, memory, disks, uptime...) and the camera list (frame rates), every
+   2 seconds while open. The system log is Blue Iris's own log ("log" command); Blue Iris may keep it to admin users. */
+const SRV = { timer: 0, data: null, cams: null, busy: false };
+const num = v => { const n = parseFloat(v); return isFinite(n) ? n : null; };
+function fmtMiB(m){
+  m = Number(m) || 0; const g = m / 1024, t = g / 1024;
+  return t >= 1 ? t.toFixed(t >= 10 ? 1 : 2) + ' TB' : g >= 1 ? g.toFixed(g >= 100 ? 0 : 1) + ' GB' : Math.round(m) + ' MB';
+}
+const fmtBiSize = v => { const m = /^([\d.]+)\s*([KMGT])/i.exec(String(v || '')); return m ? `${(+m[1]).toFixed(+m[1] >= 100 ? 0 : 1)} ${m[2].toUpperCase()}B` : String(v || ''); };
+function fmtUptime(u){
+  const p = String(u || '').split(':').map(Number);
+  if(p.length !== 4 || p.some(isNaN)) return { short: String(u || '?'), ms: 0 };
+  const [d, h, m] = p, ms = ((d * 24 + h) * 60 + m) * 60000 + p[3] * 1000;
+  return { short: d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : `${m}m`, ms };
+}
+function srvBar(v){ if(v == null) return ''; const c = v >= 90 ? 'max' : v >= 75 ? 'hi' : ''; return `<div class="bar"><span class="${c}" style="width:${Math.max(0, Math.min(100, v)).toFixed(1)}%"></span></div>`; }
+function srvTile(k, v, sub, bar, extra){ return `<${extra && extra.btn ? 'button type="button"' : 'div'} class="srv-tile${extra && extra.cls ? ' ' + extra.cls : ''}"${extra && extra.id ? ` id="${extra.id}"` : ''}><div class="k">${esc(k)}</div><div class="v">${v}</div>${sub ? `<div class="s">${esc(sub)}</div>` : ''}${srvBar(bar)}</${extra && extra.btn ? 'button' : 'div'}>`; }
+function srvCamRows(){
+  return (SRV.cams || []).filter(c => !c.group && !/^[@+]/.test(c.optionValue || '') && (LV.hidden || !c.hidden));
+}
+function srvRender(){
+  const d = SRV.data || {}, cams = srvCamRows();
+  const on = cams.filter(c => c.isEnabled !== false);
+  const fps = on.reduce((a, c) => a + (num(c.FPS) || 0), 0), bps = on.reduce((a, c) => a + (num(c.BPS) || 0), 0);
+  const cpu = num(d.cpu), gpu = num(d.gpu), load = num(d.memload);
+  const up = fmtUptime(d.uptime);
+  const disks = Array.isArray(d.disks) ? d.disks : [];
+  const used = disks.reduce((a, x) => a + (Number(x.used) || 0), 0), alloc = disks.reduce((a, x) => a + (Number(x.allocated) || 0), 0);
+  const warn = parseInt(d.warnings) || 0;
+  const sig = { 0: 'red', 1: 'green', 2: 'yellow' }[String(d.signal)];
+  $('#srvMeta').textContent = [S.sys, S.biVersion && 'Blue Iris ' + S.biVersion].filter(Boolean).join(' \u00b7 ');
+  $('#srvTiles').innerHTML = [
+    srvTile('CPU', cpu == null ? '?' : `${Math.round(cpu)}<small>%</small>`, gpu != null ? `GPU ${Math.round(gpu)}%` : 'GPU not reported', cpu),
+    srvTile('Memory', d.mem ? esc(fmtBiSize(d.mem)) : '?', load != null ? `Computer ${Math.round(load)}% of ${fmtBiSize(d.memphys)}` : 'Used by Blue Iris', load),
+    srvTile('Recordings', alloc ? `${Math.round(used / alloc * 100)}<small>%</small>` : (used ? esc(fmtMiB(used)) : '?'), alloc ? `${fmtMiB(used)} / ${fmtMiB(alloc)} allowed` : 'Space used', alloc ? used / alloc * 100 : null),
+    srvTile('Frame rate', `${Math.round(fps)}<small>fps</small>`, `${on.length} camera${on.length === 1 ? '' : 's'} \u00b7 ${(bps * 8 / 1e6).toFixed(1)} Mbps`),
+    srvTile('Uptime', esc(up.short), up.ms ? 'Since ' + new Date(Date.now() - up.ms).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''),
+    srvTile('Connections', d.cxns != null ? esc(String(d.cxns)) : '?', 'To the web server'),
+    srvTile('Warnings', String(warn), warn ? 'Open the system log' : 'Nothing new', null, { btn: true, id: 'srvWarn', cls: warn ? 'warn' : '' }),
+    retTile(),
+    srvTile('Profile', d.profile != null ? esc(String(d.profile)) : '?', [d.schedule && 'Schedule ' + d.schedule, String(d.lock) === '1' && 'held', sig && sig !== 'green' && 'signal ' + sig].filter(Boolean).join(' \u00b7 '))
+  ].join('');
+  $('#srvDisks').innerHTML = disks.length ? disks.map(srvDisk).join('') + (d.clips ? `<div class="meta">${esc(d.clips)}</div>` : '') : '<div class="meta">Blue Iris didn\u2019t report any disks.</div>';
+  const camH = '<div class="h">Camera</div><div class="h r">fps</div><div class="h r">Mbps</div><div class="h r" title="How far back this camera\u2019s recordings go">Stored</div>';
+  $('#srvCams').innerHTML = cams.length ? camH + cams.slice().sort((a, b) => String(a.optionDisplay).localeCompare(String(b.optionDisplay))).map(c => {
+    const off = c.isEnabled === false ? 'disabled' : (c.isOnline === false || c.isNoSignal) ? 'no signal' : '';
+    return `<div class="n${off ? ' off' : ''}">${esc(c.optionDisplay || c.optionValue)}</div>` + (off ? `<div class="r off" style="grid-column:span 2">${off}</div>` :
+      `<div class="r num">${(num(c.FPS) || 0).toFixed(1)}</div><div class="r num">${((num(c.BPS) || 0) * 8 / 1e6).toFixed(2)}</div>`) + retCell(c.optionValue);
+  }).join('') : '';
+  const anyOlder = Object.values(RET.map).some(x => x && x.older);
+  $('#srvCamNote').textContent = 'Stored: how far back each camera\u2019s recordings go, counted back from today until a gap of more than 2 days. Checked when this opens (every 10 minutes at most).' +
+    (anyOlder ? ' * Also has older recordings after a gap, often protected clips.' : '');
+  const w = $('#srvWarn'); if(w) w.onclick = () => { $('#srvSheet').hidden = true; logOpen(true); };
+}
+// One disk, the way UI3 draws it: recordings / allocated free / other files / unallocated free (values in MiB)
+function srvDisk(x){
+  const al = Number(x.allocated) || 0, us = Number(x.used) || 0, fr = Number(x.free) || 0;
+  let cap = Number(x.total) || 0; const mon = cap > 0;
+  if(mon && cap - us - fr < 0) cap = us + fr;
+  const over = Math.max(0, us - al), recIn = us - over, allocFree = Math.max(0, Math.min(al - us, fr)), other = mon ? Math.max(0, cap - fr - us) : 0, freeOut = mon ? Math.max(0, fr - allocFree) : 0;
+  const whole = mon ? cap : Math.max(al, us) || 1, seg = (v, c) => v > 0 ? `<i class="${c}" style="width:${(v / whole * 100).toFixed(2)}%;background:var(--c)"></i>` : '';
+  const leg = [(al || us) && ['c-rec', 'Recordings ' + fmtMiB(recIn)], over && ['c-over', 'Over allocation ' + fmtMiB(over)], allocFree && ['c-alloc', 'Allocated, free ' + fmtMiB(allocFree)],
+    mon && ['c-other', 'Other files ' + fmtMiB(other)], mon && ['c-free', 'Free ' + fmtMiB(freeOut)]].filter(Boolean);
+  const note = over ? 'Blue Iris is keeping more recordings than this disk\u2019s allocation.' : (mon && al - us > fr) ? 'There isn\u2019t enough free space left for Blue Iris to fill its allocation.' : '';
+  return `<div class="disk"><div class="dh"><b>${esc(x.disk || 'Disk')}</b><span>${mon ? `${fmtMiB(fr)} free of ${fmtMiB(cap)}` : 'Free space not monitored'} \u00b7 ${al || us ? fmtMiB(al) + ' allocated' : 'not used for recordings'}</span></div>
+    <div class="dbar">${seg(recIn, 'c-rec')}${seg(over, 'c-over')}${seg(allocFree, 'c-alloc')}${seg(other, 'c-other')}${seg(freeOut, 'c-free')}</div>
+    <div class="dleg">${leg.map(([c, t]) => `<span class="${c}">${esc(t)}</span>`).join('')}</div>${note ? `<div class="dnote">${note}</div>` : ''}</div>`;
+}
+/* How much footage each camera keeps: one wide, coarse timeline request per camera (400 days at 1 hour per step).
+   Counted back from the newest recording until a gap of more than 2 days, so an old protected clip doesn't make a
+   camera look like it keeps months. Run one camera at a time when the popup opens, reused for 10 minutes. */
+const RET = { at: 0, busy: false, map: {} };
+const RET_DAYS = 400, RET_MPP = 3600000, RET_GAP = 2 * 86400000;
+function retentionOf(segs){
+  if(!segs.length) return { none: true };
+  let i = segs.length - 1, from = segs[i][0];
+  while(i > 0 && from - segs[i - 1][1] < RET_GAP){ i--; from = Math.min(from, segs[i][0]); }
+  const hours = segs.slice(i).reduce((a, x) => a + (x[1] - x[0]), 0) / 3600000;
+  return { from, hours, older: i > 0, oldest: segs[0][0] };
+}
+const fmtKept = ms => { const h = ms / 3600000; return h < 48 ? Math.max(1, Math.round(h)) + ' h' : Math.round(h / 24) + ' days'; };
+function retCell(id){
+  const x = RET.map[id];
+  if(!x) return `<div class="r st off">${RET.busy ? '\u2026' : ''}</div>`;
+  if(x.none) return '<div class="r st off" title="No recordings found">none</div>';
+  const back = new Date(x.from).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const tip = `Back to ${back} \u00b7 about ${Math.round(x.hours)} hours recorded` + (x.older ? ` \u00b7 older recordings after a gap, back to ${new Date(x.oldest).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}` : '');
+  return `<div class="r st num" title="${esc(tip)}">${fmtKept(Date.now() - x.from)}${x.older ? '<sup>*</sup>' : ''}</div>`;
+}
+function retTile(){
+  const v = Object.values(RET.map).filter(x => x && !x.none).map(x => (Date.now() - x.from) / 86400000);
+  if(!v.length) return srvTile('Footage kept', RET.busy ? '\u2026' : '?', 'Checking each camera');
+  const lo = Math.min(...v), hi = Math.max(...v);
+  const rng = (a, b, unit) => (a === b ? a : `${a}\u2013${b}`) + `<small>${unit}</small>`;
+  const val = hi < 2 ? rng(Math.round(lo * 24), Math.round(hi * 24), 'hours') : rng(lo < 2 ? +lo.toFixed(1) : Math.round(lo), Math.round(hi), 'days');
+  return srvTile('Footage kept', val, v.length > 1 ? 'Range across cameras' : 'Oldest recording', null);
+}
+async function srvRetention(){
+  if(RET.busy || (RET.at && Date.now() - RET.at < 600000)) return;
+  RET.busy = true; if(!$('#srvSheet').hidden) srvRender();
+  const now = Math.floor(Date.now() / 1000), start = now - RET_DAYS * 86400, map = {};
+  try{
+    for(const c of srvCamRows()){
+      if($('#srvSheet').hidden) return;                       // closed: stop, try again next time
+      if(c.isEnabled === false) continue;
+      try{
+        const r = await api({ cmd: 'timeline', startdate: start, enddate: now, msecpp: RET_MPP, camera: c.optionValue });
+        const segs = ((r.data && r.data.clips) || []).map(x => [start * 1000 + x.x1 * RET_MPP, start * 1000 + x.x2 * RET_MPP]).sort((a, b) => a[0] - b[0]);
+        map[c.optionValue] = RET.map[c.optionValue] = retentionOf(segs);
+      }catch(e){ if(e.message === 'session') return; }
+      if(!$('#srvSheet').hidden) srvRender();
+    }
+    RET.map = map; RET.at = Date.now();
+  }finally{ RET.busy = false; if(!$('#srvSheet').hidden) srvRender(); }
+}
+async function srvPoll(){
+  clearTimeout(SRV.timer); SRV.timer = 0;
+  if($('#srvSheet').hidden) return;
+  if(document.visibilityState === 'visible' && !SRV.busy){
+    SRV.busy = true;
+    try{
+      const [st, cl] = await Promise.all([api({ cmd: 'status' }), api({ cmd: 'camlist' })]);
+      if(st.result === 'success'){ SRV.data = st.data || {}; $('#srvLive').classList.remove('off'); }
+      if(cl.result === 'success'){ SRV.cams = cl.data || []; srvRetention(); }
+      if(!$('#srvSheet').hidden) srvRender();
+    }catch(e){ $('#srvLive').classList.add('off'); }
+    finally{ SRV.busy = false; }
+  }
+  if(!$('#srvSheet').hidden) SRV.timer = setTimeout(srvPoll, 2000);
+}
+$('#srvBtn').addEventListener('click', () => {
+  $('#sheet').hidden = true;
+  if(SRV.data) srvRender(); else $('#srvTiles').innerHTML = '<div class="log-empty" style="grid-column:1/-1">Loading\u2026</div>';
+  $('#srvSheet').hidden = false; srvPoll();
+});
+$('#srvDone').addEventListener('click', () => { $('#srvSheet').hidden = true; });
+$('#srvSheet').addEventListener('click', e => { if(e.target.id === 'srvSheet') $('#srvSheet').hidden = true; });
+
+const LOG = { rows: [], level: 'all', find: '', loading: false };
+const LOG_LV = {
+  0: ['Info', '#4c8dff', '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5" stroke="#000" stroke-width="2.4" stroke-linecap="round"/>'],
+  1: ['Warning', '#f5d33b', '<path d="M12 3 22 20H2z"/><path d="M12 10v4.5M12 17v.3" stroke="#000" stroke-width="2.2" stroke-linecap="round"/>'],
+  2: ['Error', '#ff4d6a', '<circle cx="12" cy="12" r="9"/><path d="m8.5 8.5 7 7m0-7-7 7" stroke="#000" stroke-width="2.4" stroke-linecap="round"/>'],
+  3: ['Alert', '#ff7a1a', '<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.3" stroke="#000" stroke-width="2.4" stroke-linecap="round"/>'],
+  4: ['OK', '#63c35b', '<circle cx="12" cy="12" r="9"/><path d="m7.5 12.5 3 3 6-6.5" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'],
+  5: ['Question', '#f5d33b', '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5M12 16.5v.3" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round"/>'],
+  6: ['Signal', '#4c8dff', '<rect x="8" y="2.5" width="8" height="19" rx="3"/><circle cx="12" cy="7" r="1.6" fill="#000"/><circle cx="12" cy="12" r="1.6" fill="#000"/><circle cx="12" cy="17" r="1.6" fill="#000"/>'],
+  10: ['User', '#e8edf2', '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/>']
+};
+const LOG_PROBLEM = new Set([1, 2, 3, 5]);
+const LOG_FILTERS = [['all', 'All'], ['problems', 'Warnings & errors'], ['info', 'Info']];
+function logIcon(l){ const v = LOG_LV[l] || ['Level ' + l, '#8b97a5', '<circle cx="12" cy="12" r="9"/>']; return `<svg class="li" viewBox="0 0 24 24" fill="${v[1]}" role="img" aria-label="${v[0]}"><title>${v[0]}</title>${v[2]}</svg>`; }
+function logWhen(t){
+  const d = new Date(t * 1000), today = new Date(); 
+  return d.toDateString() === today.toDateString() ? fmtClock(d, true) : d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' });
+}
+function logRender(){
+  const f = LOG.find.trim().toLowerCase();
+  const counts = { all: LOG.rows.length, problems: LOG.rows.filter(r => LOG_PROBLEM.has(+r.level)).length };
+  counts.info = counts.all - counts.problems;
+  $('#logLevels').innerHTML = LOG_FILTERS.map(([id, name]) => `<button type="button" class="chip" data-lv="${id}" aria-pressed="${LOG.level === id}">${name} ${counts[id]}</button>`).join('');
+  const rows = LOG.rows.filter(r => (LOG.level === 'all' || (LOG.level === 'problems') === LOG_PROBLEM.has(+r.level)) &&
+    (!f || String(r.obj || '').toLowerCase().includes(f) || String(r.msg || '').toLowerCase().includes(f)));
+  $('#logList').innerHTML = rows.length ? rows.slice(0, 600).map(r => {
+    const c = parseInt(r.count) > 1 ? `<span class="lc" title="Repeated">\u00d7${parseInt(r.count)}</span>` : '';
+    return `<div class="logrow l${+r.level}">${logIcon(+r.level)}<div class="lh"><span class="lo">${esc(r.obj || '')}</span><span class="lt num">${logWhen(r.date)}</span>${c}</div><div class="lm">${esc(r.msg || '')}</div></div>`;
+  }).join('') + (rows.length > 600 ? `<div class="log-empty">Showing the newest 600 of ${rows.length}.</div>` : '') : `<div class="log-empty">${LOG.rows.length ? 'Nothing matches.' : 'The log is empty.'}</div>`;
+}
+async function logLoad(){
+  if(LOG.loading) return; LOG.loading = true;
+  $('#logRefresh').style.opacity = .4; $('#logMeta').textContent = 'Loading\u2026';
+  try{
+    const r = await api({ cmd: 'log' });
+    if(r.result !== 'success'){
+      LOG.rows = []; $('#logLevels').innerHTML = '';
+      const why = (r.data && r.data.reason) || '';
+      $('#logList').innerHTML = `<div class="log-empty">Blue Iris didn\u2019t send its system log${why ? ' (' + esc(why) + ')' : ''}.<br>It may only show it to admin users: try UI3 with an admin user, or give this Blue Iris user admin rights.</div>`;
+      $('#logMeta').textContent = ''; return;
+    }
+    LOG.rows = (r.data || []).slice().sort((a, b) => (b.date || 0) - (a.date || 0));
+    $('#logMeta').textContent = `${LOG.rows.length} entr${LOG.rows.length === 1 ? 'y' : 'ies'}, newest first \u00b7 loaded ${fmtClock(new Date(), true)}`;
+    logRender();
+  }catch(e){ if(e.message !== 'session'){ $('#logList').innerHTML = `<div class="log-empty">${esc(e.message)}</div>`; $('#logMeta').textContent = ''; } }
+  finally{ LOG.loading = false; $('#logRefresh').style.opacity = ''; }
+}
+function logOpen(problems){
+  $('#sheet').hidden = true;
+  LOG.level = problems ? 'problems' : 'all'; LOG.find = ''; $('#logFind').value = '';
+  $('#logList').innerHTML = ''; $('#logSheet').hidden = false; logLoad();
+}
+$('#logBtn').addEventListener('click', () => logOpen(false));
+$('#logRefresh').addEventListener('click', logLoad);
+$('#logLevels').addEventListener('click', e => { const b = e.target.closest('[data-lv]'); if(b){ LOG.level = b.dataset.lv; logRender(); } });
+$('#logFind').addEventListener('input', e => { LOG.find = e.target.value; logRender(); });
+$('#logDone').addEventListener('click', () => { $('#logSheet').hidden = true; });
+$('#logSheet').addEventListener('click', e => { if(e.target.id === 'logSheet') $('#logSheet').hidden = true; });
+// Settings rows show a one-line summary
+async function srvSummary(){
+  try{
+    const r = await api({ cmd: 'status' }); if(r.result !== 'success') return;
+    const d = r.data || {}, cpu = num(d.cpu), load = num(d.memload), w = parseInt(d.warnings) || 0;
+    $('#srvCur').textContent = [cpu != null && `CPU ${Math.round(cpu)}%`, load != null && `memory ${Math.round(load)}%`].filter(Boolean).join(' \u00b7 ');
+    $('#logCur').textContent = w ? `${w} warning${w === 1 ? '' : 's'}` : '';
+  }catch(e){}
+}
+$('#menuBtn').addEventListener('click', srvSummary);
 $('#aboutSheet').addEventListener('click', e => { if(e.target.id === 'aboutSheet' || e.target.id === 'aboutDone') $('#aboutSheet').hidden = true; });
 /* ---- Live view switches: tile highlight borders and AI labels ---- */
 const DIAG = { errs: [], rec: {} };
@@ -2204,7 +2494,26 @@ $('#viewer').addEventListener('pointermove', e => {
   $('#viewer').classList.remove('hideui'); fsIdle();
 });
 $('#viewer').addEventListener('pointerdown', () => { if(fsEl()) fsIdle(); });
-addEventListener('popstate', () => { if(V.open) closeViewer(true); });
+/* Back button / gesture closes popups first (phones especially), then the player, before leaving the page.
+   Each popup that opens adds a history entry; switching from one popup to another (Settings -> Server status)
+   replaces it; closing one with Done or a tap outside takes its entry back off. */
+const SHEETS = { els: [...document.querySelectorAll('.sheetbg')], open: [], skipPop: 0, fromPop: false };
+new MutationObserver(() => {
+  const now = SHEETS.els.filter(e => !e.hidden).map(e => e.id), was = SHEETS.open;
+  SHEETS.open = now;
+  if(SHEETS.fromPop){ SHEETS.fromPop = false; return; }          // closed by Back: history has already moved
+  const added = now.filter(id => !was.includes(id)), removed = was.filter(id => !now.includes(id));
+  const st = history.state || {};
+  if(added.length && removed.length){ if(st.sheet) history.replaceState({ sheet: added[0], viewer: st.viewer }, ''); else history.pushState({ sheet: added[0], viewer: V.open }, ''); }
+  else if(added.length) added.forEach(id => history.pushState({ sheet: id, viewer: V.open }, ''));
+  else if(removed.length && st.sheet){ SHEETS.skipPop++; history.back(); }
+}).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['hidden'] });
+addEventListener('popstate', () => {
+  if(SHEETS.skipPop){ SHEETS.skipPop--; return; }
+  const top = SHEETS.open[SHEETS.open.length - 1];
+  if(top){ SHEETS.fromPop = true; $('#' + top).hidden = true; return; }
+  if(V.open && !(history.state && history.state.viewer)) closeViewer(true);
+});
 
 function setCamTitle(){
   $('#vCam').textContent = camName(V.cam);
@@ -3800,6 +4109,7 @@ function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&l
 document.addEventListener('keydown', e => {
   if((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '')){ toggleFs(V.open); return; }
   if(e.key === 'Escape' && !$('#markSheet').hidden){ $('#markSheet').hidden = true; return; }
+  for(const id of ['#srvSheet', '#logSheet']) if(e.key === 'Escape' && !$(id).hidden){ $(id).hidden = true; return; }
   if(!V.open) return;
   if(e.key === 'Escape' && !$('#dlSheet').hidden){ $('#dlSheet').hidden = true; return; }
   if(e.key === 'Escape') closeViewer(false);

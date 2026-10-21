@@ -66,11 +66,15 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **Motion boxes** with a **1–10 sensitivity** setting.
 - Keyboard shortcuts on desktop: space to play / pause, `,` `.` to step one frame back / forward (like UI3), ← → to skip 10 s, ↑ ↓ to switch camera, `+` `−` `0` to zoom, `F` for full screen, Esc to close.
 
+### Server info
+- **Server status** (Settings → Server), like UI3's: CPU, memory, recordings against their allowed space, total frame rate and bitrate, uptime, connections, warnings and profile, refreshed every 2 seconds while open. **Disk usage** for each disk (recordings, allocated free space, other files, free space), with a note if Blue Iris is over its allocation. Each camera's frame rate, bitrate and **how many days of footage it keeps**.
+- **System log:** Blue Iris's own log, newest first, with colored icons for info, warnings, errors and alerts. **Filter** it to warnings & errors and **search** it by camera or message. Blue Iris may show it only to admin users.
+
 ### Everyday comfort
 - **Handles dropped connections:** a network blip shows a banner instead of a login screen.
 - **Optional "Stay signed in"** keeps you signed in through Blue Iris session timeouts. It's off by default; tick it when signing in or turn it on in Settings.
 - **Settings for each device and browser,** so everyone who uses it can set it up their own way.
-- **Add to your home screen** and it opens full-screen like an app.
+- **Add to your home screen** and it opens full-screen like an app. On phones, Back closes popups and the player before it leaves Sightline.
 - A built-in **color legend** and an **About** screen showing the Sightline and Blue Iris versions, with links to this project, its releases and its issue tracker, and a **Copy diagnostics** button for bug reports.
 
 ## Screenshots
@@ -215,7 +219,7 @@ Sightline is deliberately simple: **one HTML file with inline CSS and JavaScript
 
 Small fixes bump the last number (0.12.1), new features the middle one (0.13.0).
 
-**Blue Iris API used:** the JSON API (`login`, `camlist`, `alertlist`, `timeline`, `status`, `ptz`, `export`, `update` for flag / protect, `logout`), plus `/image/`, `/thumbs/`, `/file/clips/`, `/time/` and `/video/` for pictures and streams, and `/clips/` for downloads.
+**Blue Iris API used:** the JSON API (`login`, `camlist`, `alertlist`, `timeline`, `status`, `ptz`, `export`, `update` for flag / protect, `log` for the system log, `logout`), plus `/image/`, `/thumbs/`, `/file/clips/`, `/time/` and `/video/` for pictures and streams, and `/clips/` for downloads.
 
 ## Credits and license
 
