@@ -2,7 +2,7 @@
 
 All notable changes to Sightline for Blue Iris. Released versions match what **Settings → About** shows; a version ending in `-dev` is a work-in-progress copy from `main`.
 
-## Unreleased (next: 0.14.0)
+## 0.14.0 — 2026-10-21
 
 - **Step frame by frame with `,` and `.`**, like UI3. Pauses, then shows the frame one frame interval back or forward, using the camera's frame rate in Blue Iris. From live, `,` pauses on the frame shown and steps back.
 - **Flag or protect alerts, like UI3.** A new button in the player (or right-click an alert in the list, long-press on Android) opens Flagged and Protected switches. Flagged marks an alert to come back to; Protected stops Blue Iris deleting it in its clean-up. It uses the same Blue Iris command as UI3 and changes only those flags, so UI3 and Blue Iris show the change too. Flagged and protected alerts get small icons in the list. New **Flagged** alert filter (turn it on under Settings → Alert filters). Clear message if the Blue Iris user isn't allowed to change alerts.

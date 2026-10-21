@@ -87,11 +87,25 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 
 ![Settings, color legend and About](docs/screenshots/settings.png)
 
+**Server status and system log** (Settings → Server): CPU, memory, disks and how many days of footage each camera keeps. The system log can be **filtered** (here: warnings & errors) and **searched**.
+
+![Server status, disk usage and cameras, and the system log filtered to warnings and errors](docs/screenshots/server.png)
+
 **Desktop**
 
 ![Live view on desktop with motion boxes](docs/screenshots/desktop-live.png)
 
 ![Playback on desktop](docs/screenshots/desktop-player.png)
+
+Point at an alert to preview it beside the list:
+
+![Alert preview panel on desktop](docs/screenshots/desktop-alerts.png)
+
+Search the system log, for example for "signal":
+
+![System log searched for "signal" on desktop](docs/screenshots/desktop-log.png)
+
+![Server status on desktop](docs/screenshots/desktop-server.png)
 
 <sub>Screenshots use a simulated Blue Iris server with drawn placeholder scenes, not real camera footage.</sub>
 
