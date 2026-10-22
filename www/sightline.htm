@@ -156,6 +156,32 @@ main{flex:1;overflow:hidden;position:relative}
 }
 .apv-frame{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:var(--surface);cursor:pointer}
 .apv-frame img{width:100%;height:100%;object-fit:contain;display:block;background:#000}
+.apv-frame video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;opacity:0;pointer-events:none}
+.apv-frame video.on{opacity:1}
+.apv-speed{position:absolute;right:10px;bottom:12px;padding:2px 7px;border-radius:6px;background:rgba(0,0,0,.65);font-size:12px;font-weight:700}
+.apv-speed:empty{display:none}
+.setrow{padding:12px 14px}
+.sheet .afmode{justify-content:space-between;text-align:left}
+.dlprof small{color:var(--faint);font-size:12px}
+/* go-to calendar: days without recordings for this camera are greyed out */
+.cal{border:1px solid var(--line);border-radius:12px;padding:6px 8px 8px;background:var(--surface)}
+.calhead{display:flex;align-items:center;justify-content:space-between}
+.sheet .calhead button{width:36px;height:32px;padding:0;justify-content:center;font-size:22px;color:var(--muted)}
+.sheet .calhead button:disabled{opacity:.25}
+.calhead b{font-size:14px}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:4px}
+.calgrid .wd{font-size:11px;font-weight:700;color:var(--faint);text-align:center;padding:2px 0}
+.sheet .calgrid button{position:relative;width:auto;height:34px;padding:0;justify-content:center;border-radius:9px;font-size:14px;color:var(--text)}
+.sheet .calgrid button:hover:not(:disabled){background:var(--surface2)}
+.sheet .calgrid button:disabled{color:var(--faint);opacity:.45;cursor:default;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.25)}
+.sheet .calgrid button.today{box-shadow:inset 0 0 0 1px var(--line)}
+.sheet .calgrid button.sel{background:var(--accent);color:#04121b;font-weight:700}
+.calgrid button.al::after{content:"";position:absolute;bottom:4px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--person)}
+.calgrid button.sel.al::after{background:#04121b}
+.calnote{font-size:12px;color:var(--faint);margin-top:6px;min-height:15px}
+.sheet .afmode .ck{flex:none;font-size:18px;color:var(--accent)}
+.setrow .lbl{display:block;font-size:16px;color:var(--text);margin-bottom:10px}
+.setrow .lbl small{display:block;margin-top:2px;color:var(--faint);font-size:13px}
 .apv-frame img:not([src]){visibility:hidden}
 .apv-empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:14px}
 .apv-clock{position:absolute;left:10px;bottom:12px;padding:2px 7px;border-radius:6px;background:rgba(0,0,0,.65);font-size:12px;font-weight:600}
@@ -521,6 +547,7 @@ body.isfs #viewer.hideui{cursor:none}
         <img id="apvImg" alt="">
         <div class="apv-empty" id="apvEmpty">Point at an alert to preview it</div>
         <span class="apv-clock num" id="apvClock"></span>
+        <span class="apv-speed num" id="apvSpeed"></span>
         <div class="apv-bar"><span id="apvBarIn"></span></div>
       </div>
       <div class="apv-info">
@@ -594,7 +621,7 @@ body.isfs #viewer.hideui{cursor:none}
     <div class="lower">
       <div class="zoomwrap">
       <div class="zoom" id="zoom">
-        <button data-w="120000">2m</button><button data-w="900000">15m</button><button data-w="3600000">1h</button><button data-w="21600000">6h</button><button data-w="86400000">24h</button><button data-w="172800000">48h</button>
+        <button data-w="120000">2m</button><button data-w="900000">15m</button><button data-w="3600000">1h</button><button data-w="21600000">6h</button><button data-w="86400000">24h</button><button data-w="172800000">48h</button><button id="goBtn" class="gobtn" aria-label="Go to a date and time" title="Go to a date and time"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button>
       </div>
       </div>
     <div class="transport">
@@ -656,6 +683,34 @@ body.isfs #viewer.hideui{cursor:none}
       <label class="field"><span>To</span><input type="time" id="rTo" value="23:59"></label>
     </div>
     <div class="btnrow"><button class="secondary" id="rClear">Any time</button><button class="primary" id="rApply">Show alerts</button></div>
+  </div>
+</div>
+
+<div id="goSheet" class="sheetbg" hidden>
+  <div class="sheet">
+    <h3>Go to a time</h3>
+    <div class="meta">The timeline shows this window and the video plays from its start. Zoom or drag from there.</div>
+    <div class="quick">
+      <button class="chip" data-g="hour">Last hour</button>
+      <button class="chip" data-g="morning">This morning</button>
+      <button class="chip" data-g="night">Last night</button>
+      <button class="chip" data-g="yesterday">Yesterday</button>
+      <button class="chip" data-g="day">This time yesterday</button>
+      <button class="chip" data-g="week">This time last week</button>
+    </div>
+    <div class="fields">
+      <div class="field full"><span>Date</span>
+        <div class="cal" id="gCal">
+          <div class="calhead"><button type="button" id="calPrev" aria-label="Previous month">&#8249;</button><b id="calTitle"></b><button type="button" id="calNext" aria-label="Next month">&#8250;</button></div>
+          <div class="calgrid" id="calGrid"></div>
+          <div class="calnote" id="calNote"></div>
+        </div>
+        <input type="hidden" id="gDate">
+      </div>
+      <label class="field"><span>From</span><input type="time" id="gFrom"></label>
+      <label class="field"><span>To</span><input type="time" id="gTo"></label>
+    </div>
+    <div class="btnrow"><button class="secondary" id="gCancel">Cancel</button><button class="primary" id="gApply">Go</button></div>
   </div>
 </div>
 
@@ -725,7 +780,7 @@ body.isfs #viewer.hideui{cursor:none}
     <button id="groupsBtn" class="opt"><span>Groups on Live screen</span><span class="sub" id="groupsCur"></span></button>
     <button id="afBtn" class="opt"><span>Alert filters</span><span class="sub" id="afCur"></span></button>
     <button id="sensBtn" class="opt"><span>Motion box sensitivity</span><span class="sub" id="sensCur">Medium</span></button>
-    <button id="apvBtn" class="tgl" role="switch" aria-checked="true" hidden><span class="lbl">Alert preview panel<small>On a computer, point at an alert to watch a quick preview beside the list</small></span><span class="tog"></span></button>
+    <div class="setrow" id="apvRow" hidden><span class="lbl">Alert preview panel<small id="apvSub"></small></span><div class="dlchips" id="apvModes"></div></div>
     <button id="legendBtn">Color legend</button>
     <div class="sect">Server</div>
     <button id="srvBtn" class="opt"><span>Server status</span><span class="sub" id="srvCur"></span></button>
@@ -835,7 +890,7 @@ body.isfs #viewer.hideui{cursor:none}
 <div id="afSheet" class="sheetbg" hidden>
   <div class="sheet scroll">
     <h3>Alert filters</h3>
-    <div class="meta">Choose the filter buttons on the Alerts tab. Labels match the AI label Blue Iris saved with each alert. Capitalization and plurals don&#8217;t matter: &#8220;Dog&#8221;, &#8220;dog&#8221; and &#8220;dogs&#8221; are the same.</div>
+    <div class="meta" id="afIntro">Choose the filter buttons on the Alerts tab. Labels match the AI label Blue Iris saved with each alert. Capitalization and plurals don&#8217;t matter: &#8220;Dog&#8221;, &#8220;dog&#8221; and &#8220;dogs&#8221; are the same.</div>
     <div id="afList"></div>
     <form class="afadd" id="afAdd" autocomplete="off"><input id="afInput" placeholder="Add a label, e.g. cat" maxlength="30" autocapitalize="off" spellcheck="false" enterkeyhint="done"><button>Add</button></form>
     <div class="afnote" id="afNote"></div>
@@ -848,7 +903,7 @@ body.isfs #viewer.hideui{cursor:none}
 'use strict';
 /* Values filled in by the Blue Iris web server when it serves this .htm file */
 const INJECTED_SESSION = "%%SESSION%%";
-const APP = { name: 'Sightline', version: '0.14.0' };   // bump the version with every change you copy to the www folder
+const APP = { name: 'Sightline', version: '0.15.0-dev' };   // bump the version with every change you copy to the www folder
 const INJECTED_SYSNAME = "%%SYSNAME%%";
 /* Note: never write two percent signs together anywhere else in this file \u2014 Blue Iris treats the
    text between them as a placeholder and blanks it out when serving the page. */
@@ -1920,6 +1975,7 @@ function setTab(tab){
   if(tab === 'live'){ layoutGrid(); updateSizeBtn(); pumpAllTiles(); }
   gvSync();
   if(tab === 'alerts' && (!A.loadedAt || Date.now() - A.loadedAt > 60000)) loadAlerts(true);
+  if(tab === 'alerts' && afAuto()){ renderFilterChips(); afRefresh(); }
 }
 $('#refreshBtn').addEventListener('click', async () => {
   if(S.tab === 'alerts') loadAlerts(true);
@@ -2022,17 +2078,60 @@ function saveAf(list){
 }
 function customLabels(){ try{ const v = JSON.parse(store.get('bis_alabels') || '[]'); return Array.isArray(v) ? v : []; }catch(e){ return []; } }
 // First run: save the starting set now, so it can't change later once other settings exist
+// Brand-new visitors start on Auto (All plus what your cameras see most); everyone else keeps their own list
+if(store.get('bis_afilters') == null && store.get('bis_afmode') == null && store.get('bis_tab') == null) store.set('bis_afmode', 'auto');
 if(store.get('bis_afilters') == null) saveAf(loadAf());
+/* Auto alert filters: All, the filters you always want ("pins"), then the most common recent detections, as many
+   as fit across the screen (up to 5). The counts come from the last 3 weeks of alerts and are kept in this browser,
+   refreshed every few hours. */
+const AF_DAYS = 21, AF_AUTO_MAX = 5, AF_STALE = 6 * 3600000;
+// How many recent filters Auto adds: 'fit' = as many as fit across the screen (up to 5), or an exact number
+const afCount = () => { const v = store.get('bis_afcount'); return /^[1-8]$/.test(v || '') ? +v : 'fit'; };
+const afAuto = () => store.get('bis_afmode') === 'auto';
+function loadPins(){ try{ const v = JSON.parse(store.get('bis_afpins') || '[]'); if(Array.isArray(v)) return v.filter(id => id !== 'all' && (FILTER_BUILTIN[id] || String(id).startsWith('label:'))); }catch(e){} return []; }
+const sameFilter = (a, b) => a === b || (String(a).startsWith('label:') && String(b).startsWith('label:') && normLabel(a.slice(6)) === normLabel(b.slice(6)));
+const AFR = (() => { try{ const v = JSON.parse(store.get('bis_afrecent') || 'null'); if(v && Array.isArray(v.list)) return v; }catch(e){} return { at: 0, list: [] }; })();
+// Which filter button an AI label belongs to: person -> People, car/truck/... -> Vehicles, anything else its own label
+function recentId(name){
+  const k = normLabel(name); if(!k) return null;
+  if(/^(person|people|face)$/.test(k)) return 'people';
+  if(VEHICLES.test(k)) return 'vehicles';
+  return 'label:' + String(name).toLowerCase().replace(/[_-]+/g, ' ').trim();     // as Blue Iris reports it ("ups", "dog")
+}
+function chipList(){
+  if(!afAuto()) return loadAf();
+  const pins = loadPins();
+  const auto = AFR.list.map(x => x[0]).filter(id => filterDef(id) && !pins.some(p => sameFilter(p, id)));
+  const n = afCount();
+  return ['all', ...pins, ...auto.slice(0, n === 'fit' ? AF_AUTO_MAX : n)];
+}
 // Selected filter buttons. Empty = All. One = that filter (People/Vehicles use Blue Iris's own lists).
 // Several = alerts matching any of them, filtered on this device from the full alert list.
 A.sel = [];
 function renderFilterChips(){
-  const list = loadAf();
+  const list = chipList(), auto = afAuto(), pins = auto ? loadPins() : [];
   const keep = A.sel.filter(id => list.includes(id));
-  if(keep.length !== A.sel.length){ A.sel = keep; applyFilterState(); }
-  $('#afChips').innerHTML = list.length < 2 ? '' : list.map(id =>
-    `<button class="chip" data-f="${esc(id)}" aria-pressed="${id === 'all' ? !A.sel.length : A.sel.includes(id)}"${id === 'all' ? '' : ' title="Shift or Ctrl + click (long-press on touch) to combine with other filters"'}>${esc(filterDef(id).name)}</button>`).join('');
+  if(keep.length !== A.sel.length){ A.sel = keep; applyFilterState(); if(A.loadedAt) loadAlerts(true); }
+  $('#afChips').innerHTML = list.length < 2 ? '' : list.map(id => {
+    const recent = auto && id !== 'all' && !pins.includes(id), c = recent && AFR.list.find(x => x[0] === id);
+    const tip = (recent ? `Seen ${c ? c[1] + ' times ' : ''}in the last 3 weeks. ` : '') + (id === 'all' ? '' : 'Shift or Ctrl + click (long-press on touch) to combine with other filters');
+    return `<button class="chip${recent ? ' recent' : ''}" data-f="${esc(id)}" aria-pressed="${id === 'all' ? !A.sel.length : A.sel.includes(id)}"${tip ? ` title="${esc(tip)}"` : ''}>${esc(filterDef(id).name)}</button>`;
+  }).join('');
+  afFit();
 }
+// Auto: drop recent filters from the end while the row doesn't fit (keeping at least 2, and any that are selected)
+function afFit(){
+  if(!afAuto() || afCount() !== 'fit' || $('#alertsView').hidden) return;     // an exact number is shown as chosen (the row scrolls)
+  const bar = $('#filters');
+  for(;;){
+    const rec = [...document.querySelectorAll('#afChips .chip.recent')];
+    if(rec.length <= 2 || bar.scrollWidth <= bar.clientWidth + 1) break;
+    const drop = rec.reverse().find(b => b.getAttribute('aria-pressed') !== 'true'); if(!drop) break;
+    drop.remove();
+  }
+}
+let afFitT = 0;
+addEventListener('resize', () => { clearTimeout(afFitT); afFitT = setTimeout(() => { if(afAuto()) renderFilterChips(); }, 200); });
 function applyFilterState(){
   if(A.sel.length > 1){ A.view = 'alerts'; A.match = 'multi'; return; }
   const d = filterDef(A.sel[0] || 'all') || FILTER_BUILTIN.all; A.view = d.view; A.match = d.match || '';
@@ -2075,34 +2174,66 @@ $('#afChips').addEventListener('contextmenu', e => { if(e.target.closest('[data-
 setTimeout(renderFilterChips, 0);
 /* ---- Alert filters settings: built-ins, labels seen on your cameras, and your own labels ---- */
 const AFS = { scan:null, scanAt:0, scanning:false };
-function updateAfUi(){ const n = loadAf().length; $('#afCur').textContent = n < 2 ? 'Hidden' : n + ' shown'; }
+function updateAfUi(){
+  if(afAuto()){ const p = loadPins().length, n = afCount(); $('#afCur').textContent = 'Auto' + (p ? ` \u00b7 ${p} always` : '') + (n === 'fit' ? '' : ` \u00b7 ${n} recent`); return; }
+  const n = loadAf().length; $('#afCur').textContent = n < 2 ? 'Hidden' : n + ' shown';
+}
 async function scanLabels(){
   if(AFS.scanning || (AFS.scan && Date.now() - AFS.scanAt < 600000)) return;
   AFS.scanning = true; renderAfList();
-  const counts = new Map(), now = Math.floor(Date.now() / 1000);
+  const counts = new Map(), ids = new Map(), now = Math.floor(Date.now() / 1000);
+  AFS.idOf = new Map();                                   // one button per label however it's written
+  let done = false;
   try{
-    const days = [...Array(14).keys()];
+    const days = [...Array(AF_DAYS).keys()];
     for(let i = 0; i < days.length; i += 4){
       const res = await Promise.all(days.slice(i, i + 4).map(d =>
         api({cmd:'alertlist', camera:'index', startdate: now - (d + 1) * 86400, enddate: now - d * 86400 + (d ? 0 : 60), view:'alerts'}).catch(() => null)));
       for(const r of res) for(const it of ((r && r.data) || [])){
         if(!camShown(it.camera)) continue;
+        const mine = new Set();
         for(const n of new Set(memoNames(it))){
           const k = normLabel(n); if(!k) continue;
           const c = counts.get(k) || { name: n.replace(/[_-]+/g, ' '), n: 0 }; c.n++; counts.set(k, c);
+          const id = recentId(n); if(id) mine.add(id.startsWith('label:') ? (AFS.idOf.get(k) || (AFS.idOf.set(k, id), id)) : id);
         }
+        if(hasBit(it.flags, 26)) mine.add('people');
+        if(hasBit(it.flags, 27)) mine.add('vehicles');
+        mine.forEach(id => ids.set(id, (ids.get(id) || 0) + 1));
       }
     }
-    AFS.scan = counts; AFS.scanAt = Date.now();
-  }finally{ AFS.scanning = false; renderAfList(); }
+    AFS.scan = counts; AFS.scanAt = Date.now(); done = true;
+    AFR.at = Date.now(); AFR.list = [...ids.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20);
+    store.set('bis_afrecent', JSON.stringify(AFR));
+  }finally{
+    AFS.scanning = false; renderAfList();
+    if(done && afAuto()){ renderFilterChips(); updateAfUi(); }
+  }
 }
+// Auto keeps its counts fresh in the background
+function afRefresh(){ if(afAuto() && S.session && Date.now() - AFR.at > AF_STALE) scanLabels(); }
 function afRow(id, title, sub, on, delKey){
   return `<div class="afrow"><button class="tgl" role="switch" data-af="${esc(id)}" aria-checked="${on}"><span class="lbl">${esc(title)}<small>${esc(sub)}</small></span><span class="tog"></span></button>` +
     (delKey ? `<button class="afdel" data-del="${esc(delKey)}" aria-label="Remove ${esc(title)}">Remove</button>` : '') + '</div>';
 }
 function renderAfList(){
-  const on = new Set(loadAf()), scan = AFS.scan;
-  let h = '<div class="sect">Built in</div>' + BUILTIN_ORDER.map(id => afRow(id, FILTER_BUILTIN[id].name, FILTER_BUILTIN[id].sub, on.has(id))).join('');
+  const auto = afAuto(), on = new Set(auto ? loadPins() : loadAf()), scan = AFS.scan;
+  const modes = [['auto', 'Auto', 'All, anything you always show, then the most common detections of the last 3 weeks'], ['manual', 'Choose', 'Pick exactly which buttons show']];
+  let h = '<div class="sect">Buttons on the Alerts tab</div>' + modes.map(([m, name, sub]) =>
+    `<button class="opt afmode" data-afmode="${m}" aria-checked="${auto === (m === 'auto')}"><span class="lbl">${name}<small>${sub}</small></span><span class="ck">${auto === (m === 'auto') ? '\u2713' : ''}</span></button>`).join('');
+  $('#afIntro').textContent = auto ? 'Auto shows All, the filters you always show (below), then the detections your cameras have seen most in the last 3 weeks: as many as fit on the screen, or the number you choose. Capitalization and plurals don\u2019t matter: \u201cDog\u201d, \u201cdog\u201d and \u201cdogs\u201d are the same.'
+    : 'Choose the filter buttons on the Alerts tab. Labels match the AI label Blue Iris saved with each alert. Capitalization and plurals don\u2019t matter: \u201cDog\u201d, \u201cdog\u201d and \u201cdogs\u201d are the same.';
+  if(auto){
+    const pins = loadPins(), rec = AFR.list.filter(x => filterDef(x[0]) && !pins.some(p => sameFilter(p, x[0])));
+    h += `<div class="meta">${rec.length ? 'Most common lately: ' + rec.slice(0, 8).map(([id, n]) => `${esc(filterDef(id).name)} ${n}`).join(' \u00b7 ') +
+      '.' : (AFS.scanning ? 'Looking at the last 3 weeks of alerts\u2026' : 'Nothing detected in the last 3 weeks yet.')}</div>`;
+    const n = afCount();
+    h += `<div class="dlprof"><span>How many of these to show</span><div class="dlchips" id="afCount">` +
+      ['fit', 1, 2, 3, 4, 5, 6, 8].map(v => `<button type="button" class="chip" data-afcount="${v}" aria-pressed="${n === v}">${v === 'fit' ? 'Fit screen' : v}</button>`).join('') +
+      `</div><small>${n === 'fit' ? `As many as fit across the screen, up to ${AF_AUTO_MAX}.` : `Always ${n}, after the ones you always show. On a narrow screen the row scrolls.`}</small></div>`;
+    h += '<div class="sect">Always show</div>';
+  } else h += '<div class="sect">Built in</div>';
+  h += BUILTIN_ORDER.filter(id => !(auto && id === 'all')).map(id => afRow(id, FILTER_BUILTIN[id].name, FILTER_BUILTIN[id].sub, on.has(id))).join('');
   // labels: ones that are on, your own, then everything the AI has reported recently (most common first)
   const rows = new Map();
   const add = (l, src) => { const k = normLabel(l); if(!k) return; const r = rows.get(k) || { label: l, custom:false }; if(src === 'custom') r.custom = true; rows.set(k, r); };
@@ -2110,23 +2241,25 @@ function renderAfList(){
   customLabels().forEach(l => add(l, 'custom'));
   if(scan) [...scan.entries()].sort((a, b) => b[1].n - a[1].n).forEach(([k, c]) => { if(!rows.has(k) && k !== 'person') add(c.name); });   // person = the built-in People filter
   h += '<div class="sect">Labels</div>';
-  if(!rows.size) h += `<div class="meta">${AFS.scanning ? 'Looking at the last 14 days of alerts\u2026' : 'No AI labels found in the last 14 days. Add one below.'}</div>`;
+  if(!rows.size) h += `<div class="meta">${AFS.scanning ? 'Looking at the last 3 weeks of alerts\u2026' : 'No AI labels found in the last 3 weeks. Add one below.'}</div>`;
   for(const [k, r] of rows){
     const c = scan && scan.get(k);
-    const sub = c ? `${c.n.toLocaleString()} alert${c.n === 1 ? '' : 's'} in the last 14 days` : (AFS.scanning ? 'Checking\u2026' : (scan ? 'Not seen in the last 14 days' : ''));
+    const sub = c ? `${c.n.toLocaleString()} alert${c.n === 1 ? '' : 's'} in the last 3 weeks` : (AFS.scanning ? 'Checking\u2026' : (scan ? 'Not seen in the last 3 weeks' : ''));
     h += afRow('label:' + r.label, labelChip(r.label), sub, on.has('label:' + r.label) || [...on].some(id => id.startsWith('label:') && normLabel(id.slice(6)) === k), r.custom && !c && !on.has('label:' + r.label) ? r.label : '');
   }
-  if(AFS.scanning && rows.size) h += '<div class="meta">Looking at the last 14 days of alerts for more labels\u2026</div>';
+  if(AFS.scanning && rows.size) h += '<div class="meta">Looking at the last 3 weeks of alerts for more labels\u2026</div>';
   $('#afList').innerHTML = h;
 }
 function afToggle(id){
-  let list = loadAf();
+  const auto = afAuto();
+  let list = auto ? loadPins() : loadAf();
   const isLabel = id.startsWith('label:'), k = isLabel ? normLabel(id.slice(6)) : '';
   const cur = list.find(x => x === id || (isLabel && x.startsWith('label:') && normLabel(x.slice(6)) === k));
   if(cur) list = list.filter(x => x !== cur); else list.push(id);
-  saveAf(list);
+  if(auto) store.set('bis_afpins', JSON.stringify(BUILTIN_ORDER.filter(x => list.includes(x)).concat(list.filter(x => !FILTER_BUILTIN[x]))));
+  else saveAf(list);
   renderAfList(); updateAfUi(); renderFilterChips();
-  const now = loadAf();
+  const now = chipList();
   if(A.sel.some(id => !now.includes(id))){ A.sel = A.sel.filter(id => now.includes(id)); applyFilterState(); renderFilterChips(); loadAlerts(true); }
 }
 $('#afBtn').addEventListener('click', () => {
@@ -2135,6 +2268,10 @@ $('#afBtn').addEventListener('click', () => {
 });
 $('#afSheet').addEventListener('click', e => {
   if(e.target.id === 'afSheet' || e.target.id === 'afDone'){ $('#afSheet').hidden = true; return; }
+  const cn = e.target.closest('[data-afcount]');
+  if(cn){ store.set('bis_afcount', cn.dataset.afcount); renderAfList(); renderFilterChips(); updateAfUi(); return; }
+  const m = e.target.closest('[data-afmode]');
+  if(m){ store.set('bis_afmode', m.dataset.afmode); renderAfList(); updateAfUi(); renderFilterChips(); if(afAuto()) scanLabels(); return; }
   const d = e.target.closest('[data-del]');
   if(d){ const k = normLabel(d.dataset.del); store.set('bis_alabels', JSON.stringify(customLabels().filter(l => normLabel(l) !== k))); renderAfList(); return; }
   const b = e.target.closest('[data-af]'); if(b) afToggle(b.dataset.af);
@@ -2148,8 +2285,8 @@ $('#afAdd').addEventListener('submit', e => {
   if(!customLabels().some(l => normLabel(l) === k)) store.set('bis_alabels', JSON.stringify([...customLabels(), raw]));
   if(!loadAf().some(x => x.startsWith('label:') && normLabel(x.slice(6)) === k)) afToggle('label:' + raw); else renderAfList();
   const seen = AFS.scan && AFS.scan.get(k);
-  $('#afNote').textContent = seen ? `Added. \u201c${labelChip(raw)}\u201d matched ${seen.n.toLocaleString()} alerts in the last 14 days.`
-    : AFS.scan ? `Added. Nothing labeled \u201c${raw}\u201d in the last 14 days yet. It has to match the label your AI model reports.` : 'Added.';
+  $('#afNote').textContent = seen ? `Added. \u201c${labelChip(raw)}\u201d matched ${seen.n.toLocaleString()} alerts in the last 3 weeks.`
+    : AFS.scan ? `Added. Nothing labeled \u201c${raw}\u201d in the last 3 weeks yet. It has to match the label your AI model reports.` : 'Added.';
   $('#afInput').value = '';
 });
 // ---- date / time range ----
@@ -2599,16 +2736,24 @@ $('#markSheet').addEventListener('click', e => { if(e.target.id === 'markSheet')
    Point at an alert in the list and the panel beside it plays the alert as a flip-book: 8 still frames spread across
    the alert, like UI3's mouse-over preview but larger. Frames load one at a time (light on Blue Iris) and are kept, so
    the loop and going back to a recent alert cost nothing more. Click the picture to open the alert. */
-const APV = { on: store.get('bis_apv') !== '0', it: null, gen: 0, frames: [], idx: -1, timer: 0, hoverT: 0, cache: new Map(), N: 8, MS: 220, HOLD: 700 };
+const APV_MODES = [['std', 'Standard', 'A slideshow of stills from the alert, like UI3. Light on Blue Iris.'],
+  ['smooth', 'Smooth', 'Real video of the alert, sped up. Smoother, but Blue Iris has to decode and encode it, so it\u2019s best on a capable server.'],
+  ['off', 'Off', 'No preview panel.']];
+const apvModeOf = v => v === 'smooth' ? 'smooth' : v === '0' || v === 'off' ? 'off' : 'std';
+const APV = { mode: apvModeOf(store.get('bis_apv')), get on(){ return this.mode !== 'off'; }, it: null, gen: 0, frames: [], idx: -1, timer: 0, hoverT: 0, cache: new Map(), N: 8, MS: 220, HOLD: 700 };
 const apvMq = matchMedia('(min-width:900px) and (hover:hover) and (pointer:fine)');
 const apvActive = () => APV.on && apvMq.matches && S.tab === 'alerts' && !V.open && document.visibilityState === 'visible';
 function apvLayout(){
   document.body.classList.toggle('apv-on', APV.on && apvMq.matches);
-  $('#apvBtn').hidden = !apvMq.matches;
-  $('#apvBtn').setAttribute('aria-checked', APV.on);
+  $('#apvRow').hidden = !apvMq.matches;
+  $('#apvModes').innerHTML = APV_MODES.map(([m, name]) => `<button type="button" class="chip" data-apv="${m}" aria-pressed="${APV.mode === m}">${name}</button>`).join('');
+  $('#apvSub').textContent = APV_MODES.find(x => x[0] === APV.mode)[2];
   $('#alertPrev').hidden = !(APV.on && apvMq.matches && S.tab === 'alerts');
   clearTimeout(APV.timer); APV.timer = 0;
-  if(apvActive() && APV.it) apvStep();
+  if(!apvActive()){ avStop(true); return; }
+  if(!APV.it) return;
+  if(avWanted(APV.it)){ if(!AV.ctrl && !AV.done) avStart(APV.it); }
+  else { avStop(false); apvStep(); }
 }
 function apvFrameUrl(it, i){
   const dur = durMs(it.filesize), t = Math.round(dur * i / APV.N);
@@ -2636,6 +2781,8 @@ function apvShow(it){
   clearTimeout(APV.timer); APV.timer = 0; APV.idx = -1;
   // drop half-loaded frames of the alert before; keep the last few finished ones
   if(APV.frames.length && !APV.frames.done) APV.frames.forEach(f => { if(f.img && !f.ok){ f.img.onerror = f.img.onload = null; f.img.src = ''; } });
+  avStop(false); $('#apvSpeed').textContent = '';
+  if(avWanted(it)){ APV.frames = []; avStart(it); return; }
   let frames = APV.cache.get(k);
   if(!frames){
     frames = Array.from({ length: APV.N }, (_, i) => ({ i, img: null, ok: false, bad: false }));
@@ -2678,7 +2825,136 @@ $('#alertList').addEventListener('mouseover', e => {
 });
 $('#alertList').addEventListener('mouseleave', () => clearTimeout(APV.hoverT));
 $('#apvFrame').addEventListener('click', () => { if(APV.it) openViewer(APV.it.camera, { alert: APV.it }); });
-$('#apvBtn').addEventListener('click', () => { APV.on = !APV.on; store.set('bis_apv', APV.on ? '1' : '0'); apvLayout(); });
+$('#apvModes').addEventListener('click', e => {
+  const b = e.target.closest('[data-apv]'); if(!b) return;
+  APV.mode = b.dataset.apv; store.set('bis_apv', { std: '1', smooth: 'smooth', off: '0' }[APV.mode]);
+  const it = APV.it; avStop(false); AV.done = false;
+  if(it && APV.on){ APV.it = null; apvLayout(); if(apvMq.matches && S.tab === 'alerts') apvShow(it); } else apvLayout();
+});
+/* Smooth mode: the alert as real video, sped up so it lasts about 6 seconds (2x-8x), streamed from its recording file
+   like the player does. Blue Iris decodes and re-encodes it for each preview, so it costs the server more than the
+   stills. One stream at a time; plays the alert 3 times, then stays on the last frame. If it can't play (not a .bvr
+   recording, or the browser can't), that alert falls back to the slideshow. */
+const AV = { gen: 0, ctrl: null, jm: null, vid: null, prev: null, it: null, last: null, t0: null, lastRaw: -1, wrap: 0, gotKey: false,
+  fed: false, fedMs: 0, ending: false, done: false, loops: 0, timer: 0, clockAt: 0, speed: 1, codec: 'H264', fails: new Set() };
+function avWanted(it){
+  if(APV.mode !== 'smooth' || !VS_OK || !it) return false;
+  const clip = it.clip && !/^@-1\./.test(it.clip) ? it.clip : '';
+  return /\.bvr$/i.test(clip) && !AV.fails.has(recIdOf(it.path));
+}
+function avStop(keepPicture){
+  AV.gen++; clearTimeout(AV.timer); AV.timer = 0;
+  if(AV.ctrl){ try{ AV.ctrl.abort(); }catch(e){} AV.ctrl = null; }
+  if(AV.jm){ try{ AV.jm.destroy(); }catch(e){} AV.jm = null; }
+  const drop = v => { if(!v) return; try{ v.pause(); v.removeAttribute('src'); v.load(); }catch(e){} v.remove(); };
+  if(keepPicture && AV.vid){ drop(AV.prev); AV.prev = AV.vid; }      // the next loop takes over without a flash
+  else { drop(AV.vid); drop(AV.prev); AV.prev = null; }
+  AV.vid = null;
+}
+function avStart(it){
+  avStop(true);
+  if(!apvActive()) return;
+  if(AV.it !== it){ AV.it = it; AV.loops = 0; }
+  AV.done = false;
+  const gen = AV.gen, dur = durMs(it.filesize);
+  AV.speed = Math.max(2, Math.min(8, Math.round(dur / 6000)));
+  Object.assign(AV, { last: null, t0: null, lastRaw: -1, wrap: 0, gotKey: false, fed: false, fedMs: 0, ending: false, codec: 'H264' });
+  const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.setAttribute('playsinline', '');
+  v.addEventListener('playing', () => { if(gen !== AV.gen) return; v.classList.add('on'); if(AV.prev){ const p = AV.prev; AV.prev = null; try{ p.removeAttribute('src'); p.load(); }catch(e){} p.remove(); } });
+  $('#apvFrame').insertBefore(v, $('#apvEmpty')); AV.vid = v;
+  const c = S.camMap && S.camMap[it.camera], cw = c ? c.w : 1920, ch = c ? c.h : 1080;
+  const box = Math.min(1280, Math.round(($('#apvFrame').clientWidth || 640) * Math.min(2, devicePixelRatio || 1)));
+  let w = box, h = w * ch / cw; if(h > box * 9 / 16){ h = box * 9 / 16; w = h * cw / ch; }
+  const tier = TIERS.find(t => t.w >= w && t.h >= h) || TIERS[1], t2 = TIERS.indexOf(tier) < 1 ? TIERS[1] : tier;
+  const url = `file/clips/${it.clip}?${sq()}&speed=${AV.speed * 100}&audio=0&stream=0&w=${r8(w)}&h=${r8(h)}&q=${t2.q}&kbps=${t2.kbps}&extend=2&time=${it.offset || 0}`;
+  $('#apvSpeed').textContent = AV.speed + '\u00d7';
+  const ctrl = new AbortController(); AV.ctrl = ctrl;
+  AV.timer = setTimeout(() => { if(gen === AV.gen && !AV.fed){ if(apvActive()) avFail(gen, 'no picture after 8 s'); else avStop(true); } }, 8000);
+  fetch(url, { signal: ctrl.signal, cache: 'no-store', credentials: 'same-origin' })
+    .then(res => {
+      if(gen !== AV.gen) return;
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      if(/image\//i.test(res.headers.get('Content-Type') || '')) throw new Error('server sent a still image');
+      return avPump(res.body.getReader(), gen);
+    })
+    .catch(e => { if(gen === AV.gen && !(e && e.name === 'AbortError') && !AV.ending) avFail(gen, (e && e.message) || String(e)); });
+}
+function avFail(gen, why){
+  if(gen !== AV.gen) return;
+  const it = AV.it; avStop(false); diagNote('preview video: ' + why);
+  if(!it) return;
+  AV.fails.add(recIdOf(it.path));
+  if(APV.it === it){ APV.it = null; apvShow(it); }       // this alert: the slideshow instead
+}
+async function avPump(reader, gen){
+  const q = new ByteQueue();
+  let state = 0, hdrLen = 0, type = -1, need = 0, raw = 0;
+  const isBlue = (b, upper) => b[0] === (upper ? 66 : 98) && b[1] === 108 && b[2] === 117 && b[3] === 101;
+  for(;;){
+    const r = await reader.read();
+    if(gen !== AV.gen || AV.ending){ try{ reader.cancel(); }catch(e){} return; }
+    if(r.done){ avEnd(gen); return; }
+    q.push(r.value);
+    for(;;){
+      if(state === 0){ const b = q.take(6); if(!b) break; if(!isBlue(b, false)) throw new Error('not a Blue Iris video stream'); hdrLen = b[5]; state = 1; }
+      else if(state === 1){
+        const b = q.take(hdrLen); if(!b) break;
+        if(hdrLen >= 20 && String.fromCharCode(b[16], b[17], b[18], b[19]).toUpperCase() === 'H265') AV.codec = 'H265';
+        state = 2;
+      } else if(state === 2){ const b = q.take(5); if(!b) break; if(!isBlue(b, true)) throw new Error('stream out of sync'); type = b[4]; if(type === 4){ avEnd(gen); return; } state = 3; }
+      else if(state === 3){
+        if(type === 0){ const b = q.take(18); if(!b) break; const dv = new DataView(b.buffer, b.byteOffset, 18); raw = dv.getUint32(2, false); need = dv.getUint32(14, false); if(need > 10000000) throw new Error('bad video frame size'); }
+        else if(type === 1){ const b = q.take(4); if(!b) break; need = new DataView(b.buffer, b.byteOffset, 4).getInt32(0, false); if(need < 0 || need > 2000000) throw new Error('bad audio frame size'); }
+        else if(type === 2){ const b = q.take(1); if(!b) break; need = Math.max(0, b[0] - 6); }
+        else throw new Error('unknown block type ' + type);
+        state = 4;
+      } else { const b = q.take(need); if(!b) break; if(type === 0) avFrame(b, raw, gen); if(AV.ending) return; state = 2; }
+    }
+  }
+}
+function avFrame(data, raw, gen){
+  if(gen !== AV.gen) return;
+  const h265 = AV.codec === 'H265';
+  if(!AV.gotKey){ if(!isKeyframe(data, h265)) return; AV.gotKey = true; }
+  if(!AV.jm){
+    AV.jm = new JMuxer({ node: AV.vid, mode: 'video', videoCodec: AV.codec, flushingTime: 0, clearBuffer: true, fps: 30, maxDelay: 4000,
+      onError: m => avFail(gen, 'player error: ' + m), onUnsupportedCodec: c => avFail(gen, 'browser can\u2019t play ' + c) });
+  }
+  let t = raw;
+  if(AV.lastRaw >= 0){ if(AV.lastRaw - 1e9 > t) AV.wrap += 4294967296; else if(AV.lastRaw + 1e9 < t) AV.wrap -= 4294967296; }
+  AV.lastRaw = raw; t += AV.wrap;
+  if(AV.t0 == null) AV.t0 = t;
+  const it = AV.it, dur = durMs(it.filesize), el = t - AV.t0;
+  if(AV.last){
+    const d = Math.max(1, Math.min(1000, Math.round((t - AV.last.t) / AV.speed)));    // recording-time stamps: play them sped up
+    AV.jm.feed({ video: AV.last.data, duration: d }); AV.fedMs += d;
+    if(!AV.fed){ AV.fed = true; clearTimeout(AV.timer); const p = AV.vid.play(); if(p && p.catch) p.catch(() => {}); avWatch(gen); }
+  }
+  AV.last = { data, t, el };
+  if(el >= dur){ AV.ending = true; if(AV.ctrl){ try{ AV.ctrl.abort(); }catch(e){} AV.ctrl = null; } }   // the end of the alert: stop reading
+}
+// Keep the clock and bar in step with what's on screen, and loop when the alert has played out
+function avWatch(gen){
+  clearTimeout(AV.timer);
+  AV.timer = setTimeout(() => {
+    if(gen !== AV.gen) return;
+    if(!apvActive()){ avStop(true); return; }
+    const v = AV.vid, it = AV.it, dur = durMs(it.filesize), at = v ? v.currentTime * 1000 : 0;
+    const el = Math.min(dur, at * AV.speed);
+    $('#apvClock').textContent = fmtClock(new Date(it.date * 1000 + el), true);
+    $('#apvBarIn').style.width = Math.min(100, el / dur * 100) + '%';
+    if(AV.ending && at >= AV.fedMs - 120){ avEnd(gen); return; }
+    avWatch(gen);
+  }, 150);
+}
+function avEnd(gen){
+  if(gen !== AV.gen) return;
+  AV.ending = true; clearTimeout(AV.timer);
+  if(AV.vid && AV.fed && AV.vid.currentTime * 1000 < AV.fedMs - 120){ avWatch(gen); return; }   // still playing what's buffered
+  const it = AV.it;
+  if(++AV.loops < 3){ AV.timer = setTimeout(() => { if(gen === AV.gen && APV.it === it && apvActive()) avStart(it); }, APV.HOLD); }
+  else { AV.done = true; if(AV.ctrl){ try{ AV.ctrl.abort(); }catch(e){} AV.ctrl = null; } }
+}
 apvMq.addEventListener ? apvMq.addEventListener('change', apvLayout) : apvMq.addListener(apvLayout);
 document.addEventListener('visibilitychange', () => apvLayout());
 
@@ -3646,7 +3922,8 @@ mbSet(MB.on);
 function setZoom(W, redraw = true){
   const anchor = V.mode === 'live' ? null : V.pos;
   V.W = W;
-  document.querySelectorAll('#zoom button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.w === W));
+  document.querySelectorAll('#zoom button[data-w]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.w === W));
+  V.goWin = null;
   if(!redraw) return;
   if(anchor == null) updateWindow(true); else centerWindow(anchor);
   updateUI();
@@ -3665,7 +3942,93 @@ function updateWindow(force){
   }
 }
 setInterval(() => { if(V.open && V.mode === 'live' && !V.dragging){ updateWindow(); updateUI(); } }, 5000);
-$('#zoom').addEventListener('click', e => { const b = e.target.closest('button'); if(b) setZoom(+b.dataset.w); });
+$('#zoom').addEventListener('click', e => { const b = e.target.closest('button[data-w]'); if(b) setZoom(+b.dataset.w); });
+/* ---- go to any date and time: the timeline shows exactly that window (any length from 30 s to a day; zoom from there)
+   and playback starts at its beginning. Quick choices for the usual ones. ---- */
+function goWindow(startMs, endMs){
+  if(startMs > Date.now() - KEEP_OUT - 30000){ toast('That time hasn\u2019t been recorded yet. Pick an earlier time.', 3500); return false; }
+  const e = Math.min(endMs, Date.now() - KEEP_OUT), st = Math.min(startMs, e - 30000);
+  const W = Math.max(30000, Math.min(7 * 86400000, e - st));
+  V.W = W;
+  document.querySelectorAll('#zoom button[data-w]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.w === W));
+  if(V.mode === 'live'){ resetFrames(); enterRec(st, true); } else seek(st);
+  V.winStart = st; V.winEnd = st + W; V.goWin = { s: st, e: st + W };
+  loadTimeline(); updateUI();
+  return true;
+}
+$('#goBtn').addEventListener('click', () => {
+  const g = V.goWin, at = new Date(V.mode === 'live' ? Date.now() - 3600000 : V.pos);
+  const from = g ? new Date(g.s) : new Date(Math.floor(at / 300000) * 300000 - 1800000), to = g ? new Date(g.e) : new Date(from.getTime() + 3600000);
+  $('#gDate').value = ymd(from); $('#gFrom').value = hm(from); $('#gTo').value = hm(to);
+  CAL.y = from.getFullYear(); CAL.m = from.getMonth();
+  $('#goSheet').hidden = false; calRender(); calLoad();
+});
+/* The calendar asks Blue Iris for one month of this camera's timeline at a time (1 hour per step), the same data as
+   the bar under the player, and greys out days with no recording. Days with alerts get a dot. Kept per camera and month. */
+const CAL = { y: 0, m: 0, data: new Map(), loading: '' };
+const calKey = () => `${V.cam}|${CAL.y}-${CAL.m}`;
+async function calLoad(){
+  const key = calKey(), had = CAL.data.get(key);
+  if(had && (had.done && Date.now() - had.at < (CAL.m === new Date().getMonth() ? 300000 : 3600000)) || CAL.loading === key) return;
+  CAL.loading = key; calRender();
+  const a = new Date(CAL.y, CAL.m, 1), b = new Date(CAL.y, CAL.m + 1, 1), mpp = 3600000;
+  const start = Math.floor(a / 1000), end = Math.floor(Math.min(b, Date.now()) / 1000);
+  const rec = new Set(), al = new Set();
+  try{
+    if(end > start){
+      const r = await api({ cmd: 'timeline', camera: V.cam, startdate: start, enddate: end, msecpp: mpp });
+      if(r.result !== 'success') throw new Error('no timeline');
+      const day = t => { const d = new Date(t); return d.getFullYear() === CAL.y && d.getMonth() === CAL.m ? d.getDate() : 0; };
+      for(const c of (r.data && r.data.clips) || []){
+        const s0 = start * 1000 + c.x1 * mpp, e0 = start * 1000 + c.x2 * mpp;
+        for(let t = s0; t < e0 + 1; t = new Date(new Date(t).setHours(24, 0, 0, 0)).getTime()){ const d = day(t); if(d) rec.add(d); if(t >= e0) break; }
+        const d = day(Math.max(s0, e0 - 1)); if(d) rec.add(d);
+      }
+      for(const x of (r.data && r.data.alerts) || []){ const d = day(start * 1000 + x.x1 * mpp); if(d) al.add(d); }
+    }
+    CAL.data.set(key, { rec, al, done: true, at: Date.now() });
+  }catch(e){ if(e.message === 'session') return; CAL.data.set(key, { failed: true, at: Date.now() }); }
+  finally{ if(CAL.loading === key) CAL.loading = ''; if(!$('#goSheet').hidden) calRender(); }
+}
+function calRender(){
+  const first = new Date(CAL.y, CAL.m, 1), days = new Date(CAL.y, CAL.m + 1, 0).getDate(), today = new Date();
+  const info = CAL.data.get(calKey()), sel = $('#gDate').value;
+  $('#calTitle').textContent = first.toLocaleDateString([], { month: 'long', year: 'numeric' });
+  $('#calNext').disabled = CAL.y > today.getFullYear() || (CAL.y === today.getFullYear() && CAL.m >= today.getMonth());
+  let h = [...Array(7)].map((_, i) => `<div class="wd">${new Date(2026, 1, 1 + i).toLocaleDateString([], { weekday: 'narrow' })}</div>`).join('');   // Feb 1 2026 is a Sunday
+  h += '<div></div>'.repeat(first.getDay());
+  for(let d = 1; d <= days; d++){
+    const date = new Date(CAL.y, CAL.m, d), v = ymd(date), future = date > today;
+    const none = future || (info && info.done && !info.rec.has(d));
+    const cls = [v === sel && 'sel', v === ymd(today) && 'today', info && info.done && info.al.has(d) && !none && 'al'].filter(Boolean).join(' ');
+    h += `<button type="button" data-day="${v}" class="${cls}"${none ? ' disabled' : ''} title="${none ? (future ? 'Not yet recorded' : 'No recordings on this day') : (info && info.done && info.al.has(d) ? 'Recordings and alerts' : '')}">${d}</button>`;
+  }
+  $('#calGrid').innerHTML = h;
+  $('#calNote').textContent = CAL.loading === calKey() ? 'Checking which days have recordings\u2026' : info && info.failed ? 'Couldn\u2019t check which days have recordings.'
+    : info && info.done ? (info.rec.size ? `Greyed-out days have no recordings for ${camName(V.cam)}. A dot marks days with alerts.` : `No recordings for ${camName(V.cam)} this month.`) : '';
+}
+$('#calGrid').addEventListener('click', e => { const b = e.target.closest('[data-day]'); if(!b || b.disabled) return; $('#gDate').value = b.dataset.day; calRender(); });
+$('#calPrev').addEventListener('click', () => { if(--CAL.m < 0){ CAL.m = 11; CAL.y--; } calRender(); calLoad(); });
+$('#calNext').addEventListener('click', () => { if(++CAL.m > 11){ CAL.m = 0; CAL.y++; } calRender(); calLoad(); });
+function goFromInputs(){
+  const date = $('#gDate').value; if(!date){ toast('Pick a date'); return null; }
+  const from = $('#gFrom').value || '00:00', to = $('#gTo').value || '23:59';
+  const a = new Date(`${date}T${from}:00`); let b = new Date(`${date}T${to}:59`);
+  if(b <= a) b = new Date(b.getTime() + 86400000);          // e.g. 10 PM - 2 AM runs past midnight
+  return { s: a.getTime(), e: b.getTime() };
+}
+$('#goSheet').addEventListener('click', e => {
+  if(e.target.id === 'goSheet' || e.target.id === 'gCancel'){ $('#goSheet').hidden = true; return; }
+  let r = null;
+  if(e.target.id === 'gApply') r = goFromInputs();
+  const q = e.target.closest('[data-g]');
+  if(q){
+    const now = Date.now(), day0 = new Date(); day0.setHours(0, 0, 0, 0); const d0 = day0.getTime(), H = 3600000;
+    r = { hour: { s: now - H, e: now }, morning: { s: d0 + 6 * H, e: d0 + 12 * H }, night: { s: d0 - 4 * H, e: d0 + 6 * H },
+          yesterday: { s: d0 - 24 * H, e: d0 - 1000 }, day: { s: now - 24 * H - H / 2, e: now - 24 * H + H / 2 }, week: { s: now - 168 * H - H / 2, e: now - 168 * H + H / 2 } }[q.dataset.g];
+  }
+  if(r && goWindow(r.s, r.e)) $('#goSheet').hidden = true;
+});
 
 /* ---- timeline data (recording coverage + alert markers) ---- */
 let tlTimer, tlPending = '';
@@ -3810,7 +4173,7 @@ function zoomTimeline(W, anchorT, anchorX){
     if(end > maxEnd){ end = maxEnd; start = end - V.W; }
     V.winStart = start; V.winEnd = end; loadTimeline();
   }
-  document.querySelectorAll('#zoom button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.w === V.W));
+  document.querySelectorAll('#zoom button[data-w]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.w === V.W));
   updateUI();
 }
 function panTimeline(dt){

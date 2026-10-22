@@ -2,6 +2,13 @@
 
 All notable changes to Sightline for Blue Iris. Released versions match what **Settings → About** shows; a version ending in `-dev` is a work-in-progress copy from `main`.
 
+## Unreleased (next: 0.15.0)
+
+- **Auto alert filters.** A new choice in **Settings → Alert filters**: **Auto** shows All, the filters you always want (switch them on under Always show, for example People and Vehicles), then the detections your cameras have seen most in the last 3 weeks. Person counts as People and car / truck / bus as Vehicles; other labels get their own button (Dogs, UPS, Amazon…). Show as many as fit across the screen (Fit screen, up to 5) or an exact number (1–8). The counts are kept in this browser and refreshed every few hours in the background. **Choose** is the hand-picked list as before. Brand-new visitors start on Auto; everyone else keeps their own list until they switch.
+- The label scan in Alert filters now covers the last 3 weeks (was 14 days).
+- **Smooth mode for the alert preview panel.** Settings → Interface → Alert preview panel is now **Standard / Smooth / Off**. Standard (the default) is the slideshow of stills, like UI3. Smooth plays the alert as real video from its recording file, sped up so it lasts about 6 seconds (2×–8×, shown in the corner), 3 times. Blue Iris has to decode and encode it for each preview, so it's best on a capable server. One stream at a time; it pauses while the player is open; an alert that can't be played falls back to the slideshow.
+- **Go to any date and time in the player.** A calendar button after 48h opens quick choices (Last hour, This morning, Last night, Yesterday, This time yesterday, This time last week) or a month calendar with from / to times (a range can run past midnight). Days with no recordings for the camera are greyed out and can't be picked; days with alerts get a dot (one coarse timeline request per month viewed). The timeline then shows exactly that window and plays from its start, however far back. Times not yet recorded are refused.
+
 ## 0.14.0 — 2026-10-21
 
 - **Step frame by frame with `,` and `.`**, like UI3. Pauses, then shows the frame one frame interval back or forward, using the camera's frame rate in Blue Iris. From live, `,` pauses on the frame shown and steps back.
