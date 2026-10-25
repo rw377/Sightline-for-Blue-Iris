@@ -2,7 +2,7 @@
 
 All notable changes to Sightline for Blue Iris. Released versions match what **Settings → About** shows; a version ending in `-dev` is a work-in-progress copy from `main`.
 
-## Unreleased (next: 0.15.0)
+## 0.15.0 — 2026-10-24
 
 - **Auto alert filters.** A new choice in **Settings → Alert filters**: **Auto** shows All, the filters you always want (switch them on under Always show, for example People and Vehicles), then the detections your cameras have seen most in the last 3 weeks. Person counts as People and car / truck / bus as Vehicles; other labels get their own button (Dogs, UPS, Amazon…). Show as many as fit across the screen (Fit screen, up to 5) or an exact number (1–8). The counts are kept in this browser and refreshed every few hours in the background. **Choose** is the hand-picked list as before. Brand-new visitors start on Auto; everyone else keeps their own list until they switch.
 - The label scan in Alert filters now covers the last 3 weeks (was 14 days).

@@ -99,6 +99,10 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 
 ![Playback on desktop](docs/screenshots/desktop-player.png)
 
+Go to any date and time: days with no recordings for the camera are greyed out, and days with alerts are marked:
+
+![Go to a time, with a calendar of the days that have recordings](docs/screenshots/desktop-goto.png)
+
 Point at an alert to preview it beside the list:
 
 ![Alert preview panel on desktop](docs/screenshots/desktop-alerts.png)
