@@ -38,6 +38,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **A camera grid that fits your screen.** Tiles size themselves so the whole group fits (2 + 2, not 3 + 1), or pick Large / Medium / Small. The choice is remembered for each group.
 - **Your Blue Iris groups as buttons** (Outdoor, Indoor and so on). Choose which ones appear.
 - **Drag to reorder** cameras, with a separate order for each group.
+- **Make some cameras bigger:** right-click a tile (press and hold on a phone) to make it **Large** (2×2), **Wide** (2×1, for panoramic and dual-lens cameras) or **Tall** (1×2, for portrait cameras). The grid fills in around them, and sizes are kept per group. With live video, up to 3 big tiles get their camera's own stream so they stay sharp.
 - **Hidden and disabled cameras stay out of the way.** Cameras marked Hidden in Blue Iris, and disabled cameras, don't appear in the grid or the alerts. A setting lets you show hidden cameras if you want them.
 - **Activity at a glance.** A tile's border lights up when Blue Iris sees motion (white) or a trigger, colored by what the AI found (person, vehicle, animal, delivery), with a label such as **"Dog 88%"**.
 - **Optional motion boxes on the tiles** show *where* something is moving, so you can follow the dog around the house without opening each camera.

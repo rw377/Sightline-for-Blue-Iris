@@ -2,6 +2,11 @@
 
 All notable changes to Sightline for Blue Iris. Released versions match what **Settings → About** shows; a version ending in `-dev` is a work-in-progress copy from `main`.
 
+## Unreleased (next: 0.16.0)
+
+- **Per-camera tile sizes on the Live grid.** Right-click a tile (on a phone, press and hold, then let go without dragging) and choose **Normal**, **Large** (2×2), **Wide** (2×1, for panoramic and dual-lens cameras) or **Tall** (1×2, for portrait cameras). The grid fills the gaps around big tiles, and Auto still fits the whole group on screen with the sizes taken into account. Sizes are saved per group, like the camera order; on a phone, Large and Wide tiles are full width. **Settings → Reset layout for this view** (was "Reset camera order") resets both order and sizes.
+- **Big tiles stay sharp with live video.** Up to 3 big tiles that are on screen get their camera's own stream at their size (720p-1080p tier), while the other tiles keep sharing the group stream. Further big tiles show their part of the group picture enlarged. The extra streams pause while the player is open; motion boxes work on them too. In snapshot mode, big tiles ask Blue Iris for bigger stills.
+
 ## 0.15.0 — 2026-10-24
 
 - **Auto alert filters.** A new choice in **Settings → Alert filters**: **Auto** shows All, the filters you always want (switch them on under Always show, for example People and Vehicles), then the detections your cameras have seen most in the last 3 weeks. Person counts as People and car / truck / bus as Vehicles; other labels get their own button (Dogs, UPS, Amazon…). Show as many as fit across the screen (Fit screen, up to 5) or an exact number (1–8). The counts are kept in this browser and refreshed every few hours in the background. **Choose** is the hand-picked list as before. Brand-new visitors start on Auto; everyone else keeps their own list until they switch.

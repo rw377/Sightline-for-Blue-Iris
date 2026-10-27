@@ -60,12 +60,13 @@ main{flex:1;overflow:hidden;position:relative}
 .tabs button[aria-selected=true] svg{color:var(--accent)}
 
 /* ---------- live grid ---------- */
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:0 calc(6px + var(--safe-r)) 0 calc(6px + var(--safe-l))}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);grid-auto-flow:row dense;gap:6px;padding:0 calc(6px + var(--safe-r)) 0 calc(6px + var(--safe-l))}
 #groupBar{padding-top:8px;padding-bottom:8px}
 .sizebtn{margin-left:auto;flex:none;height:32px;padding:0 10px 0 9px;border-radius:16px;border:1px solid var(--line);display:flex;align-items:center;gap:6px;
   color:var(--muted);font-size:13px;font-weight:600}
 .sizebtn:active{background:var(--surface2)}
 .tile{position:relative;display:block;width:100%;border-radius:10px;overflow:hidden;background:var(--surface);aspect-ratio:16/9}
+.grid.rows .tile{aspect-ratio:auto;height:100%}
 .tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;-webkit-user-drag:none}
 .tile{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 .tile::after{content:"";position:absolute;inset:0;border-radius:inherit;border:3px solid transparent;pointer-events:none;z-index:3;transition:border-color .25s,box-shadow .25s}
@@ -117,6 +118,14 @@ main{flex:1;overflow:hidden;position:relative}
 .tile canvas.tlive{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .tile.live img{visibility:hidden}
 .gvvid{position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none;z-index:-1}
+.sheet .szopt{justify-content:flex-start;gap:14px;text-align:left}
+.sheet .szopt svg{flex:none;color:var(--muted)}
+.sheet .szopt[aria-checked=true] svg{color:var(--accent)}
+.sheet .szopt .lbl{flex:1}
+.tile video.tvid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;pointer-events:none;background:#000}
+.tile.portrait video.tvid{object-fit:contain}
+.tile.own video.tvid{opacity:1}
+.tile.own img,.tile.own canvas.tlive{visibility:hidden}
 .tile .offmsg{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:12px}
 
 /* ---------- alerts ---------- */
@@ -714,6 +723,15 @@ body.isfs #viewer.hideui{cursor:none}
   </div>
 </div>
 
+<div id="tsizeSheet" class="sheetbg" hidden>
+  <div class="sheet">
+    <h3 id="tsizeTitle">Tile size</h3>
+    <div class="meta" id="tsizeMeta"></div>
+    <div id="tsizeOpts"></div>
+    <div class="btnrow"><button class="primary" id="tsizeDone">Done</button></div>
+  </div>
+</div>
+
 <div id="staySheet" class="sheetbg" hidden>
   <form class="sheet" id="stayForm">
     <h3>Stay signed in</h3>
@@ -775,7 +793,7 @@ body.isfs #viewer.hideui{cursor:none}
     <button id="tlBtn" class="tgl" role="switch" aria-checked="true"><span class="lbl">AI labels on cameras<small>Show what the AI saw on the tile, e.g. &#8220;Dog 82%&#8221;</small></span><span class="tog"></span></button>
     <button id="tvBtn" class="tgl" role="switch" aria-checked="true"><span class="lbl">Live video in camera tiles<small>Off shows snapshots every 1.5 seconds instead, which uses less data</small></span><span class="tog"></span></button>
     <button id="hidBtn" class="tgl" role="switch" aria-checked="false"><span class="lbl">Show hidden cameras<small>Cameras marked Hidden in Blue Iris. Disabled cameras are never shown.</small></span><span class="tog"></span></button>
-    <button id="resetOrderBtn">Reset camera order for this view</button>
+    <button id="resetOrderBtn">Reset layout for this view<span class="sub" style="margin-left:auto;color:var(--faint);font-size:13px">order and tile sizes</span></button>
     <div class="sect">Interface</div>
     <button id="groupsBtn" class="opt"><span>Groups on Live screen</span><span class="sub" id="groupsCur"></span></button>
     <button id="afBtn" class="opt"><span>Alert filters</span><span class="sub" id="afCur"></span></button>
@@ -903,7 +921,7 @@ body.isfs #viewer.hideui{cursor:none}
 'use strict';
 /* Values filled in by the Blue Iris web server when it serves this .htm file */
 const INJECTED_SESSION = "%%SESSION%%";
-const APP = { name: 'Sightline', version: '0.15.0' };   // bump the version with every change you copy to the www folder
+const APP = { name: 'Sightline', version: '0.16.0-dev' };   // bump the version with every change you copy to the www folder
 const INJECTED_SYSNAME = "%%SYSNAME%%";
 /* Note: never write two percent signs together anywhere else in this file \u2014 Blue Iris treats the
    text between them as a placeholder and blanks it out when serving the page. */
@@ -1219,11 +1237,12 @@ function autoLayout(n){
   const view = $('#liveView');
   const W = (view.clientWidth || innerWidth) - 12, H = (view.clientHeight || innerHeight) - $('#groupBar').offsetHeight - 18;
   if(!n) return { cols: 2 };
+  const fp = sizeFootprint(), cells = Math.max(n, fp.cells);       // bigger tiles take more grid cells
   const opts = [];
-  for(let c = 1; c <= Math.min(n, 8); c++){
-    const rows = Math.ceil(n / c);
+  for(let c = Math.min(fp.minCols, 8); c <= Math.min(cells, 8); c++){
+    const pk = packGrid(fp.items, c), rows = pk.rows;
     const tw = Math.min((W - 6 * (c - 1)) / c, ((H - 6 * (rows - 1)) / rows) * 16 / 9);
-    opts.push({ cols: c, tw, empty: rows * c - n });
+    opts.push({ cols: c, tw, empty: pk.empty });
   }
   const best = Math.max(...opts.map(o => o.tw));
   if(best < 150) return { cols: Math.max(2, Math.round(W / 300)) };
@@ -1234,17 +1253,79 @@ function autoLayout(n){
   return { cols: pick.cols, tw: Math.floor(pick.tw) };
 }
 function autoCols(n){ return autoLayout(n).cols; }
+/* ---- tile sizes: per camera, per group (like the order). A tile can span 2 columns and/or 2 rows; the grid fills
+   the gaps around big tiles. Rows are a fixed 16:9 height of one column so every size keeps its proportions. ---- */
+const TSIZES = { n: [1, 1, 'Normal', 'One grid space'], l: [2, 2, 'Large', 'Twice as wide and twice as tall'],
+  w: [2, 1, 'Wide', 'Twice as wide: for panoramic and dual-lens cameras'], t: [1, 2, 'Tall', 'Twice as tall: for portrait (upright) cameras'] };
+function loadSizes(){ try{ return JSON.parse(store.get('bis_tsize') || '{}') || {}; }catch(e){ return {}; } }
+function saveSizes(map){ const m = loadSizes(); if(map && Object.keys(map).length) m[S.group] = map; else delete m[S.group]; store.set('bis_tsize', JSON.stringify(m)); }
+const camSize = id => { const v = (loadSizes()[S.group] || {})[id]; return TSIZES[v] ? v : 'n'; };
+function sizeFootprint(){
+  let cells = 0, minCols = 1; const items = [];
+  for(const c of visibleCams()){ const z = TSIZES[camSize(c.id)]; cells += z[0] * z[1]; minCols = Math.max(minCols, z[0]); items.push([z[0], z[1]]); }
+  return { cells, minCols, items };
+}
+// How many rows the browser will need: place tiles in order, each in the first spot it fits (CSS grid "dense")
+function packGrid(items, cols){
+  const occ = [], taken = (y, x) => occ[y] && occ[y][x];
+  let rows = 0, area = 0;
+  for(const [w0, h] of items){
+    const w = Math.min(w0, cols); area += w * h;
+    for(let r = 0, done = false; !done; r++){
+      for(let c = 0; c + w <= cols && !done; c++){
+        let ok = true;
+        for(let y = r; y < r + h && ok; y++) for(let x = c; x < c + w; x++) if(taken(y, x)){ ok = false; break; }
+        if(!ok) continue;
+        for(let y = r; y < r + h; y++){ occ[y] = occ[y] || []; for(let x = c; x < c + w; x++) occ[y][x] = 1; }
+        rows = Math.max(rows, r + h); done = true;
+      }
+    }
+  }
+  return { rows, empty: rows * cols - area };
+}
 function layoutGrid(){
   const g = $('#grid'), c = getCols();
+  let cols, colW = 0;
   if(c === 'auto'){
     const L = autoLayout(visibleCams().length);
+    cols = L.cols; colW = L.tw || 0;
     g.style.gridTemplateColumns = L.tw ? `repeat(${L.cols}, ${L.tw}px)` : `repeat(${L.cols}, minmax(0, 1fr))`;
     g.style.justifyContent = L.tw ? 'center' : '';
   } else {
+    cols = +c;
     g.style.gridTemplateColumns = `repeat(${+c}, minmax(0, 1fr))`;
     g.style.justifyContent = '';
   }
+  // each tile spans its size, never more columns than there are
+  g.querySelectorAll('.tile').forEach(el => {
+    const z = TSIZES[camSize(el.dataset.cam)];
+    el.style.gridColumn = z[0] > 1 && cols > 1 ? `span ${Math.min(z[0], cols)}` : '';
+    el.style.gridRow = z[1] > 1 ? `span ${z[1]}` : '';
+    el.classList.toggle('big', z[0] > 1 || z[1] > 1);
+  });
+  if(!colW && g.clientWidth){
+    const cs = getComputedStyle(g), inner = g.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    colW = (inner - 6 * (cols - 1)) / cols;
+  }
+  if(colW > 0){ g.style.gridAutoRows = Math.round(colW * 9 / 16) + 'px'; g.classList.add('rows'); }
+  else { g.style.gridAutoRows = ''; g.classList.remove('rows'); }
 }
+function openSizeSheet(id){
+  const cur = camSize(id), grp = S.group === 'index' ? 'All' : ((S.groups.find(g => g.id === S.group) || {}).name || S.group);
+  $('#tsizeTitle').textContent = camName(id);
+  $('#tsizeMeta').textContent = `Tile size in ${grp}. Big tiles with live video get their own stream so they stay sharp (up to ${OWN_MAX} at a time).`;
+  const icon = (w, h) => { const W = w === 2 ? 20 : 9, H = h === 2 ? 18 : 8; return `<svg width="24" height="22" viewBox="0 0 24 22" fill="none" stroke="currentColor" stroke-width="2"><rect x="${(24 - W) / 2}" y="${(22 - H) / 2}" width="${W}" height="${H}" rx="2"/></svg>`; };
+  $('#tsizeOpts').innerHTML = Object.entries(TSIZES).map(([k, [w, h, name, sub]]) =>
+    `<button class="opt szopt" data-tsize="${k}" data-cam="${esc(id)}" aria-checked="${cur === k}">${icon(w, h)}<span class="lbl">${name}${cur === k ? ' \u2713' : ''}<small>${sub}</small></span></button>`).join('');
+  $('#tsizeSheet').hidden = false;
+}
+$('#tsizeSheet').addEventListener('click', e => {
+  if(e.target.id === 'tsizeSheet' || e.target.id === 'tsizeDone'){ $('#tsizeSheet').hidden = true; return; }
+  const b = e.target.closest('[data-tsize]'); if(!b) return;
+  const m = Object.assign({}, loadSizes()[S.group] || {});
+  if(b.dataset.tsize === 'n') delete m[b.dataset.cam]; else m[b.dataset.cam] = b.dataset.tsize;
+  saveSizes(m); layoutGrid(); updateSizeBtn(); openSizeSheet(b.dataset.cam); ownSync();
+});
 addEventListener('resize', () => { if(S.tab === 'live'){ layoutGrid(); updateSizeBtn(); } });
 function camName(id){ return (S.camMap[id] && S.camMap[id].name) || id; }
 
@@ -1264,7 +1345,7 @@ function buildGrid(){
   for(const c of cams){
     const el = document.createElement('button');
     el.className = 'tile' + (c.online ? '' : ' off') + (c.trig ? ' trig' : '');
-    el.dataset.cam = c.id;
+    el.dataset.cam = c.id; el.title = 'Drag to reorder \u00b7 right-click for tile size';
     if(c.h > c.w) el.classList.add('portrait');
     el.innerHTML = `<img alt=""><canvas class="tbox"></canvas><span class="tlabel" hidden></span><div class="tname"><span class="dot"></span><span>${esc(c.name)}</span></div>`;
     el.addEventListener('click', () => { if(performance.now() - DR.endedAt > 350) openViewer(c.id); });
@@ -1273,11 +1354,12 @@ function buildGrid(){
     tiles.set(c.id, t);
     tileObserver.observe(el);
   }
+  layoutGrid();
 }
 /* ---- drag to reorder: mouse = just drag; touch = press and hold, then drag ---- */
 const DR = { el:null, pid:null, sx:0, sy:0, x:0, y:0, type:'', active:false, timer:null, ghost:null, offX:0, offY:0, endedAt:-1e9, scrollTimer:null };
 const gridEl = $('#grid');
-gridEl.addEventListener('contextmenu', e => { if(e.target.closest('.tile')) e.preventDefault(); });
+gridEl.addEventListener('contextmenu', e => { const t = e.target.closest('.tile'); if(!t) return; e.preventDefault(); if((e.pointerType || DR.type || 'mouse') === 'mouse') openSizeSheet(t.dataset.cam); });   // touch: hold and let go instead
 gridEl.addEventListener('pointerdown', e => {
   const el = e.target.closest('.tile'); if(!el || (e.pointerType === 'mouse' && e.button !== 0)) return;
   Object.assign(DR, { el, pid: e.pointerId, sx: e.clientX, sy: e.clientY, x: e.clientX, y: e.clientY, type: e.pointerType, active: false });
@@ -1363,6 +1445,7 @@ function dragEnd(){
   const ids = [...gridEl.querySelectorAll('.tile')].map(t => t.dataset.cam);
   const prev = visibleCams().map(c => c.id);
   if(ids.join('|') !== prev.join('|')) saveOrder(ids);
+  else if(DR.type !== 'mouse' && Math.hypot(DR.x - DR.sx, DR.y - DR.sy) < 12) setTimeout(() => openSizeSheet(el.dataset.cam), 170);   // held and let go: tile size
 }
 $('#legendBtn').addEventListener('click', () => { $('#sheet').hidden = true; $('#legendSheet').hidden = false; });
 /* ---- About ---- */
@@ -1732,13 +1815,13 @@ setTimeout(applyLiveOpts, 0);   // SENS/MB are defined further down this script
 $('#legendSheet').addEventListener('click', e => { if(e.target.id === 'legendSheet') $('#legendSheet').hidden = true; });
 $('#resetOrderBtn').addEventListener('click', () => {
   $('#sheet').hidden = true;
-  saveOrder(null); buildGrid();
-  toast('Camera order reset to Blue Iris order');
+  saveOrder(null); saveSizes(null); buildGrid(); gvSync();
+  toast('Layout reset: Blue Iris order, all tiles normal size');
 });
 
 const canRefreshTiles = () => S.tab === 'live' && !V.open && document.visibilityState === 'visible';
 function pumpTile(t){
-  if(t.busy || t.timer || t.live || !t.visible || !canRefreshTiles()) return;
+  if(t.busy || t.timer || t.live || t.ownOn || !t.visible || !canRefreshTiles()) return;
   t.busy = true;
   const w = Math.min(1280, Math.round(t.el.clientWidth * Math.min(2, devicePixelRatio || 1)) || 320);
   const im = new Image();
@@ -1772,6 +1855,7 @@ function gvSize(g){
   return { w: r8(g.w * sc), h: r8(g.h * sc), q: t.q, kbps: t.kbps };
 }
 function gvSync(){
+  ownSync();
   const g = gvWanted() ? gvGroup() : null;
   const key = g ? g.id + '|' + JSON.stringify(gvSize(g)) : '';
   if(key === GV.key) return;
@@ -1876,6 +1960,7 @@ function gvDraw(){
       t.lc = document.createElement('canvas'); t.lc.className = 'tlive';
       t.el.insertBefore(t.lc, t.el.querySelector('canvas.tbox')); t.el.classList.add('live');
     }
+    if(t.ownOn) return;                                    // a big tile showing its own stream
     const W = t.el.clientWidth, H = t.el.clientHeight; if(!W || !H) return;
     const cw = Math.round(W * dpr), ch = Math.round(H * dpr), cnv = t.lc;
     if(cnv.width !== cw || cnv.height !== ch){ cnv.width = cw; cnv.height = ch; }
@@ -1892,6 +1977,117 @@ function gvDraw(){
     }
     if(detect) tileDetect(t, cnv, cw, ch);
   });
+}
+/* ---- big tiles get their own stream ----
+   The grid's live video is one stream of the whole group, cut up per tile; a tile shown at 2x would just be that
+   piece enlarged. So up to OWN_MAX big tiles (Large / Wide / Tall) that are on screen get the camera's own stream at
+   their size, while the rest keep sharing the group stream (browsers allow only about 6 connections per server).
+   Anything that goes wrong falls back to the shared picture for a while. */
+const OWN_MAX = 3;
+const OWN = { players: new Map(), until: {} };
+const ownWanted = () => GV.on && VS_OK && started && S.tab === 'live' && !V.open && document.visibilityState === 'visible';
+function ownSync(){
+  const want = new Set();
+  if(ownWanted()){
+    for(const el of gridEl.querySelectorAll('.tile.big')){
+      if(want.size >= OWN_MAX) break;
+      const t = tiles.get(el.dataset.cam), c = S.camMap[el.dataset.cam];
+      if(t && t.el === el && t.visible && c && c.online && Date.now() >= (OWN.until[c.id] || 0)) want.add(c.id);
+    }
+  }
+  for(const [id, p] of OWN.players) if(!want.has(id) || tiles.get(id) !== p.t || p.key !== ownKey(p.t)) ownStop(id);
+  for(const id of want) if(!OWN.players.has(id)) ownStart(tiles.get(id));
+}
+function ownSize(t){
+  const c = S.camMap[t.cam] || { w: 1920, h: 1080 }, dpr = Math.min(2, devicePixelRatio || 1);
+  const need = Math.max(t.el.clientWidth, t.el.clientHeight * c.w / c.h) * dpr;
+  let i = TIERS.findIndex(x => x.w >= need); if(i < 0 || i > 2) i = 2; i = Math.max(1, i);   // 720p to 1080p
+  const T = TIERS[i], sc = Math.min(1, T.w / c.w, T.h / c.h, Math.max(T.w, T.h) / Math.max(c.w, c.h));
+  return { w: r8(c.w * sc), h: r8(c.h * sc), q: T.q, kbps: T.kbps };
+}
+const ownKey = t => JSON.stringify(ownSize(t));
+function ownStop(id){
+  const p = OWN.players.get(id); if(!p) return;
+  OWN.players.delete(id); p.dead = true; clearTimeout(p.watch);
+  try{ p.ctrl.abort(); }catch(e){}
+  if(p.jm){ try{ p.jm.destroy(); }catch(e){} }
+  try{ p.vid.pause(); p.vid.removeAttribute('src'); p.vid.load(); }catch(e){} p.vid.remove();
+  p.t.ownOn = false; p.t.el.classList.remove('own');
+  if(!p.t.live) pumpTile(p.t);
+}
+function ownFail(p, why){
+  if(p.dead) return;
+  const n = (p.t.ownFails = (p.t.ownFails || 0) + 1);
+  OWN.until[p.t.cam] = Date.now() + Math.min(300000, 30000 * n);
+  diagNote('big tile video: ' + why);
+  ownStop(p.t.cam);
+}
+function ownStart(t){
+  const z = ownSize(t);
+  const p = { t, key: JSON.stringify(z), ctrl: new AbortController(), jm: null, vid: document.createElement('video'), last: null, lastRaw: -1, wrap: 0,
+    gotKey: false, fed: false, codec: 'H264', dead: false, detAt: 0, watch: 0 };
+  OWN.players.set(t.cam, p);
+  const v = p.vid; v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.className = 'tvid';
+  v.addEventListener('playing', () => { if(p.dead) return; t.ownOn = true; t.el.classList.add('own'); t.ownFails = 0; clearTimeout(t.timer); t.timer = null; ownDetect(p); });
+  t.el.insertBefore(v, t.el.querySelector('canvas.tbox'));
+  p.watch = setTimeout(() => { if(!p.fed) ownFail(p, 'no picture after 10 s'); }, 10000);
+  fetch(`video/${camEnc(t.cam)}/2.0?${sq()}&audio=0&stream=0&w=${z.w}&h=${z.h}&q=${z.q}&kbps=${z.kbps}&extend=2`,
+    { signal: p.ctrl.signal, cache: 'no-store', credentials: 'same-origin' })
+    .then(res => {
+      if(p.dead) return;
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      if(/image\//i.test(res.headers.get('Content-Type') || '')) throw new Error('server sent a still image');
+      return biPump(res.body.getReader(), () => !p.dead, (data, raw) => ownFrame(p, data, raw), why => ownFail(p, why), c => { p.codec = c; });
+    })
+    .catch(e => { if(!p.dead && !(e && e.name === 'AbortError')) ownFail(p, (e && e.message) || String(e)); });
+}
+function ownFrame(p, data, raw){
+  if(p.dead) return;
+  const h265 = p.codec === 'H265';
+  if(!p.gotKey){ if(!isKeyframe(data, h265)) return; p.gotKey = true; }
+  if(!p.jm) p.jm = new JMuxer({ node: p.vid, mode: 'video', videoCodec: p.codec, flushingTime: 0, clearBuffer: true, fps: 30, maxDelay: 1500,
+    onError: m => ownFail(p, 'player error: ' + m), onUnsupportedCodec: c => ownFail(p, 'browser can\u2019t play ' + c) });
+  let t = raw;
+  if(p.lastRaw >= 0){ if(p.lastRaw - 1e9 > t) p.wrap += 4294967296; else if(p.lastRaw + 1e9 < t) p.wrap -= 4294967296; }
+  p.lastRaw = raw; t += p.wrap;
+  if(p.last){
+    p.jm.feed({ video: p.last.data, duration: Math.max(1, Math.min(1000, Math.round(t - p.last.t))) });
+    if(!p.fed){ p.fed = true; clearTimeout(p.watch); const pr = p.vid.play(); if(pr && pr.catch) pr.catch(() => {}); }
+  }
+  p.last = { data, t };
+}
+// motion boxes on a big tile's own video
+function ownDetect(p){
+  if(p.dead) return;
+  if(MB.on && p.vid.videoWidth && performance.now() - p.detAt > 600){ p.detAt = performance.now(); tileDetect(p.t, p.vid, p.vid.videoWidth, p.vid.videoHeight); }
+  if(p.vid.requestVideoFrameCallback) p.vid.requestVideoFrameCallback(() => ownDetect(p)); else setTimeout(() => ownDetect(p), 200);
+}
+// Blue Iris's stream format: "blue" header, then blocks of video / audio / status
+async function biPump(reader, alive, onFrame, onFail, onCodec){
+  const q = new ByteQueue();
+  let state = 0, hdrLen = 0, type = -1, need = 0, raw = 0;
+  const isBlue = (b, upper) => b[0] === (upper ? 66 : 98) && b[1] === 108 && b[2] === 117 && b[3] === 101;
+  for(;;){
+    const r = await reader.read();
+    if(!alive()){ try{ reader.cancel(); }catch(e){} return; }
+    if(r.done){ onFail('stream ended'); return; }
+    q.push(r.value);
+    for(;;){
+      if(state === 0){ const b = q.take(6); if(!b) break; if(!isBlue(b, false)) throw new Error('not a Blue Iris video stream'); hdrLen = b[5]; state = 1; }
+      else if(state === 1){
+        const b = q.take(hdrLen); if(!b) break;
+        if(hdrLen >= 20 && String.fromCharCode(b[16], b[17], b[18], b[19]).toUpperCase() === 'H265') onCodec('H265');
+        state = 2;
+      } else if(state === 2){ const b = q.take(5); if(!b) break; if(!isBlue(b, true)) throw new Error('stream out of sync'); type = b[4]; if(type === 4){ onFail('stream ended'); return; } state = 3; }
+      else if(state === 3){
+        if(type === 0){ const b = q.take(18); if(!b) break; const dv = new DataView(b.buffer, b.byteOffset, 18); raw = dv.getUint32(2, false); need = dv.getUint32(14, false); if(need > 10000000) throw new Error('bad video frame size'); }
+        else if(type === 1){ const b = q.take(4); if(!b) break; need = new DataView(b.buffer, b.byteOffset, 4).getInt32(0, false); if(need < 0 || need > 2000000) throw new Error('bad audio frame size'); }
+        else if(type === 2){ const b = q.take(1); if(!b) break; need = Math.max(0, b[0] - 6); }
+        else throw new Error('unknown block type ' + type);
+        state = 4;
+      } else { const b = q.take(need); if(!b) break; if(type === 0) onFrame(b, raw); if(!alive()) return; state = 2; }
+    }
+  }
 }
 let hiddenAt = 0;
 // Coming back to the app: make sure the session is good (silently signing back in if needed) before restarting video
