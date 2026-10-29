@@ -1828,7 +1828,7 @@ function pumpTile(t){
   im.alt = '';
   const done = ok => {
     t.busy = false;
-    if(ok){ t.fails = 0; const old = t.el.querySelector('img'); old.replaceWith(im); t.el.classList.remove('off'); if(MB.on) tileDetect(t, im); }
+    if(ok){ t.fails = 0; const old = t.el.querySelector('img'); old.replaceWith(im); t.el.classList.remove('off'); if(MB.on) tileDetect(t, im, im.naturalWidth, im.naturalHeight, 's'); }
     else if(++t.fails > 1) t.el.classList.add('off');
     t.timer = setTimeout(() => { t.timer = null; pumpTile(t); }, ok ? tileRefreshMs() : 5000);
   };
@@ -1975,7 +1975,7 @@ function gvDraw(){
       const sc = Math.min(cw / sw, ch / sh), dw = sw * sc, dh = sh * sc;
       ctx.clearRect(0, 0, cw, ch); ctx.drawImage(v, sx, sy, sw, sh, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
     }
-    if(detect) tileDetect(t, cnv, cw, ch);
+    if(detect) tileDetect(t, cnv, cw, ch, 'g' + GV.gen);
   });
 }
 /* ---- big tiles get their own stream ----
@@ -1984,7 +1984,7 @@ function gvDraw(){
    their size, while the rest keep sharing the group stream (browsers allow only about 6 connections per server).
    Anything that goes wrong falls back to the shared picture for a while. */
 const OWN_MAX = 3;
-const OWN = { players: new Map(), until: {} };
+const OWN = { players: new Map(), until: {}, seq: 0 };
 const ownWanted = () => GV.on && VS_OK && started && S.tab === 'live' && !V.open && document.visibilityState === 'visible';
 function ownSync(){
   const want = new Set();
@@ -2025,7 +2025,7 @@ function ownFail(p, why){
 function ownStart(t){
   const z = ownSize(t);
   const p = { t, key: JSON.stringify(z), ctrl: new AbortController(), jm: null, vid: document.createElement('video'), last: null, lastRaw: -1, wrap: 0,
-    gotKey: false, fed: false, codec: 'H264', dead: false, detAt: 0, watch: 0 };
+    gotKey: false, fed: false, codec: 'H264', dead: false, detAt: 0, watch: 0, id: ++OWN.seq };
   OWN.players.set(t.cam, p);
   const v = p.vid; v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.className = 'tvid';
   v.addEventListener('playing', () => { if(p.dead) return; t.ownOn = true; t.el.classList.add('own'); t.ownFails = 0; clearTimeout(t.timer); t.timer = null; ownDetect(p); });
@@ -2059,7 +2059,7 @@ function ownFrame(p, data, raw){
 // motion boxes on a big tile's own video
 function ownDetect(p){
   if(p.dead) return;
-  if(MB.on && p.vid.videoWidth && performance.now() - p.detAt > 600){ p.detAt = performance.now(); tileDetect(p.t, p.vid, p.vid.videoWidth, p.vid.videoHeight); }
+  if(MB.on && p.vid.videoWidth && performance.now() - p.detAt > 600){ p.detAt = performance.now(); tileDetect(p.t, p.vid, p.vid.videoWidth, p.vid.videoHeight, 'o' + p.id); }
   if(p.vid.requestVideoFrameCallback) p.vid.requestVideoFrameCallback(() => ownDetect(p)); else setTimeout(() => ownDetect(p), 200);
 }
 // Blue Iris's stream format: "blue" header, then blocks of video / audio / status
@@ -3941,14 +3941,25 @@ function sensDesc(level){
 }
 const SENS_OLD = { low: 3, med: 5, high: 8 };     // earlier versions stored a word
 function loadSens(){ const v = store.get('bis_msens'); const n = SENS_OLD[v] || parseInt(v, 10); return n >= 1 && n <= 10 ? n : 5; }
-const MB = { sens: loadSens(), on: store.get('bis_motion') === '1', timer:null, prev:null, pw:0, ph:0, boxes:[], lastKey:'' };
+const MB = { sens: loadSens(), on: store.get('bis_motion') === '1', timer:null, prev:null, pw:0, ph:0, boxes:[], lastKey:'', src:'', quiet:0 };
+/* Motion boxes compare each frame with the one before, so both must come from the same source. A snapshot, the group
+   stream, a tile's own stream and each new stream all render the same scene a little differently (sharpness,
+   compression), and the difference is biggest on hard edges: overlay text and timestamps lit up whenever the source
+   changed, for example on coming back to the tab. So a new source starts over, and frames from the first MB_SETTLE ms
+   (while a fresh stream sharpens) are only kept as the reference. */
+const MB_SETTLE = 1500;
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState !== 'visible') return;
+  MB.src = ''; MB.lastKey = '';
+  tiles.forEach(t => { t.det.src = ''; });
+});
 const mCanvas = $('#motionCanvas'), mctx = mCanvas.getContext('2d');
 const sampleCanvas = document.createElement('canvas'), sctx = sampleCanvas.getContext('2d', { willReadFrequently: true });
 
 function mbSource(){
-  if(!vEl.hidden && VS.started && vEl.readyState >= 2 && vEl.videoWidth) return { el: vEl, w: vEl.videoWidth, h: vEl.videoHeight, key: 'v' + vEl.currentTime };
+  if(!vEl.hidden && VS.started && vEl.readyState >= 2 && vEl.videoWidth) return { el: vEl, w: vEl.videoWidth, h: vEl.videoHeight, key: 'v' + vEl.currentTime, src: 'v' + VS.gen };
   const im = stage.querySelector('img.frame');
-  if(im && im.complete && im.naturalWidth) return { el: im, w: im.naturalWidth, h: im.naturalHeight, key: 'i' + im.src };
+  if(im && im.complete && im.naturalWidth) return { el: im, w: im.naturalWidth, h: im.naturalHeight, key: 'i' + im.src, src: 'i' };
   return null;
 }
 // Where the picture actually sits inside the stage (object-fit contain or cover)
@@ -3964,13 +3975,15 @@ function mbTick(){
   if(!src){ mbDraw(null); return; }
   if(src.key !== MB.lastKey){
     MB.lastKey = src.key;
+    const now = performance.now();
+    if(MB.src !== src.src){ MB.src = src.src; MB.prev = null; MB.quiet = now + MB_SETTLE; }   // new source: see MB_SETTLE
     const SW = 128, SH = Math.max(8, Math.round(SW * src.h / src.w));
     if(sampleCanvas.width !== SW || sampleCanvas.height !== SH){ sampleCanvas.width = SW; sampleCanvas.height = SH; MB.prev = null; }
     let px;
     try{ sctx.drawImage(src.el, 0, 0, SW, SH); px = sctx.getImageData(0, 0, SW, SH).data; }catch(e){ return; }
     const g = new Uint8Array(SW * SH);
     for(let i = 0, j = 0; i < g.length; i++, j += 4) g[i] = (px[j] * 77 + px[j+1] * 150 + px[j+2] * 29) >> 8;
-    if(MB.prev && MB.prev.length === g.length) mbDetect(MB.prev, g, SW, SH);
+    if(MB.prev && MB.prev.length === g.length && now >= (MB.quiet || 0)) mbDetect(MB.prev, g, SW, SH);
     MB.prev = g;
   }
   mbDraw(src);
@@ -4083,10 +4096,12 @@ $('#tileMotionBtn').addEventListener('click', () => { mbSet(!MB.on); toast(MB.on
 const tileSample = document.createElement('canvas'), tileSampleCtx = tileSample.getContext('2d', { willReadFrequently: true });
 const TILE_LINGER = 2200;
 function tileRefreshMs(){ return MB.on ? 600 : TILE_REFRESH; }   // faster snapshots while boxes are on
-function tileDetect(t, im, iw = im.naturalWidth, ih = im.naturalHeight){
+function tileDetect(t, im, iw, ih, src){
   const s = mbGray(im, iw, ih, tileSample, tileSampleCtx);
   if(!s) return;
-  if(t.det.prev && t.det.prev.length === s.g.length) mbDetect(t.det.prev, s.g, s.SW, s.SH, t.det);
+  const now = performance.now();
+  if(t.det.src !== src){ t.det.src = src; t.det.prev = null; t.det.quiet = now + MB_SETTLE; }   // new source: see MB_SETTLE
+  if(t.det.prev && t.det.prev.length === s.g.length && now >= (t.det.quiet || 0)) mbDetect(t.det.prev, s.g, s.SW, s.SH, t.det);
   t.det.prev = s.g; t.det.iw = iw; t.det.ih = ih;
   tileDrawBoxes(t);
 }
