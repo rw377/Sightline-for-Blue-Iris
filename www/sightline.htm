@@ -1474,7 +1474,7 @@ function diagText(){
     `Cameras: ${st.total ?? '?'} in Blue Iris \u00b7 ${st.shown ?? '?'} shown \u00b7 ${st.hidden ?? 0} hidden \u00b7 ${st.disabled ?? 0} disabled \u00b7 ${st.noWeb ?? 0} web access off \u00b7 ${st.offline ?? 0} offline`,
     `Groups: ${st.groups ?? '?'} \u00b7 with a layout for live tiles: ${st.layouts ?? '?'} \u00b7 this group: ${g ? 'yes' : 'no'}`,
     `Live tiles: ${GV.on ? (GV.started ? 'live video (playing)' : GV.retryAt === Infinity ? 'snapshots (this browser can\u2019t play the live video)' : GV.retryAt > Date.now() ? 'live video (waiting to retry; snapshots now)' : 'live video (not playing)') : 'snapshots'}`,
-    `Timeline (rewind): ${TL.ok === true ? 'yes' : TL.ok === false ? 'no \u00b7 ' + TL.why : 'not checked yet'}`,
+    `Timeline (rewind): ${TL.ok === true ? 'yes' : TL.ok === false ? 'no \u00b7 ' + TL.why : 'not checked yet'}${CL.failed ? ' \u00b7 clip list refused too: ' + CL.why : clipMode() ? ' \u00b7 rewinding from recording files' + (CL.force ? ' (forced for testing)' : '') : ''}`,
     `Alert recordings seen: ${Object.entries(DIAG.rec).map(([k, n]) => `${k} ${n}`).join(', ') || 'none loaded yet'}`,
     `Settings: quality ${S.quality} \u00b7 highlights ${yn(LV.hl)} \u00b7 AI labels ${yn(LV.labels)} \u00b7 show hidden ${yn(LV.hidden)} \u00b7 motion boxes ${yn(MB.on)} (sensitivity ${MB.sens}) \u00b7 stay signed in ${yn(staySignedIn())}`,
     `Recent errors:${DIAG.errs.length ? '' : ' none'}`,
@@ -3376,13 +3376,13 @@ function onFrame(ok, meta){
     if(V.playing && !V.dragging && !VS.ctrl) tick();
   } else {
     // First failure on an alert: fall back to reading frames straight from the clip file
-    if(V.alert && V.clip && !V.clip.useClip && V.pos >= V.clip.start && /\.bvr$/i.test(V.clip.path)){   // other files answer "Not BVR"
+    if(!clipMode() && V.alert && V.clip && !V.clip.useClip && V.pos >= V.clip.start && /\.bvr$/i.test(V.clip.path)){   // other files answer "Not BVR"
       V.clip.useClip = true; requestRecFrame();
       if(V.playing && useVideo() && !VS.started) vsStart('rec', recVideoUrl(), V.speed);   // video from the clip file too
       return;
     }
     V.errs++;
-    showMsg(TL.ok === false ? 'Rewinding needs a newer Blue Iris (one whose UI3 has a timeline)' : 'No recording at this moment');
+    showMsg(TL.ok === false && !clipMode() ? 'Rewinding needs a newer Blue Iris (one whose UI3 has a timeline)' : 'No recording at this moment');
     $('#vSpin').hidden = true;
     if(V.playing && !V.dragging && !VS.ctrl && V.errs < 40){ V.pos += 2000 * V.speed; updateUI(); setTimeout(requestRecFrame, 250); }
   }
@@ -3407,13 +3407,17 @@ function goLive(){
 /* ---- recorded ---- */
 function recUrl(){
   const fa = frameArgs(), pos = Math.floor(V.pos);
+  if(clipMode() && CL.cur){
+    const t = Math.max(0, pos - CL.cur.start);
+    return `file/clips/${CL.cur.path}?time=${t}&${fa}&q=70&${sq()}`;
+  }
   if(V.clip && V.clip.useClip){
     const t = Math.max(0, pos - V.clip.start);
     return `file/clips/${V.clip.path}?time=${t}&${fa}&q=70&${sq()}`;
   }
   return `time/${camEnc(V.cam)}?jpeg&isolate&pos=${pos}&${fa}&q=70&${sq()}`;
 }
-function requestRecFrame(){ if(V.open && V.mode === 'rec') wantFrame(recUrl(), { pos:V.pos }); }
+function requestRecFrame(){ if(V.open && V.mode === 'rec' && (!clipMode() || clPick(V.playing && !V.dragging))) wantFrame(recUrl(), { pos:V.pos }); }
 function enterRec(pos, play){
   if(V.mode === 'live'){ resetFrames(); vsStop(!play); }
   V.mode = 'rec';
@@ -3427,6 +3431,7 @@ function enterRec(pos, play){
 // Play recorded video from V.pos: real video stream when possible, otherwise fast stills
 function startPlayback(){
   V.lastTick = 0;
+  if(clipMode() && !clPick(true)) return;       // older Blue Iris: waiting for its clip list, or nothing recorded here
   if(useVideo()){
     vsStart('rec', recVideoUrl(), V.speed);
     requestRecFrame();                           // a still shows instantly while the stream connects
@@ -3588,6 +3593,12 @@ const clipPlay = () => !!(V.alert && V.clip && /\.bvr$/i.test(V.clip.path) && V.
   (V.clip.useClip || V.pos < V.clip.end) && !(V.clip.endedAt && V.pos >= V.clip.endedAt - 1000));
 function recVideoUrl(){
   const z = vsSize();
+  if(clipMode() && CL.cur){
+    const t = Math.max(0, Math.floor(V.pos - CL.cur.start));
+    VS.nextClipBase = CL.cur.start + t;
+    return `file/clips/${CL.cur.path}?${sq()}&speed=${Math.round(V.speed * 100)}&audio=${AU.on && V.speed === 1 ? 1 : 0}` +
+      `&stream=0&w=${z.w}&h=${z.h}${streamArgs()}&extend=2&time=${t}`;
+  }
   if(clipPlay()){
     const t = Math.max(0, Math.floor(V.pos - V.clip.start));
     VS.nextClipBase = V.clip.start + t;
@@ -3823,7 +3834,12 @@ function vsEnded(){
     VS.retryTimer = setTimeout(() => { if(V.open && V.mode === 'live') goLive(); }, 1500);
   } else if(kind === 'rec' && V.mode === 'rec' && V.playing){
     const t = vsShownUtc(); if(t) V.pos = t;
-    if(/^file\//.test(VS.url || '') && V.clip){ V.clip.endedAt = V.pos; startPlayback(); return; }   // end of the alert's file: on along the timeline
+    if(clipMode() && CL.cur && /^file\//.test(VS.url || '')){       // older Blue Iris: on to the next recording file
+      CL.ended = { path: CL.cur.path, at: V.pos };
+      if(isFinite(CL.cur.end)) V.pos = Math.max(V.pos, CL.cur.end);
+      if(V.pos < Date.now() - 60000){ startPlayback(); return; }
+    }
+    else if(/^file\//.test(VS.url || '') && V.clip){ V.clip.endedAt = V.pos; startPlayback(); return; }   // end of the alert's file: on along the timeline
     if(V.pos > Date.now() - 60000) goLive();     // caught up with the present
     else { V.playing = false; updateUI(); }
   }
@@ -3850,8 +3866,9 @@ function vsFail(why, permanent){
   }
   VS.failed[V.cam] = true;
   vsStop(false);
-  showMsg('Smooth video unavailable \u2014 showing still frames');
-  setTimeout(hideMsg, 4000);
+  const note = 'Smooth video unavailable \u2014 showing still frames';
+  showMsg(note);
+  setTimeout(() => { if($('#vMsg').textContent === note) hideMsg(); }, 4000);   // leave a newer message alone
   if(kind === 'live' && V.mode === 'live') requestLiveFrame();
   else if(V.mode === 'rec'){ V.lastTick = 0; requestRecFrame(); }
 }
@@ -4200,7 +4217,15 @@ async function calLoad(){
   const start = Math.floor(a / 1000), end = Math.floor(Math.min(b, Date.now()) / 1000);
   const rec = new Set(), al = new Set();
   try{
-    if(end > start){
+    if(end > start && clipMode()){                         // older Blue Iris: days from the recording files
+      const cam = V.cam; await clEnsure(cam, start * 1000, end * 1000);
+      for(const c of clSorted(cam)){
+        const e0 = Math.min(c.end, end * 1000);
+        if(e0 <= start * 1000 || c.start >= end * 1000) continue;
+        for(let t = Math.max(c.start, start * 1000); t < e0; t = new Date(new Date(t).setHours(24, 0, 0, 0)).getTime()){ const d = new Date(t); if(d.getMonth() === CAL.m) rec.add(d.getDate()); }
+      }
+      for(const x of V.camAlerts){ const d = new Date(x.t); if(d.getFullYear() === CAL.y && d.getMonth() === CAL.m) al.add(d.getDate()); }
+    } else if(end > start){
       const r = await api({ cmd: 'timeline', camera: V.cam, startdate: start, enddate: end, msecpp: mpp });
       if(r.result !== 'success') throw new Error('no timeline');
       const day = t => { const d = new Date(t); return d.getFullYear() === CAL.y && d.getMonth() === CAL.m ? d.getDate() : 0; };
@@ -4261,6 +4286,108 @@ let tlTimer, tlPending = '';
    feature (time/ frames and streams), so without it only alerts and clips can play. null until the first answer;
    one successful answer settles it. */
 const TL = { ok: null, why: '' };
+
+/* ---- rewinding from recording files (older Blue Iris) ----
+   Without the timeline, rewinding works the way UI3 did before it had one: Blue Iris's clip list ("cliplist", UI3's
+   Clips panel, All clips) says which recording file covers a moment, and that file is played or read from the right
+   offset (file/clips/<file>?time=<ms>), as alerts already are. When a file ends, playback carries on with the next
+   one, skipping gaps. The bar shows the files' coverage and the camera's alerts. Only used when Blue Iris refuses
+   the timeline, or for testing with ?cliprewind=1 in the address (?cliprewind=0 turns that off again). */
+const CL = { force: false, failed: false, why: '', cams: {}, cur: null, ended: null, pending: {} };
+const CL_BACK = 36 * 3600;          // also ask for files that started this long (s) before the range: one may still cover it
+(() => { try{ const m = /[?&]cliprewind=([01])\b/.exec(location.search); if(m) store.set('bis_cliprewind', m[1]); }catch(e){} })();
+CL.force = store.get('bis_cliprewind') === '1';
+const clipMode = () => !CL.failed && (CL.force || TL.ok === false);
+const clCam = cam => CL.cams[cam] || (CL.cams[cam] = { clips: new Map(), spans: [], sorted: null });
+function clSorted(cam){ const c = clCam(cam); return c.sorted || (c.sorted = [...c.clips.values()].sort((a, b) => a.start - b.start)); }
+// Loaded and still fresh: a span reaching into the last 5 minutes is reloaded after a minute (the newest file grows)
+function clCovered(cam, from, to){
+  const now = Date.now();
+  return clCam(cam).spans.some(([a, b, at]) => a <= from && b >= to && (b < at - 300000 || now - at < 60000));
+}
+async function clEnsure(cam, from, to){
+  if(clCovered(cam, from, to)) return;
+  const k = cam + ':' + from + ':' + to;
+  if(CL.pending[k]) return CL.pending[k];
+  return (CL.pending[k] = (async () => {
+    try{
+      const args = { cmd:'cliplist', camera:cam, startdate: Math.floor(from / 1000) - CL_BACK, enddate: Math.ceil(to / 1000) + 60, view:'all' };
+      let r = await api(Object.assign({}, args));
+      if(r.result !== 'success'){ delete args.view; r = await api(Object.assign({}, args)); }    // in case "view" is too new
+      if(r.result !== 'success'){
+        CL.failed = true; CL.why = (r.data && r.data.reason) || JSON.stringify(r).slice(0, 80);
+        diagNote('cliplist refused: ' + CL.why);
+        throw new Error('cliplist');
+      }
+      const c = clCam(cam), at = Date.now(), data = r.data || [];
+      if(data.length >= 1000) diagNote('cliplist: 1000 files or more, some may be missing');
+      for(const x of data){
+        if(!x || !x.path || x.clip || !/\.bvr$/i.test(x.path)) continue;     // recording files only (alert items have a clip field)
+        const len = x.msec > 0 ? +x.msec : durMs(x.filesize), start = x.date * 1000;
+        if(!(start > 0) || !(len > 0)) continue;
+        c.clips.set(x.path, { path: x.path, start, end: start + len });
+      }
+      // the newest file, if it was still growing when listed, is taken to run on to now
+      const all = [...c.clips.values()].sort((a, b) => a.start - b.start), last = all[all.length - 1];
+      if(last && last.end > at - 120000) last.end = Infinity;
+      c.sorted = all;
+      c.spans.push([from, to, at]); if(c.spans.length > 30) c.spans.shift();
+    }finally{ delete CL.pending[k]; }
+  })());
+}
+function clFind(cam, pos){
+  const e = CL.ended, list = clSorted(cam);
+  for(let i = list.length - 1; i >= 0; i--){
+    const c = list[i];
+    if(c.start > pos) continue;
+    if(pos < c.end && !(e && e.path === c.path && pos >= e.at - 1000)) return c;
+  }
+  return null;
+}
+const clNext = (cam, pos) => clSorted(cam).find(c => c.start > pos) || null;
+/* Pick the recording file for V.pos (CL.cur). False while the clip list loads (it then carries on by itself) or when
+   nothing was recorded at that moment; when playing, a gap is skipped to the next file. */
+function clPick(play){
+  const cam = V.cam, pos = V.pos;
+  const from = Math.min(V.winStart || pos, pos - 60000), to = Math.max(V.winEnd || pos, pos + 60000);
+  if(!clCovered(cam, pos - 60000, Math.min(pos + 60000, Date.now()))){
+    $('#vSpin').hidden = false;
+    clEnsure(cam, from, Math.min(to, Date.now())).then(() => {
+      if(!V.open || V.cam !== cam || V.mode !== 'rec') return;
+      if(V.playing) startPlayback(); else requestRecFrame();
+    }, e => {
+      if(!V.open || V.cam !== cam || V.mode !== 'rec' || e.message === 'session') return;
+      $('#vSpin').hidden = true;
+      showMsg(CL.failed ? 'Rewinding needs a newer Blue Iris (one whose UI3 has a timeline)' : 'Couldn\u2019t load the list of recordings');
+    });
+    return false;
+  }
+  let c = clFind(cam, pos);
+  if(!c && play){
+    const n = clNext(cam, pos);
+    if(n && n.start < Date.now() - KEEP_OUT){ V.pos = n.start; c = n; updateUI(); }
+  }
+  if(!c){
+    CL.cur = null; vsStop(false);
+    $('#vSpin').hidden = true; showMsg('No recording at this moment');
+    if(play){ V.playing = false; updateUI(); }
+    return false;
+  }
+  if(CL.cur !== c) CL.ended = null;
+  CL.cur = c;
+  return true;
+}
+// The timeline bar from the recording files, with the camera's alerts as markers
+async function clTimeline(cam, start, end, key){
+  try{ await clEnsure(cam, start * 1000, Math.min(end * 1000, Date.now())); }catch(e){ return; }
+  if(cam !== V.cam || key !== V.tlKey) return;
+  const now = Date.now(), s = start * 1000, e = end * 1000;
+  V.tl = {
+    clips: clSorted(cam).filter(c => c.end > s && c.start < e).map(c => ({ t: c.start, len: Math.min(c.end, now) - c.start })),
+    alerts: V.camAlerts.filter(x => x.t >= s - 60000 && x.t <= e).map(x => ({ t: x.t, len: Math.min(durMs(x.a.filesize), 600000), cls: 'motion' }))
+  };
+  drawScrub();
+}
 function loadTimeline(){
   // Asked again for the window that's already loaded or about to load: leave the pending request alone
   const want = V.cam + ':' + Math.floor(V.winStart / 1000) + ':' + Math.ceil(V.winEnd / 1000);
@@ -4274,12 +4401,19 @@ function loadTimeline(){
     const key = cam + ':' + start + ':' + end;
     if(key === V.tlKey) return;
     V.tlKey = key;
+    if(clipMode()){ clTimeline(cam, start, end, key); return; }
     try{
       const r = await api({cmd:'timeline', startdate:start, enddate:end, msecpp, camera:cam});
       if(r.result === 'success') TL.ok = true;
       else if(TL.ok !== true && TL.ok !== false){
         TL.ok = false; TL.why = (r.data && r.data.reason) || JSON.stringify(r).slice(0, 80);
         diagNote('timeline refused: ' + TL.why);
+        if(clipMode() && cam === V.cam && key === V.tlKey){
+          clTimeline(cam, start, end, key);
+          // a rewind that already failed on the timeline: try again from the recording files
+          if(V.open && V.mode === 'rec' && V.errs){ V.errs = 0; if(V.playing) startPlayback(); else requestRecFrame(); }
+          return;
+        }
       }
       if(cam !== V.cam || key !== V.tlKey || !r.data) return;
       const off = start * 1000;
@@ -4298,6 +4432,7 @@ async function loadCamAlerts(){
     const r = await api({cmd:'alertlist', camera:cam, startdate:now - 7*86400, enddate:now + 60, view:'alerts'});
     if(cam !== V.cam) return;
     V.camAlerts = (r.data || []).map(a => ({ t:a.date * 1000, a })).sort((x,y) => x.t - y.t);
+    if(clipMode()){ V.tlKey = ''; loadTimeline(); }             // markers on the bar come from this list then
     updateUI();
   }catch(e){}
 }
