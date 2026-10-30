@@ -364,7 +364,7 @@ body.isfs #viewer.hideui{cursor:none}
 #vSound svg .mute,#volMute svg .mute{display:none}
 .spin{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px;border-radius:50%;border:3px solid rgba(255,255,255,.18);border-top-color:#fff;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(1turn)}}
-.vmsg{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);padding:6px 12px;border-radius:9px;background:rgba(20,24,29,.88);font-size:13px;color:var(--text);white-space:nowrap}
+.vmsg{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);padding:6px 12px;border-radius:9px;background:rgba(20,24,29,.88);font-size:13px;color:var(--text);width:max-content;max-width:calc(100% - 28px);text-align:center}
 .camnav{position:absolute;top:50%;width:44px;height:64px;margin-top:-32px;display:grid;place-items:center;color:rgba(255,255,255,.75);opacity:.0;transition:opacity .2s}
 .stage:hover .camnav{opacity:1}
 .camnav.l{left:0}.camnav.r{right:0}
@@ -1474,6 +1474,7 @@ function diagText(){
     `Cameras: ${st.total ?? '?'} in Blue Iris \u00b7 ${st.shown ?? '?'} shown \u00b7 ${st.hidden ?? 0} hidden \u00b7 ${st.disabled ?? 0} disabled \u00b7 ${st.noWeb ?? 0} web access off \u00b7 ${st.offline ?? 0} offline`,
     `Groups: ${st.groups ?? '?'} \u00b7 with a layout for live tiles: ${st.layouts ?? '?'} \u00b7 this group: ${g ? 'yes' : 'no'}`,
     `Live tiles: ${GV.on ? (GV.started ? 'live video (playing)' : GV.retryAt === Infinity ? 'snapshots (this browser can\u2019t play the live video)' : GV.retryAt > Date.now() ? 'live video (waiting to retry; snapshots now)' : 'live video (not playing)') : 'snapshots'}`,
+    `Timeline (rewind): ${TL.ok === true ? 'yes' : TL.ok === false ? 'no \u00b7 ' + TL.why : 'not checked yet'}`,
     `Alert recordings seen: ${Object.entries(DIAG.rec).map(([k, n]) => `${k} ${n}`).join(', ') || 'none loaded yet'}`,
     `Settings: quality ${S.quality} \u00b7 highlights ${yn(LV.hl)} \u00b7 AI labels ${yn(LV.labels)} \u00b7 show hidden ${yn(LV.hidden)} \u00b7 motion boxes ${yn(MB.on)} (sensitivity ${MB.sens}) \u00b7 stay signed in ${yn(staySignedIn())}`,
     `Recent errors:${DIAG.errs.length ? '' : ' none'}`,
@@ -2281,6 +2282,7 @@ if(store.get('bis_afilters') == null) saveAf(loadAf());
    as fit across the screen (up to 5). The counts come from the last 3 weeks of alerts and are kept in this browser,
    refreshed every few hours. */
 const AF_DAYS = 21, AF_AUTO_MAX = 5, AF_STALE = 6 * 3600000;
+const AF_PAR = 1;      // label-scan requests at a time (background work; 4 at once crowded older Blue Iris servers)
 // How many recent filters Auto adds: 'fit' = as many as fit across the screen (up to 5), or an exact number
 const afCount = () => { const v = store.get('bis_afcount'); return /^[1-8]$/.test(v || '') ? +v : 'fit'; };
 const afAuto = () => store.get('bis_afmode') === 'auto';
@@ -2382,8 +2384,8 @@ async function scanLabels(){
   let done = false;
   try{
     const days = [...Array(AF_DAYS).keys()];
-    for(let i = 0; i < days.length; i += 4){
-      const res = await Promise.all(days.slice(i, i + 4).map(d =>
+    for(let i = 0; i < days.length; i += AF_PAR){
+      const res = await Promise.all(days.slice(i, i + AF_PAR).map(d =>
         api({cmd:'alertlist', camera:'index', startdate: now - (d + 1) * 86400, enddate: now - d * 86400 + (d ? 0 : 60), view:'alerts'}).catch(() => null)));
       for(const r of res) for(const it of ((r && r.data) || [])){
         if(!camShown(it.camera)) continue;
@@ -2533,6 +2535,18 @@ $('#rApply').addEventListener('click', () => { const r = rangeFromInputs(); if(r
 $('#rClear').addEventListener('click', () => setRange(null));
 $('#camFilter').addEventListener('change', e => { A.cam = e.target.value; loadAlerts(true); });
 
+/* Blue Iris sometimes refuses an alert list without saying why (seen on older versions, likely while busy with
+   other requests). Wait a moment and ask once more before showing an error; note each refusal for diagnostics. */
+async function alertQuery(args, stale){
+  for(let i = 0; ; i++){
+    const r = await api(Object.assign({}, args));
+    if(r.result === 'success' || stale()) return r;
+    diagNote(`alertlist refused (${i ? 'retry' : 'first try'}): ${JSON.stringify(r).slice(0, 110)}`);
+    if(i) return r;
+    await new Promise(res => setTimeout(res, 1500));
+    if(stale()) return r;
+  }
+}
 async function loadAlerts(reset){
   if(reset){
     A.gen++; A.end = A.range ? A.range.end : Math.floor(Date.now()/1000) + 60; A.seen = new Set(); A.lastDay = ''; A.count = 0; A.exhausted = false; A.loading = false;
@@ -2546,9 +2560,9 @@ async function loadAlerts(reset){
   try{
     while(added === 0 && emptyDays < 7 && !(A.range && A.end <= A.range.start)){
       const start = A.range ? Math.max(A.range.start, A.end - 86400) : A.end - 86400;
-      const r = await api({cmd:'alertlist', camera:A.cam, startdate:start, enddate:A.end, view:A.view});
+      const r = await alertQuery({cmd:'alertlist', camera:A.cam, startdate:start, enddate:A.end, view:A.view}, () => gen !== A.gen);
       if(gen !== A.gen) return;
-      if(r.result !== 'success') throw new Error((r.data && r.data.reason) || 'Could not load alerts');
+      if(r.result !== 'success') throw new Error('Could not load alerts: ' + ((r.data && r.data.reason) || 'Blue Iris gave no reason'));
       const raw = (r.data || []).filter(x => !A.seen.has(x.path)).sort((a,b) => b.date - a.date);
       raw.forEach(x => { const k = !x.clip || /^@-1\./.test(x.clip) ? 'snapshot only' : ((/\.(\w+)$/.exec(x.clip) || [])[1] || 'unknown').toLowerCase(); DIAG.rec[k] = (DIAG.rec[k] || 0) + 1; });
       // If Blue Iris capped the result size, continue from the oldest item; otherwise the whole day is covered
@@ -3368,7 +3382,7 @@ function onFrame(ok, meta){
       return;
     }
     V.errs++;
-    showMsg('No recording at this moment');
+    showMsg(TL.ok === false ? 'Rewinding needs a newer Blue Iris (one whose UI3 has a timeline)' : 'No recording at this moment');
     $('#vSpin').hidden = true;
     if(V.playing && !V.dragging && !VS.ctrl && V.errs < 40){ V.pos += 2000 * V.speed; updateUI(); setTimeout(requestRecFrame, 250); }
   }
@@ -4243,6 +4257,10 @@ $('#goSheet').addEventListener('click', e => {
 
 /* ---- timeline data (recording coverage + alert markers) ---- */
 let tlTimer, tlPending = '';
+/* Whether this Blue Iris has the timeline (UI3's timeline bar; older 5.x releases don't). Rewinding uses the same
+   feature (time/ frames and streams), so without it only alerts and clips can play. null until the first answer;
+   one successful answer settles it. */
+const TL = { ok: null, why: '' };
 function loadTimeline(){
   // Asked again for the window that's already loaded or about to load: leave the pending request alone
   const want = V.cam + ':' + Math.floor(V.winStart / 1000) + ':' + Math.ceil(V.winEnd / 1000);
@@ -4258,6 +4276,11 @@ function loadTimeline(){
     V.tlKey = key;
     try{
       const r = await api({cmd:'timeline', startdate:start, enddate:end, msecpp, camera:cam});
+      if(r.result === 'success') TL.ok = true;
+      else if(TL.ok !== true && TL.ok !== false){
+        TL.ok = false; TL.why = (r.data && r.data.reason) || JSON.stringify(r).slice(0, 80);
+        diagNote('timeline refused: ' + TL.why);
+      }
       if(cam !== V.cam || key !== V.tlKey || !r.data) return;
       const off = start * 1000;
       V.tl = {
