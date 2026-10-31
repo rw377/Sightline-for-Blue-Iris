@@ -45,6 +45,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 
 ### Alerts
 - **AI-aware filter buttons:** People, Vehicles, Animals, plus any label your AI model reports, such as Dogs, UPS or Amazon.
+- **Camera (ONVIF) detections count too.** If a camera's own detection triggers Blue Iris instead of the AI, the label Blue Iris saves (for example "PeopleDet") reads as **Person** and counts under People; likewise Vehicle, Animal (DogCatDetect), Visitor (doorbell), Intrusion and Line crossed. Tip: in Blue Iris's ONVIF event settings, the Memo/label field can set your own label (for example `dog`) instead of the event name.
 - **Combine filters:** a click or tap shows one filter. To see alerts matching several, for example Dogs + People, Shift- or Ctrl-click the extra ones (long-press on a phone). Tap All to clear.
 - **Auto filter buttons** (new visitors start here): All, the filters you always want (for example People and Vehicles), then the detections your cameras have seen most in the last 3 weeks: as many as fit on the screen, or a number you choose. Or switch to **Choose** and pick the buttons yourself.
 - **Labels picked from real data.** Sightline scans the last 3 weeks of alerts and lists every label your cameras have actually reported, with counts. You can also type your own. Capitalization and plurals don't matter.

@@ -2205,8 +2205,8 @@ const ANIMALS = /\b(dog|cat|bear|bird|deer|horse|sheep|cow|fox|coyote|raccoon|sq
 const memoOf = it => String(it.memo || '').toLowerCase();
 const FILTER_BUILTIN = {
   all:      { name:'All',      sub:'Every alert',                         view:'alerts' },
-  people:   { name:'People',   sub:'Blue Iris person alerts',             view:'people',   noun:'person' },
-  vehicles: { name:'Vehicles', sub:'Blue Iris vehicle alerts',            view:'vehicles', noun:'vehicle' },
+  people:   { name:'People',   sub:'People found by the AI or the camera', view:'alerts', match:'people',   noun:'person' },
+  vehicles: { name:'Vehicles', sub:'Vehicles found by the AI or the camera', view:'alerts', match:'vehicles', noun:'vehicle' },
   animals:  { name:'Animals',  sub:'Any animal: dog, cat, bear, bird\u2026', view:'alerts', match:'animal', noun:'animal' },
   flagged:  { name:'Flagged',  sub:'Alerts flagged here, in UI3 or in Blue Iris', view:'alerts', match:'flagged', noun:'flagged' }
 };
@@ -2226,7 +2226,11 @@ function memoNames(it){
 function memoKeys(it){
   if(it._k) return it._k;
   const k = new Set();
-  for(const n of memoNames(it)){ k.add(normLabel(n)); n.split(/[\s_-]+/).forEach(w => w && k.add(normLabel(w))); }
+  for(const n of memoNames(it)){
+    const al = onvifAlias(n);
+    if(al){ k.add(al.key); continue; }                    // a camera (ONVIF) detection, e.g. PeopleDet -> person
+    k.add(normLabel(n)); n.split(/[\s_-]+/).forEach(w => w && k.add(normLabel(w)));
+  }
   return (it._k = k);
 }
 const IRREG = { person:'People', deer:'Deer', sheep:'Sheep', fish:'Fish', mouse:'Mice', goose:'Geese' };
@@ -2249,14 +2253,15 @@ const VEHICLES = /\b(car|truck|bus|motorcycle|bicycle|boat|vehicle|van|suv)s?\b/
 // One matcher per filter button, used when several are selected together (alerts matching ANY of them)
 function filterMatcher(id){
   if(id === 'all') return () => true;
-  if(id === 'people') return it => hasBit(it.flags, 26) || /\b(person|people)\b/.test(memoOf(it));     // Blue Iris AI person flag
-  if(id === 'vehicles') return it => hasBit(it.flags, 27) || VEHICLES.test(memoOf(it));                // Blue Iris AI vehicle flag
+  if(id === 'people') return it => hasBit(it.flags, 26) || /\b(person|people)\b/.test(memoOf(it)) || memoKeys(it).has('person') || memoKeys(it).has('face');   // AI person flag, or the label (AI or camera)
+  if(id === 'vehicles') return it => hasBit(it.flags, 27) || VEHICLES.test(memoOf(it)) || memoKeys(it).has('vehicle');
   if(id === 'animals') return matcherFor('animal');
   return matcherFor(id);
 }
 function matcherFor(match){
   if(match === 'multi'){ const ms = A.sel.map(filterMatcher); return it => ms.some(m => m(it)); }
-  if(match === 'animal') return it => ANIMALS.test(memoOf(it)) || hasBit(it.flags, 31);
+  if(match === 'animal') return it => ANIMALS.test(memoOf(it)) || hasBit(it.flags, 31) || memoKeys(it).has('animal');
+  if(match === 'people' || match === 'vehicles') return filterMatcher(match);
   if(match === 'flagged') return it => hasBit(flagsOf(it), 1);
   if(String(match).startsWith('label:')){ const k = normLabel(match.slice(6)); return it => memoKeys(it).has(k); }
   return () => true;
@@ -2291,6 +2296,9 @@ const sameFilter = (a, b) => a === b || (String(a).startsWith('label:') && Strin
 const AFR = (() => { try{ const v = JSON.parse(store.get('bis_afrecent') || 'null'); if(v && Array.isArray(v.list)) return v; }catch(e){} return { at: 0, list: [] }; })();
 // Which filter button an AI label belongs to: person -> People, car/truck/... -> Vehicles, anything else its own label
 function recentId(name){
+  const al = onvifAlias(name);
+  if(al) return { person: 'people', face: 'people', vehicle: 'vehicles', animal: 'animals', motion: null }[al.key] !== undefined
+    ? { person: 'people', face: 'people', vehicle: 'vehicles', animal: 'animals', motion: null }[al.key] : 'label:' + al.text.toLowerCase();
   const k = normLabel(name); if(!k) return null;
   if(/^(person|people|face)$/.test(k)) return 'people';
   if(VEHICLES.test(k)) return 'vehicles';
@@ -2391,8 +2399,8 @@ async function scanLabels(){
         if(!camShown(it.camera)) continue;
         const mine = new Set();
         for(const n of new Set(memoNames(it))){
-          const k = normLabel(n); if(!k) continue;
-          const c = counts.get(k) || { name: n.replace(/[_-]+/g, ' '), n: 0 }; c.n++; counts.set(k, c);
+          const al = onvifAlias(n), k = al ? al.key : normLabel(n); if(!k || k === 'motion') continue;
+          const c = counts.get(k) || { name: al ? al.text.toLowerCase() : n.replace(/[_-]+/g, ' '), n: 0 }; c.n++; counts.set(k, c);
           const id = recentId(n); if(id) mine.add(id.startsWith('label:') ? (AFS.idOf.get(k) || (AFS.idOf.set(k, id), id)) : id);
         }
         if(hasBit(it.flags, 26)) mine.add('people');
@@ -2612,6 +2620,23 @@ function durMs(fs){
   return ms || 10000;
 }
 function fmtDur(ms){ const s = Math.round(ms/1000); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
+/* ONVIF triggers: when a camera's own detection triggers Blue Iris (instead of the AI), Blue Iris saves a shortened
+   event name as the alert's label, e.g. RuleEngine/MyRuleDetector/PeopleDetect -> "PeopleDet". Treat the common ones
+   like the AI's labels so they read "Person" and count under People, Vehicles and Animals. Matched on how the name
+   starts, since Blue Iris shortens them. */
+function onvifAlias(name){
+  const k = String(name || '').toLowerCase().replace(/[^a-z0-9]/g, ''), pre = (...p) => p.some(x => k.startsWith(x));
+  if(pre('peopled', 'persond', 'humand', 'bodyd', 'pedestrian') || k === 'human' || k === 'humans') return { key: 'person', text: 'Person', cls: 'person' };
+  if(pre('faced')) return { key: 'face', text: 'Face', cls: 'person' };
+  if(pre('vehicled', 'motorvehicle', 'card', 'vehicleo')) return { key: 'vehicle', text: 'Vehicle', cls: 'vehicle' };
+  if(pre('animald', 'petd', 'dogcat')) return { key: 'animal', text: 'Animal', cls: 'animal' };
+  if(pre('visitor', 'doorbell', 'callbutton', 'callreq')) return { key: 'visitor', text: 'Visitor', cls: 'person' };
+  if(pre('objectsin', 'fieldd', 'intrusion', 'regionent')) return { key: 'intrusion', text: 'Intrusion', cls: 'motion' };
+  if(pre('crossed', 'lined', 'linecross', 'tripwire')) return { key: 'linecrossed', text: 'Line crossed', cls: 'motion' };
+  if(pre('cellmotion', 'motiond', 'motiona', 'videomotion') || k === 'motion') return { key: 'motion', text: 'Motion', cls: 'motion' };
+  if(pre('alarmin', 'digitalin')) return { key: 'alarminput', text: 'Alarm input', cls: 'motion' };
+  return null;
+}
 function classify(label){
   label = label.toLowerCase();
   if(/\b(amazon|ups|usps|fed ?ex|dhl|delivery)\b/.test(label)) return 'delivery';
@@ -2629,6 +2654,8 @@ function alertTags(it){
       const m = /([a-zA-Z_ ]+?)\s*:?\s*(\d+%)?\s*$/.exec(part.trim());
       if(!m || !m[1]) continue;
       const name = m[1].trim(); if(!name || /^nothing/i.test(name)) continue;
+      const al = onvifAlias(name);
+      if(al){ if(!tags.some(t => t.text === al.text)) tags.push({ cls: al.cls, text: al.text, onvif: name }); if(tags.length === 2) break; continue; }
       tags.push({ cls: classify(name), text: (LABEL_NAMES[name.toLowerCase()] || name[0].toUpperCase() + name.slice(1)) + (m[2] ? ' ' + m[2] : '') });
       if(tags.length === 2) break;
     }
@@ -4384,7 +4411,7 @@ async function clTimeline(cam, start, end, key){
   const now = Date.now(), s = start * 1000, e = end * 1000;
   V.tl = {
     clips: clSorted(cam).filter(c => c.end > s && c.start < e).map(c => ({ t: c.start, len: Math.min(c.end, now) - c.start })),
-    alerts: V.camAlerts.filter(x => x.t >= s - 60000 && x.t <= e).map(x => ({ t: x.t, len: Math.min(durMs(x.a.filesize), 600000), cls: 'motion' }))
+    alerts: V.camAlerts.filter(x => x.t >= s - 60000 && x.t <= e).map(x => ({ t: x.t, len: Math.min(durMs(x.a.filesize), 600000), cls: (alertTags(x.a)[0] || {}).cls || 'motion' }))   // colored by AI or camera label
   };
   drawScrub();
 }
@@ -4422,8 +4449,34 @@ function loadTimeline(){
         alerts: (r.data.alerts || []).map(a => ({ t: off + a.x1 * msecpp, len: Math.max(1, a.x2 - a.x1) * msecpp, cls: flagClass(a.type) }))
       };
       drawScrub();
+      if(V.tl.alerts.some(a => a.cls === 'motion')) tlLabelColors(cam, start, end, key, msecpp);
     }catch(e){ /* timeline is optional decoration */ }
   }, 250);
+}
+/* The timeline's alert marks only carry Blue Iris's AI flags, so alerts triggered by the camera itself (ONVIF people,
+   vehicle... detections) would all look like plain motion. Look up those alerts' labels and color the marks to match
+   the alert list. One request per timeline window, and only when there are plain-motion marks to check. */
+const TLC = new Map();
+async function tlLabelColors(cam, start, end, key, msecpp){
+  let list = TLC.get(key);
+  if(!list){
+    try{
+      const r = await api({ cmd: 'alertlist', camera: cam, startdate: start - 60, enddate: end + 60, view: 'alerts' });
+      list = (r.data || []).filter(a => (a.camera || cam) === cam || String(a.camera).toLowerCase() === String(cam).toLowerCase())
+        .map(a => ({ t: a.date * 1000, cls: (alertTags(a)[0] || {}).cls || 'motion' })).filter(a => a.cls !== 'motion');
+      TLC.set(key, list); if(TLC.size > 30) TLC.delete(TLC.keys().next().value);
+    }catch(e){ return; }
+  }
+  if(key !== V.tlKey || cam !== V.cam || !list.length) return;
+  const tol = Math.max(3000, msecpp * 2);
+  let changed = false;
+  for(const m of V.tl.alerts){
+    if(m.cls !== 'motion') continue;
+    let best = null, bd = tol;
+    for(const a of list){ const d = Math.abs(a.t - m.t); if(d <= bd){ bd = d; best = a; } }
+    if(best){ m.cls = best.cls; changed = true; }
+  }
+  if(changed) drawScrub();
 }
 async function loadCamAlerts(){
   const cam = V.cam; V.camAlerts = [];
