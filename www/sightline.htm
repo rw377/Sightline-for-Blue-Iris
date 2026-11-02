@@ -109,7 +109,7 @@ main{flex:1;overflow:hidden;position:relative}
 .tsp{flex:1}
 .tgo{flex:none;height:30px;padding:0 16px;border-radius:15px;background:var(--accent);color:#04121b;font-size:12.5px;font-weight:800}
 @media (min-width:641px){ .trimbar{flex-direction:row;align-items:center;justify-content:center;gap:14px} .trimbar .tsp{display:none} .trimbar .trow{gap:8px} }
-.toast{position:fixed;left:50%;bottom:calc(80px + var(--safe-b));transform:translateX(-50%);z-index:60;padding:10px 16px;border-radius:12px;background:var(--surface2);color:var(--text);font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.5);white-space:nowrap}
+.toast{position:fixed;left:50%;bottom:calc(80px + var(--safe-b));transform:translateX(-50%);z-index:60;padding:10px 16px;border-radius:12px;background:var(--surface2);color:var(--text);font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.5);width:max-content;max-width:min(560px, calc(100vw - 32px));white-space:normal;text-align:center}
 .tile.portrait{background:#000}
 .tile.portrait img{object-fit:contain}
 .tile .tname{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:6px;padding:16px 8px 6px;
@@ -3473,12 +3473,25 @@ function exportName(a, t){
   const cam = String(camName(a.camera) || a.camera).replace(/[\\/:*?"<>|]+/g, '-').trim();
   return `${cam} ${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${h % 12 || 12}-${p(d.getMinutes())}-${p(d.getSeconds())} ${h < 12 ? 'AM' : 'PM'}.mp4`;
 }
-// Cancel: take the job out of Blue Iris's export queue (like UI3's Convert/Export list) and stop waiting for it
-function dlDelete(path){ if(path) api({ cmd: 'export', path, delete: true }).catch(() => {}); }
+/* Cancel: stop waiting for the clip and ask Blue Iris to take it out of its export queue (Blue Iris 6's UI3 does this
+   from its Convert/Export list). Older Blue Iris (seen on 5.8) has no way to stop an export: it finishes in Blue Iris's
+   export folder anyway, so check and say so. */
+async function dlCancelJob(job){
+  if(!job.path || job.cancelSent) return;        // no path yet: done as soon as Blue Iris says what it is
+  job.cancelSent = true;
+  let gone = false;
+  try{
+    await api({ cmd: 'export', path: job.path, delete: true });
+    await wait(1500);
+    const q = await api({ cmd: 'export' }), it = (Array.isArray(q.data) ? q.data : []).find(x => x.path === job.path);
+    gone = q.result === 'success' && (!it || it.status === 'error');
+  }catch(e){}
+  toast(gone ? 'Download cancelled' : 'Cancelled here. This Blue Iris can\u2019t stop exports, so it will still finish in its export folder', gone ? 2500 : 8000);
+}
 $('#dlCancel').addEventListener('click', () => {
   const job = DL.job; if(!job || job.cancel) return;
   job.cancel = true; dlShow('');
-  dlDelete(job.path);                            // no path yet: deleted as soon as Blue Iris says what it is
+  dlCancelJob(job);
 });
 function dlShow(text, pct){
   if(text && DL.job && DL.job.cancel) return;   // cancelled: stays closed while the last check finishes
@@ -3503,7 +3516,7 @@ async function downloadAlert(a, range){
     if(r.result !== 'success') throw new Error(exportFail(r));
     const mine = r.data || {};
     job.path = mine.path || '';
-    if(job.cancel){ dlDelete(job.path); throw new Error('cancelled'); }
+    if(job.cancel){ dlCancelJob(job); throw new Error('cancelled'); }
     let uri = '', misses = 0, errs = 0, seen = '', moved = Date.now();
     for(;;){
       await wait(1500);
@@ -3532,7 +3545,7 @@ async function downloadAlert(a, range){
     dlShow(''); toast('Download started: ' + job.name + (range && range.note ? ` (${range.note})` : ''), range && range.note ? 8000 : 4000);
   }catch(e){
     dlShow('');
-    if(e.message === 'cancelled') toast('Download cancelled', 2500);
+    if(e.message === 'cancelled'){}                // dlCancelJob says how it went
     else if(e.message !== 'session'){ toast(e.message || 'Download failed', 6000); diagNote('download: ' + (e.message || 'failed')); }
   }finally{ DL.job = null; }
 }
