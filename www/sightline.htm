@@ -49,7 +49,13 @@ svg{display:block}
 .top{display:flex;align-items:center;gap:8px;padding:calc(10px + var(--safe-t)) calc(12px + var(--safe-r)) 10px calc(16px + var(--safe-l));
   background:var(--bg);border-bottom:1px solid var(--line)}
 .toplogo{flex:none;display:block;margin-left:-2px}
-.top h1{flex:1;margin:0;font-size:19px;font-weight:650;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ttl{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+/* "Sightline" over the server name, so it's clear which app this is */
+.brandtag{font-size:10.5px;font-weight:650;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brandtag .bt-short{display:none}
+@media (max-width:420px){ .brandtag .bt-long{display:none} .brandtag .bt-short{display:inline} }
+.brandtag:not([hidden]) + h1{line-height:1.2}
+.top h1{margin:0;font-size:19px;font-weight:650;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .iconbtn{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--muted)}
 .iconbtn:active{background:var(--surface2)}
 main{flex:1;overflow:hidden;position:relative}
@@ -145,6 +151,10 @@ main{flex:1;overflow:hidden;position:relative}
 .selectwrap svg{position:absolute;right:10px;top:9px;pointer-events:none;color:var(--muted)}
 .day{position:sticky;top:52px;z-index:2;padding:8px calc(16px + var(--safe-r)) 6px calc(16px + var(--safe-l));background:var(--bg);
   font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.aftip{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:2px calc(12px + var(--safe-r)) 8px calc(12px + var(--safe-l));padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:13.5px;color:var(--muted)}
+.aftip > span:first-child{flex:1 1 260px}
+.aftip b{color:var(--text)}
+.aftip-b{display:flex;gap:8px;margin-left:auto}
 .alert{display:flex;gap:12px;width:100%;text-align:left;padding:6px calc(12px + var(--safe-r)) 6px calc(12px + var(--safe-l))}
 .alert:active{background:var(--surface)}
 .thumb{position:relative;flex:none;width:44%;max-width:220px;aspect-ratio:16/9;border-radius:9px;overflow:hidden;background:var(--surface)}
@@ -163,6 +173,7 @@ main{flex:1;overflow:hidden;position:relative}
 /* alert preview panel: computers with a mouse and room beside the list */
 @media (min-width:900px) and (hover:hover) and (pointer:fine){
   body.apv-on #alertList,body.apv-on #alertMore{max-width:560px}
+  body.apv-on .aftip{max-width:536px}
   body.apv-on #alertList .alert{border-radius:10px}
   body.apv-on #alertList .alert.apv-cur{background:var(--surface)}
   #alertPrev{position:absolute;top:60px;left:584px;right:24px;max-width:1000px;z-index:4}
@@ -472,6 +483,7 @@ body.isfs #viewer.hideui{cursor:none}
 /* ---------- login / sheet ---------- */
 .overlay{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:24px;background:var(--bg)}
 .card{width:100%;max-width:340px}
+.loginbrand{display:flex;align-items:center;gap:8px;margin:0 0 14px;color:var(--muted);font-size:13px;font-weight:650;letter-spacing:.4px}
 .card h2{margin:0 0 4px;font-size:24px}
 .card p{margin:0 0 22px;color:var(--muted)}
 .field{display:block;margin-bottom:12px}
@@ -566,7 +578,7 @@ body.isfs #viewer.hideui{cursor:none}
 <div id="app" hidden>
   <header class="top">
     <svg class="toplogo" width="24" height="24" viewBox="4 4 16 16" aria-hidden="true"><circle cx="12" cy="12" r="6.56" fill="none" stroke="#4cc2ff" stroke-width="1.36"/><circle cx="12" cy="12" r="2.69" fill="#e8edf2"/></svg>
-    <h1 id="title">Sightline</h1>
+    <div class="ttl"><span class="brandtag" id="brandTag" hidden><span class="bt-long">Sightline for Blue Iris</span><span class="bt-short">Sightline</span></span><h1 id="title">Sightline</h1></div>
     <button class="iconbtn fsbtn" id="fsBtn" aria-label="Full screen" title="Full screen (F)"><svg class="fs-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="fs-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>
     <button class="iconbtn" id="refreshBtn" aria-label="Refresh"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
     <button class="iconbtn" id="menuBtn" aria-label="Menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
@@ -587,6 +599,7 @@ body.isfs #viewer.hideui{cursor:none}
         <div class="selectwrap"><select id="camFilter" aria-label="Camera"><option value="index">All cameras</option></select>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg></div>
       </div>
+      <div class="aftip" id="afTip" hidden role="note"><span>These are the starting filter buttons. Pick your own, or switch to <b>Auto</b> to show what your cameras detect most, in Settings &#8594; Alert filters.</span><span class="aftip-b"><button type="button" class="chip" id="afTipOpen">Customize</button><button type="button" class="chip" id="afTipOk">Got it</button></span></div>
       <div id="alertList"></div>
       <div id="alertMore" class="more"></div>
     </section>
@@ -708,6 +721,7 @@ body.isfs #viewer.hideui{cursor:none}
 
 <div id="login" class="overlay" hidden>
   <form class="card" id="loginForm" autocomplete="on">
+    <div class="loginbrand"><svg width="20" height="20" viewBox="4 4 16 16" aria-hidden="true"><circle cx="12" cy="12" r="6.56" fill="none" stroke="#4cc2ff" stroke-width="1.36"/><circle cx="12" cy="12" r="2.69" fill="#e8edf2"/></svg><span>Sightline for Blue Iris</span></div>
     <h2 id="loginTitle">Sightline</h2>
     <p id="loginSub">Sign in with your Blue Iris account.</p>
     <label class="field"><span>Username</span><input id="user" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" required></label>
@@ -982,6 +996,17 @@ body.isfs #viewer.hideui{cursor:none}
   </div>
 </div>
 
+<div id="popSheet" class="sheetbg" hidden>
+  <div class="sheet scroll">
+    <h3>Pop up for these labels</h3>
+    <div class="meta">A camera pops up when an alert has any label switched on here, as well as People, Vehicles or Animals if they&#8217;re on. Labels match the AI label Blue Iris saved with each alert; capitalization and plurals don&#8217;t matter.</div>
+    <div id="popLblList"></div>
+    <form class="afadd" id="popAdd" autocomplete="off"><input id="popInput" placeholder="Add a label, e.g. ups" maxlength="30" autocapitalize="off" spellcheck="false" enterkeyhint="done"><button>Add</button></form>
+    <div class="afnote" id="popNote"></div>
+    <div class="btnrow"><button class="primary" id="popDone">Done</button></div>
+  </div>
+</div>
+
 <script src="sightline-jmuxer.min.js"></script>
 <script>
 'use strict';
@@ -1161,7 +1186,8 @@ function showLogin(msg){
   $('#offline').hidden = true; clearTimeout(offlineTimer);
   $('#remember').checked = staySignedIn();
   $('#login').hidden = false;
-  $('#loginTitle').textContent = S.sys || APP.name;
+  $('#loginTitle').textContent = S.sys || '';
+  $('#loginTitle').hidden = !S.sys;              // no server name: the Sightline line above says it all
   $('#loginErr').textContent = msg || '';
   $('#user').value = store.get('bis_u') || $('#user').value;
 }
@@ -1188,6 +1214,7 @@ async function start(){
   $('#login').hidden = true;
   $('#app').hidden = false;
   $('#title').textContent = S.sys || APP.name;
+  $('#brandTag').hidden = !S.sys;               // the server's name, with "Sightline" above it
   document.title = (S.sys ? S.sys + ' - ' : '') + APP.name;
   await loadCams();
   if(!started){ started = true; setTab(store.get('bis_tab') || 'live'); }
@@ -2280,19 +2307,28 @@ const TA = {};
 /* ---- pop up cameras on detection (opt-in): while the Live grid is on screen, a new AI or camera detection of the
    chosen kinds pops that camera up large, with live video, for 20 s. Pointing at it pauses the countdown; a click
    opens the camera. A newer detection replaces it. Nothing happens on other screens or in the background. ---- */
-const POP_KINDS = [['person', 'People'], ['vehicle', 'Vehicles'], ['animal', 'Animals'], ['delivery', 'Deliveries']];
+const POP_KINDS = [['person', 'People'], ['vehicle', 'Vehicles'], ['animal', 'Animals']];
 const POP = { kinds: (() => {                 // which kinds pop up; empty = off (older builds stored people / pv / any)
-    const v = store.get('bis_popup') || '', old = { people: 'person', pv: 'person,vehicle', any: 'person,vehicle,animal,delivery' };
+    const v = store.get('bis_popup') || '', old = { people: 'person', pv: 'person,vehicle', any: 'person,vehicle,animal' };
     return new Set((old[v] || v).split(',').filter(k => POP_KINDS.some(x => x[0] === k)));
-  })(), seen: new Set(),
+  })(), labels: (() => { try{ const v = JSON.parse(store.get('bis_poplabels') || '[]'); return Array.isArray(v) ? v.filter(x => typeof x === 'string') : []; }catch(e){ return []; } })(),
+  seen: new Set(),
   cam: '', t: 0, left: 0, total: 20000, timer: 0, hover: false, p: null, imgT: 0 };
-const popOn = () => POP.kinds.size > 0;
-function popWants(cls){ return POP.kinds.has(cls); }
-function popConsider(it, tag){
+const popOn = () => POP.kinds.size > 0 || POP.labels.length > 0;
+// What to show for an alert that should pop up, or null: People / Vehicles / Animals by type, or one of your own labels
+function popWants(it, tag){
+  if(tag && POP.kinds.has(tag.cls)) return tag;
+  if(!POP.labels.length) return null;
+  const keys = memoKeys(it), hit = POP.labels.find(l => keys.has(normLabel(l)));
+  if(!hit) return null;
+  const k = normLabel(hit), t = alertTags(it).find(t => normLabel(String(t.text).replace(/\s*\d+%$/, '')) === k);
+  return t || { cls: classify(hit), text: labelTitle(hit) };
+}
+function popConsider(it, tag0){
   if(!popOn() || POP.seen.has(it.path)) return;
   POP.seen.add(it.path);
-  const t = it.date * 1000;
-  if(Date.now() - t > 30000 || !popWants(tag.cls) || !canRefreshTiles()) return;   // only what's happening now
+  const t = it.date * 1000, tag = popWants(it, tag0);
+  if(Date.now() - t > 30000 || !tag || !canRefreshTiles()) return;   // only what's happening now
   if(!$('#popBox').hidden && t < POP.t) return;                     // the list is newest first: never let an older one replace a newer
   popShow(it.camera, tag, t);
 }
@@ -2354,25 +2390,70 @@ function popClose(){
   POP.cam = ''; $('#popBox').hidden = true; $('#popImg').removeAttribute('src');
 }
 function popUi(){
+  const nl = POP.labels.length;
   $('#popModes').innerHTML = `<button type="button" class="chip" data-pop="off" aria-pressed="${!popOn()}">Off</button>` +
-    POP_KINDS.map(([k, name]) => `<button type="button" class="chip" data-pop="${k}" aria-pressed="${POP.kinds.has(k)}">${name}</button>`).join('');
-  const names = POP_KINDS.filter(x => POP.kinds.has(x[0])).map(x => x[1].toLowerCase());
-  $('#popSub').textContent = !names.length ? 'Pick what makes a camera pop up. Plain motion never does.'
+    POP_KINDS.map(([k, name]) => `<button type="button" class="chip" data-pop="${k}" aria-pressed="${POP.kinds.has(k)}">${name}</button>`).join('') +
+    `<button type="button" class="chip" data-pop="custom" aria-pressed="${nl > 0}">${nl ? `Custom (${nl})` : 'Custom\u2026'}</button>`;
+  const names = POP_KINDS.filter(x => POP.kinds.has(x[0])).map(x => x[1].toLowerCase()).concat(POP.labels.map(l => labelChip(l)));
+  $('#popSub').textContent = !names.length ? 'Pick what makes a camera pop up. Custom picks labels from your recent alerts or ones you type. Plain motion never does.'
     : `A camera pops up when it sees ${names.length > 1 ? names.slice(0, -1).join(', ') + ' or ' + names[names.length - 1] : names[0]}. Only while the camera grid is on screen.`;
+}
+function popSaveLabels(){ store.set('bis_poplabels', POP.labels.length ? JSON.stringify(POP.labels) : null); popUi(); popLblRender(); }
+// The label picker: labels your cameras reported in the last 3 weeks (the same scan as Alert filters) plus your own
+function popLblRender(){
+  const rows = new Map(), scan = AFS.scan, add = l => { const k = normLabel(l); if(k && !rows.has(k)) rows.set(k, l); };
+  POP.labels.forEach(add);
+  if(scan) [...scan.entries()].sort((a, b) => b[1].n - a[1].n).forEach(([k, c]) => { if(!['person', 'vehicle', 'animal'].includes(k)) add(c.name); });
+  let h = '';
+  if(!rows.size) h = `<div class="meta">${AFS.scanning ? 'Looking at the last 3 weeks of alerts\u2026' : 'No other AI labels found in the last 3 weeks. Add one below.'}</div>`;
+  for(const [k, l] of rows){
+    const c = scan && scan.get(k), on = POP.labels.some(x => normLabel(x) === k);
+    const sub = c ? `${c.n.toLocaleString()} alert${c.n === 1 ? '' : 's'} in the last 3 weeks` : (AFS.scanning ? 'Checking\u2026' : (scan ? 'Not seen in the last 3 weeks' : ''));
+    h += afRow('pl:' + l, labelChip(l), sub, on, '').replace('data-af=', 'data-pl=');
+  }
+  if(AFS.scanning && rows.size) h += '<div class="meta">Looking at the last 3 weeks of alerts for more labels\u2026</div>';
+  $('#popLblList').innerHTML = h;
 }
 $('#popModes').addEventListener('click', e => {
   const b = e.target.closest('[data-pop]'); if(!b) return;
   const k = b.dataset.pop;
-  if(k === 'off') POP.kinds.clear(); else if(POP.kinds.has(k)) POP.kinds.delete(k); else POP.kinds.add(k);
+  if(k === 'custom'){
+    $('#sheet').hidden = true; $('#popNote').textContent = ''; $('#popInput').value = '';
+    popLblRender(); $('#popSheet').hidden = false;
+    scanLabels().then(popLblRender, () => {}); popLblRender();
+    return;
+  }
+  if(k === 'off'){ POP.kinds.clear(); POP.labels = []; store.set('bis_poplabels', null); }
+  else if(POP.kinds.has(k)) POP.kinds.delete(k); else POP.kinds.add(k);
   store.set('bis_popup', [...POP.kinds].join(',') || null); popUi();
   if(!popOn()) popClose();
 });
+$('#popLblList').addEventListener('click', e => {
+  const b = e.target.closest('[data-pl]'); if(!b) return;
+  const l = b.dataset.pl.slice(3), k = normLabel(l);
+  POP.labels = POP.labels.some(x => normLabel(x) === k) ? POP.labels.filter(x => normLabel(x) !== k) : [...POP.labels, l];
+  popSaveLabels();
+});
+$('#popAdd').addEventListener('submit', e => {
+  e.preventDefault();
+  const raw = $('#popInput').value.trim().toLowerCase().replace(/\s+/g, ' ');
+  if(!raw) return;
+  if(!/^[a-z0-9][a-z0-9 _-]{0,29}$/.test(raw)){ $('#popNote').textContent = 'Use letters, numbers, spaces or dashes.'; return; }
+  const k = normLabel(raw);
+  if(!POP.labels.some(x => normLabel(x) === k)) POP.labels = [...POP.labels, raw];
+  popSaveLabels();
+  const seen = AFS.scan && AFS.scan.get(k);
+  $('#popNote').textContent = seen ? `Added. \u201c${labelChip(raw)}\u201d matched ${seen.n.toLocaleString()} alert${seen.n === 1 ? '' : 's'} in the last 3 weeks.`
+    : AFS.scan ? `Added. Nothing labeled \u201c${raw}\u201d in the last 3 weeks yet. It has to match the label your AI model reports.` : 'Added.';
+  $('#popInput').value = '';
+});
+$('#popSheet').addEventListener('click', e => { if(e.target.id === 'popSheet' || e.target.id === 'popDone') $('#popSheet').hidden = true; });
 $('#popClose').addEventListener('click', popClose);
 $('#popOpen').addEventListener('click', () => { const c = POP.cam; popClose(); if(c) openViewer(c); });
 $('#popFrame').addEventListener('click', () => { const c = POP.cam; popClose(); if(c) openViewer(c); });
 $('#popBox').addEventListener('pointermove', e => { if(e.pointerType === 'mouse') POP.hover = true; });   // a real move, not a pop-up appearing under a resting mouse
 $('#popBox').addEventListener('pointerleave', () => { POP.hover = false; });
-popUi();
+setTimeout(popUi, 0);                            // after the label helpers further down are set up
 async function pollRecentAlerts(){
   if(!S.session) return;
   try{
@@ -2381,8 +2462,8 @@ async function pollRecentAlerts(){
     for(const it of (r.data || [])){
       if(!camShown(it.camera)) continue;
       const tag = alertTags(it)[0];
+      popConsider(it, tag && tag.cls !== 'motion' ? tag : null);
       if(!tag || tag.cls === 'motion') continue;
-      popConsider(it, tag);
       const prev = TA[it.camera];
       if(!prev || it.date * 1000 > prev.at) TA[it.camera] = { tag, at: it.date * 1000 };
     }
@@ -2416,7 +2497,13 @@ function setTab(tab){
   gvSync();
   if(tab === 'alerts' && (!A.loadedAt || Date.now() - A.loadedAt > 60000)) loadAlerts(true);
   if(tab === 'alerts' && afAuto()){ renderFilterChips(); afRefresh(); }
+  if(tab === 'alerts') afTipShow();
 }
+// A one-time tip the first time the Alerts tab opens: the filter buttons can be changed, or set to Auto
+function afTipShow(){ $('#afTip').hidden = !!store.get('bis_tip_af') || afAuto(); }
+function afTipDone(){ store.set('bis_tip_af', '1'); $('#afTip').hidden = true; }
+$('#afTipOk').addEventListener('click', afTipDone);
+$('#afTipOpen').addEventListener('click', () => { afTipDone(); $('#afBtn').click(); });
 $('#refreshBtn').addEventListener('click', async () => {
   if(S.tab === 'alerts') loadAlerts(true);
   else { await loadCams(); }
@@ -2523,8 +2610,7 @@ function saveAf(list){
 }
 function customLabels(){ try{ const v = JSON.parse(store.get('bis_alabels') || '[]'); return Array.isArray(v) ? v : []; }catch(e){ return []; } }
 // First run: save the starting set now, so it can't change later once other settings exist
-// Brand-new visitors start on Auto (All plus what your cameras see most); everyone else keeps their own list
-if(store.get('bis_afilters') == null && store.get('bis_afmode') == null && store.get('bis_tab') == null) store.set('bis_afmode', 'auto');
+// Everyone starts on Choose with All, People, Vehicles and Animals; Auto is there to switch on in Alert filters
 if(store.get('bis_afilters') == null) saveAf(loadAf());
 /* Auto alert filters: All, the filters you always want ("pins"), then the most common recent detections, as many
    as fit across the screen (up to 5). The counts come from the last 3 weeks of alerts and are kept in this browser,
@@ -2734,7 +2820,7 @@ $('#afAdd').addEventListener('submit', e => {
   if(!customLabels().some(l => normLabel(l) === k)) store.set('bis_alabels', JSON.stringify([...customLabels(), raw]));
   if(!loadAf().some(x => x.startsWith('label:') && normLabel(x.slice(6)) === k)) afToggle('label:' + raw); else renderAfList();
   const seen = AFS.scan && AFS.scan.get(k);
-  $('#afNote').textContent = seen ? `Added. \u201c${labelChip(raw)}\u201d matched ${seen.n.toLocaleString()} alerts in the last 3 weeks.`
+  $('#afNote').textContent = seen ? `Added. \u201c${labelChip(raw)}\u201d matched ${seen.n.toLocaleString()} alert${seen.n === 1 ? '' : 's'} in the last 3 weeks.`
     : AFS.scan ? `Added. Nothing labeled \u201c${raw}\u201d in the last 3 weeks yet. It has to match the label your AI model reports.` : 'Added.';
   $('#afInput').value = '';
 });
@@ -5376,7 +5462,7 @@ function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&l
 document.addEventListener('keydown', e => {
   if((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '')){ toggleFs(V.open); return; }
   if(e.key === 'Escape' && !$('#markSheet').hidden){ $('#markSheet').hidden = true; return; }
-  for(const id of ['#srvSheet', '#logSheet', '#actSheet']) if(e.key === 'Escape' && !$(id).hidden){ $(id).hidden = true; return; }
+  for(const id of ['#srvSheet', '#logSheet', '#actSheet', '#popSheet']) if(e.key === 'Escape' && !$(id).hidden){ $(id).hidden = true; return; }
   if(e.key === 'Escape' && !$('#popBox').hidden){ popClose(); return; }
   if(!V.open) return;
   if(e.key === 'Escape' && !$('#dlSheet').hidden){ $('#dlSheet').hidden = true; return; }

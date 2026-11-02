@@ -42,13 +42,13 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **Hidden and disabled cameras stay out of the way.** Cameras marked Hidden in Blue Iris, and disabled cameras, don't appear in the grid or the alerts. A setting lets you show hidden cameras if you want them.
 - **Activity at a glance.** A tile's border lights up when Blue Iris sees motion (white) or a trigger, colored by what the AI found (person, vehicle, animal, delivery), with a label such as **"Dog 88%"**.
 - **Optional motion boxes on the tiles** show *where* something is moving, so you can follow the dog around the house without opening each camera.
-- **Pop up cameras on detection** (optional): pick People, Vehicles, Animals and/or Deliveries, and while the grid is on screen a camera that detects one pops up large with live video for 20 seconds. Click it to open the camera.
+- **Pop up cameras on detection** (optional): pick People, Vehicles, Animals and/or your own labels (choose from what your cameras have detected lately, such as Dogs or UPS, or type one), and while the grid is on screen a camera that detects one pops up large with live video for 20 seconds. Click it to open the camera.
 
 ### Alerts
-- **AI-aware filter buttons:** People, Vehicles, Animals, plus any label your AI model reports, such as Dogs, UPS or Amazon.
+- **AI-aware filter buttons:** you start with All, People, Vehicles and Animals, and can add any label your AI model reports, such as Dogs, UPS or Amazon.
 - **Camera (ONVIF) detections count too.** If a camera's own detection triggers Blue Iris instead of the AI, the label Blue Iris saves (for example "PeopleDet") reads as **Person** and counts under People; likewise Vehicle, Animal (DogCatDetect), Visitor (doorbell), Intrusion and Line crossed. Tip: in Blue Iris's ONVIF event settings, the Memo/label field can set your own label (for example `dog`) instead of the event name.
 - **Combine filters:** a click or tap shows one filter. To see alerts matching several, for example Dogs + People, Shift- or Ctrl-click the extra ones (long-press on a phone). Tap All to clear.
-- **Auto filter buttons** (new visitors start here): All, the filters you always want (for example People and Vehicles), then the detections your cameras have seen most in the last 3 weeks: as many as fit on the screen, or a number you choose. Or switch to **Choose** and pick the buttons yourself.
+- **Auto filter buttons** (switch on in Settings → Alert filters): All, the filters you always want (for example People and Vehicles), then the detections your cameras have seen most in the last 3 weeks: as many as fit on the screen, or a number you choose. Or keep **Choose** (the default) and pick the buttons yourself.
 - **Labels picked from real data.** Sightline scans the last 3 weeks of alerts and lists every label your cameras have actually reported, with counts. You can also type your own. Capitalization and plurals don't matter.
 - **Date and time ranges:** last hour, today, yesterday, last night (8 PM–6 AM), or any custom day and time window.
 - **Filter by camera or group.**
