@@ -86,6 +86,9 @@ main{flex:1;overflow:hidden;position:relative}
 .tile.ghost{position:fixed;z-index:50;margin:0;pointer-events:none;transform:scale(1.04);box-shadow:0 14px 40px rgba(0,0,0,.6);transition:transform .12s;outline:2px solid var(--accent)}
 .grid.dragging .tile:not(.ghost){transition:transform .18s ease}
 .dlstatus{position:fixed;left:50%;top:calc(64px + var(--safe-t));transform:translateX(-50%);z-index:61;display:flex;flex-direction:column;gap:7px;min-width:220px;max-width:calc(100vw - 32px);padding:10px 16px 11px;border-radius:12px;background:var(--surface2);color:var(--text);font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.dlstatus .row{display:flex;align-items:center;gap:14px}
+.dlstatus .row .t{flex:1}
+#dlCancel{flex:none;height:28px;padding:0 12px;margin:-4px -6px -4px 0;border-radius:14px;background:rgba(255,255,255,.1);color:var(--text);font-size:13px;font-weight:700}
 .dlstatus .bar{display:block;height:4px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden}
 .dlstatus .bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:2px;transition:width .4s}
 .dlstatus.indet .bar i{width:35% !important;animation:dlslide 1.1s ease-in-out infinite}
@@ -102,6 +105,7 @@ main{flex:1;overflow:hidden;position:relative}
 .ttime{flex:none;height:30px;padding:0 6px;border-radius:8px;color:var(--accent);font-size:13px;font-weight:700}
 .tarrow{color:var(--muted)}
 .tlen{color:var(--muted);font-size:12.5px}
+.tlen.slow::after{content:' \00b7  slow to re-encode';color:#f5a524}
 .tsp{flex:1}
 .tgo{flex:none;height:30px;padding:0 16px;border-radius:15px;background:var(--accent);color:#04121b;font-size:12.5px;font-weight:800}
 @media (min-width:641px){ .trimbar{flex-direction:row;align-items:center;justify-content:center;gap:14px} .trimbar .tsp{display:none} .trimbar .trow{gap:8px} }
@@ -171,6 +175,21 @@ main{flex:1;overflow:hidden;position:relative}
 .apv-speed:empty{display:none}
 .setrow{padding:12px 14px}
 .sheet .afmode{justify-content:space-between;text-align:left}
+/* detection pop-up over the Live grid */
+.popbox{position:fixed;z-index:25;left:50%;top:max(70px, 9vh);transform:translateX(-50%);width:min(860px, 72vw);background:var(--surface);border-radius:16px;
+  box-shadow:0 18px 60px rgba(0,0,0,.65),0 0 0 2px var(--pc, var(--person));overflow:hidden;animation:popin .18s ease-out}
+@keyframes popin{from{opacity:0;transform:translateX(-50%) scale(.96)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+@media (max-width:700px){ .popbox{width:calc(100vw - 16px);top:calc(58px + var(--safe-t))} .popopen{display:none} }
+.pophead .tag,.pophead .num,.popopen{white-space:nowrap;flex:none}
+.pophead{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 14px}
+.pophead b{min-width:0;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pophead .num{color:var(--muted);font-size:13px;margin-right:auto;flex:none}
+.popopen{height:32px;padding:0 14px;border-radius:16px;background:var(--surface2);color:var(--text);font-weight:700;font-size:13px}
+.popframe{position:relative;aspect-ratio:16/9;background:#000;cursor:pointer}
+.popframe img,.popframe video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.popframe video{opacity:0}.popframe video.on{opacity:1}
+.popbar{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.12)}
+.popbar span{display:block;height:100%;width:100%;background:var(--pc, var(--person));transition:width .25s linear}
 .dlprof small{color:var(--faint);font-size:12px}
 /* go-to calendar: days without recordings for this camera are greyed out */
 .cal{border:1px solid var(--line);border-radius:12px;padding:6px 8px 8px;background:var(--surface)}
@@ -205,13 +224,19 @@ main{flex:1;overflow:hidden;position:relative}
 .aflags .af-f{color:#f5a524}
 .aflags .af-p{color:#8ab4ff}
 #vMark{position:relative}
+#vGroup[aria-pressed=true]{background:rgba(76,194,255,.18)}
+#viewer.grp .stage{cursor:pointer}
+/* a group with hidden or disabled cameras in it: Sightline redraws just the shown cameras into its own grid */
+.stage canvas#grpCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;background:#000;transform:var(--zt,none);transform-origin:0 0}
+.stage.rg img.frame,.stage.rg video,.stage.rg canvas#motionCanvas{opacity:0}
 #vMark .mkl,#vMark .mk-narrow,#vMark .mkdot{display:none}
 #vMark .mkdot{position:absolute;top:7px;right:4px;width:8px;height:8px;border-radius:50%;background:#f5a524}
 #vMark.prot .mkdot{background:#8ab4ff}
 #vMark.flagged.prot .mkdot{background:linear-gradient(90deg,#f5a524 50%,#8ab4ff 50%)}
 /* phones: download, flag and protect share one button ("...") so the camera name keeps its room */
 @media (max-width:420px){
-  #viewer .vtop #vDl{display:none}
+  #viewer.hasmark .vtop #vDl{display:none}
+  #viewer.grp .vtop #vMotion{display:none}
   #vMark .mk-wide{display:none}
   #vMark .mk-narrow{display:block}
   #vMark.flagged .mkdot,#vMark.prot .mkdot{display:block}
@@ -505,6 +530,20 @@ body.isfs #viewer.hideui{cursor:none}
 .log-tools .dlchips{display:flex;gap:6px;flex-wrap:wrap}
 .log-tools input{flex:1;min-width:140px;height:34px;border-radius:17px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:0 14px;font:14px system-ui,sans-serif}
 .log-list{padding:0 8px}
+/* activity overview */
+.actdays{display:flex;align-items:flex-end;gap:2px;height:110px;padding:6px 14px 0}
+.actdays .d{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;min-width:0;position:relative}
+.actdays .d i{display:block;width:100%}
+.actdays .d i:first-child{border-radius:3px 3px 0 0}
+.actdays .d b{position:absolute;left:0;right:0;bottom:-16px;text-align:center;font-size:10px;font-weight:600;color:var(--faint);white-space:nowrap;overflow:hidden}
+.actdays + .sect{margin-top:26px}
+.actmap{padding:4px 14px 2px;display:grid;grid-template-columns:minmax(64px,120px) repeat(24,minmax(0,1fr)) auto;gap:2px;align-items:center;font-size:12px}
+.actmap .h{font-size:10px;color:var(--faint);text-align:left;white-space:nowrap;overflow:visible}
+.actmap .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);padding-right:6px;cursor:pointer}
+.actmap .n:hover{color:var(--accent)}
+.actmap .c{height:18px;border-radius:3px;background:rgba(76,194,255,var(--a,0));box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
+.actmap .t{text-align:right;color:var(--muted);padding-left:6px;font-variant-numeric:tabular-nums}
+.actmap .all{font-weight:700}
 .logrow{display:grid;grid-template-columns:22px 1fr;gap:2px 10px;padding:9px 6px;border-top:1px solid var(--line);align-items:start}
 .logrow:first-child{border-top:0}
 .logrow .li{width:18px;height:18px;margin-top:1px}
@@ -573,6 +612,15 @@ body.isfs #viewer.hideui{cursor:none}
   </nav>
 </div>
 
+<div id="popBox" class="popbox" hidden role="dialog" aria-label="Detection">
+  <div class="pophead">
+    <span class="tag" id="popTag"></span><b id="popCam"></b><span class="num" id="popTime"></span>
+    <button type="button" id="popOpen" class="popopen">Open</button>
+    <button type="button" class="iconbtn" id="popClose" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="popframe" id="popFrame"><img id="popImg" alt=""><div class="popbar"><span id="popBar"></span></div></div>
+</div>
+
 <div id="viewer" hidden>
   <div class="vtop">
     <button class="iconbtn" id="vBack" aria-label="Back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg></button>
@@ -580,6 +628,7 @@ body.isfs #viewer.hideui{cursor:none}
     <button class="iconbtn" id="vSound" aria-label="Sound"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z" fill="#fff"/><path class="wave" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/><path class="mute" d="m16 9 6 6m0-6-6 6"/></svg></button>
     <button class="iconbtn" id="vPtz" aria-label="PTZ controls" aria-pressed="false" title="Pan / tilt / zoom" hidden><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/><path d="m9 5 3-3 3 3M9 19l3 3 3-3M5 9l-3 3 3 3M19 9l3 3-3 3"/><circle cx="12" cy="12" r="2"/></svg></button>
     <button class="iconbtn fsbtn" id="vFs" aria-label="Full screen" title="Full screen (F)"><svg class="fs-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="fs-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>
+    <button class="iconbtn" id="vGroup" aria-label="Watch all cameras in the group" title="Watch all cameras in the group" aria-pressed="false" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="4" width="8" height="7" rx="1.5"/><rect x="13" y="4" width="8" height="7" rx="1.5"/><rect x="3" y="13" width="8" height="7" rx="1.5"/><rect x="13" y="13" width="8" height="7" rx="1.5"/></svg></button>
     <button class="iconbtn" id="vMotion" aria-label="Motion boxes" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><rect x="9" y="9" width="6" height="6" rx="1" stroke-dasharray="2 2"/></svg></button>
     <button class="iconbtn" id="vDl" aria-label="Download this alert" title="Download this alert (MP4)" hidden><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"/></svg></button>
     <button class="iconbtn" id="vMark" aria-label="Flag or protect this alert" title="Flag or protect this alert" aria-pressed="false" hidden><svg class="mk-wide" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="mkf" d="M5 21V4h11l-2 4 2 4H5"/><g class="mkl"><rect x="13" y="14" width="9" height="7" rx="1.5"/><path d="M15 14v-2a2.5 2.5 0 0 1 5 0v2"/></g></svg><svg class="mk-narrow" width="20" height="20" viewBox="0 0 24 24" fill="#fff"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg><span class="mkdot"></span></button>
@@ -595,6 +644,7 @@ body.isfs #viewer.hideui{cursor:none}
   <div class="stage" id="stage">
     <video id="vVideo" muted playsinline hidden></video>
     <canvas id="motionCanvas"></canvas>
+    <canvas id="grpCanvas" hidden></canvas>
     <div class="spin" id="vSpin"></div>
     <button class="camnav l" id="camPrev" aria-label="Previous camera"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m15 5-7 7 7 7"/></svg></button>
     <button class="camnav r" id="camNext" aria-label="Next camera"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 5 7 7-7 7"/></svg></button>
@@ -668,7 +718,7 @@ body.isfs #viewer.hideui{cursor:none}
   </form>
 </div>
 
-<div id="dlStatus" class="dlstatus" role="status" aria-live="polite" hidden><span class="t"></span><span class="bar"><i></i></span></div>
+<div id="dlStatus" class="dlstatus" role="status" aria-live="polite" hidden><span class="row"><span class="t"></span><button type="button" id="dlCancel">Cancel</button></span><span class="bar"><i></i></span></div>
 
 <div id="qualSheet" class="sheetbg" hidden>
   <div class="sheet">
@@ -792,6 +842,7 @@ body.isfs #viewer.hideui{cursor:none}
     <button id="hlBtn" class="tgl" role="switch" aria-checked="true"><span class="lbl">Highlight active cameras<small>Colored border on tiles with motion or a detection</small></span><span class="tog"></span></button>
     <button id="tlBtn" class="tgl" role="switch" aria-checked="true"><span class="lbl">AI labels on cameras<small>Show what the AI saw on the tile, e.g. &#8220;Dog 82%&#8221;</small></span><span class="tog"></span></button>
     <button id="tvBtn" class="tgl" role="switch" aria-checked="true"><span class="lbl">Live video in camera tiles<small>Off shows snapshots every 1.5 seconds instead, which uses less data</small></span><span class="tog"></span></button>
+    <div class="setrow" id="popRow"><span class="lbl">Pop up cameras on detection<small id="popSub"></small></span><div class="dlchips" id="popModes"></div></div>
     <button id="hidBtn" class="tgl" role="switch" aria-checked="false"><span class="lbl">Show hidden cameras<small>Cameras marked Hidden in Blue Iris. Disabled cameras are never shown.</small></span><span class="tog"></span></button>
     <button id="resetOrderBtn">Reset layout for this view<span class="sub" style="margin-left:auto;color:var(--faint);font-size:13px">order and tile sizes</span></button>
     <div class="sect">Interface</div>
@@ -803,6 +854,7 @@ body.isfs #viewer.hideui{cursor:none}
     <div class="sect">Server</div>
     <button id="srvBtn" class="opt"><span>Server status</span><span class="sub" id="srvCur"></span></button>
     <button id="logBtn" class="opt"><span>System log</span><span class="sub" id="logCur"></span></button>
+    <button id="actBtn" class="opt"><span>Activity</span><span class="sub">Busiest cameras and times</span></button>
     <div class="sect">Account</div>
     <button id="stayBtn" class="opt"><span>Stay signed in</span><span class="sub" id="stayCur">On</span></button>
     <a href="ui3.htm" target="_blank" rel="noopener">Open full Blue Iris UI (UI3)</a>
@@ -813,9 +865,9 @@ body.isfs #viewer.hideui{cursor:none}
 
 <div id="dlSheet" class="sheetbg" hidden>
   <div class="sheet scroll">
-    <h3>Download this alert</h3>
+    <h3 id="dlTitle">Download this alert</h3>
     <div class="meta" id="dlInfo"></div>
-    <div class="sect">Length</div>
+    <div class="sect" id="dlLenHead">Length</div>
     <div id="dlRanges"></div>
     <div class="sect">Video</div>
     <div id="dlModes"></div>
@@ -857,6 +909,20 @@ body.isfs #viewer.hideui{cursor:none}
     <div class="srv-cams" id="srvCams"></div>
     <div class="srv-note" id="srvCamNote"></div>
     <div class="btnrow"><button class="primary" id="srvDone">Done</button></div>
+  </div>
+</div>
+
+<div id="actSheet" class="sheetbg" hidden>
+  <div class="sheet scroll wide">
+    <div class="sheethead"><h3>Activity</h3></div>
+    <div class="log-tools"><div class="dlchips" id="actDays"></div><div class="dlchips" id="actTypes"></div></div>
+    <div class="meta" id="actSum"></div>
+    <div class="sect">Alerts per day</div>
+    <div class="actdays" id="actBars"></div>
+    <div class="sect">By camera and time of day</div>
+    <div class="actmap" id="actMap"></div>
+    <div class="meta" id="actNote"></div>
+    <div class="btnrow"><button class="primary" id="actDone">Done</button></div>
   </div>
 </div>
 
@@ -1155,7 +1221,7 @@ async function loadCams(){
     id: c.optionValue, name: c.optionDisplay || c.optionValue,
     w: c.width > 100 ? c.width : 1920, h: c.height > 100 ? c.height : 1080,
     online: c.isOnline !== false && !c.isNoSignal, trig: !!(c.isTriggered || c.isAlerting), ptz: !!c.ptz,
-    fps: c.FPS > 0 ? Math.min(60, c.FPS) : 0
+    fps: c.FPS > 0 ? Math.min(60, c.FPS) : 0, bps: c.BPS > 0 ? +c.BPS : 0   // bytes a second, as recorded
   }));
   S.camMap = Object.fromEntries(S.cams.map(c => [c.id, c]));
   S.camKeys = new Set(S.cams.map(c => String(c.id).toLowerCase()));
@@ -1327,7 +1393,15 @@ $('#tsizeSheet').addEventListener('click', e => {
   saveSizes(m); layoutGrid(); updateSizeBtn(); openSizeSheet(b.dataset.cam); ownSync();
 });
 addEventListener('resize', () => { if(S.tab === 'live'){ layoutGrid(); updateSizeBtn(); } });
-function camName(id){ return (S.camMap[id] && S.camMap[id].name) || id; }
+function camName(id){
+  if(S.camMap[id]) return S.camMap[id].name;
+  if(String(id).toLowerCase() === 'index') return 'All cameras';
+  const g = (S.groups || []).find(g => g.id === id); return g ? g.name : id;
+}
+// The player can show a whole Blue Iris group: one combined picture of all its cameras, live or recorded, all at the
+// same moment (what UI3 plays for a group). Needs the group's layout from Blue Iris, and its timeline.
+const groupOf = id => S.groupRaw && S.groupRaw[String(id || '').toLowerCase()];
+const GROUP_ARGS = '&flags=1&mask=1';                     // ask Blue Iris to print camera names on the combined picture
 
 const tiles = new Map();
 let tileObserver;
@@ -1472,7 +1546,7 @@ function diagText(){
     `Screen: ${innerWidth}x${innerHeight} @${devicePixelRatio || 1}x \u00b7 touch ${yn(navigator.maxTouchPoints > 0)} \u00b7 home-screen app ${yn(matchMedia('(display-mode: standalone)').matches)} \u00b7 ${location.protocol.replace(':', '')}`,
     `Video support: H.264 ${yn(mse('video/mp4; codecs="avc1.42E01E"'))} \u00b7 H.265 ${yn(mse('video/mp4; codecs="hvc1.1.6.L93.B0"'))} \u00b7 streaming ${yn(VS_OK)}`,
     `Cameras: ${st.total ?? '?'} in Blue Iris \u00b7 ${st.shown ?? '?'} shown \u00b7 ${st.hidden ?? 0} hidden \u00b7 ${st.disabled ?? 0} disabled \u00b7 ${st.noWeb ?? 0} web access off \u00b7 ${st.offline ?? 0} offline`,
-    `Groups: ${st.groups ?? '?'} \u00b7 with a layout for live tiles: ${st.layouts ?? '?'} \u00b7 this group: ${g ? 'yes' : 'no'}`,
+    `Groups: ${st.groups ?? '?'} \u00b7 with a layout for live tiles: ${st.layouts ?? '?'} \u00b7 this group: ${g ? 'yes' : 'no'}` + (V.grpL ? ` \u00b7 group view layout from the stream: ${V.grpL.cams.length} cameras in ${V.grpL.w}x${V.grpL.h}` : V.grp ? ' \u00b7 group view layout from the camera list' : ''),
     `Live tiles: ${GV.on ? (GV.started ? 'live video (playing)' : GV.retryAt === Infinity ? 'snapshots (this browser can\u2019t play the live video)' : GV.retryAt > Date.now() ? 'live video (waiting to retry; snapshots now)' : 'live video (not playing)') : 'snapshots'}`,
     `Timeline (rewind): ${TL.ok === true ? 'yes' : TL.ok === false ? 'no \u00b7 ' + TL.why : 'not checked yet'}${CL.failed ? ' \u00b7 clip list refused too: ' + CL.why : clipMode() ? ' \u00b7 rewinding from recording files' + (CL.force ? ' (forced for testing)' : '') : ''}`,
     `Alert recordings seen: ${Object.entries(DIAG.rec).map(([k, n]) => `${k} ${n}`).join(', ') || 'none loaded yet'}`,
@@ -1687,6 +1761,78 @@ $('#logLevels').addEventListener('click', e => { const b = e.target.closest('[da
 $('#logFind').addEventListener('input', e => { LOG.find = e.target.value; logRender(); });
 $('#logDone').addEventListener('click', () => { $('#logSheet').hidden = true; });
 $('#logSheet').addEventListener('click', e => { if(e.target.id === 'logSheet') $('#logSheet').hidden = true; });
+/* ---- activity overview: when and where alerts happen, from Blue Iris's alert list (one request per day, 4 at a time,
+   kept for 10 minutes). Each alert counts once, by its first label (AI or camera). ---- */
+const ACT = { days: 7, type: 'all', data: new Map(), loading: 0 };
+const ACT_TYPES = [['all', 'All'], ['people', 'People'], ['vehicles', 'Vehicles'], ['animals', 'Animals']];
+const ACT_COLOR = { person: 'var(--person)', vehicle: 'var(--vehicle)', animal: 'var(--animal)', delivery: 'var(--delivery)', motion: 'var(--motion)' };
+async function actLoad(){
+  const days = ACT.days, have = ACT.data.get(days);
+  if(have && Date.now() - have.at < 600000){ actRender(); return; }
+  const gen = ++ACT.loading; actRender();
+  const now = Math.floor(Date.now() / 1000), items = [], seen = new Set();
+  const list = [...Array(days).keys()];
+  for(let i = 0; i < list.length; i += 4){
+    const res = await Promise.all(list.slice(i, i + 4).map(d =>
+      api({ cmd: 'alertlist', camera: 'index', startdate: now - (d + 1) * 86400, enddate: now - d * 86400 + (d ? 0 : 60), view: 'alerts' }).catch(() => null)));
+    if(gen !== ACT.loading) return;
+    for(const r of res) for(const it of ((r && r.data) || [])){
+      if(seen.has(it.path) || !camShown(it.camera)) continue; seen.add(it.path);
+      items.push({ it, cam: it.camera, t: it.date * 1000, cls: (alertTags(it)[0] || {}).cls || 'motion' });
+    }
+    if(!$('#actSheet').hidden) $('#actSum').textContent = `Reading ${Math.min(days, i + 4)} of ${days} days\u2026`;
+  }
+  ACT.data.set(days, { at: Date.now(), items }); ACT.loading = 0;
+  if(!$('#actSheet').hidden) actRender();
+}
+const hourText = h => { const d = new Date(2026, 0, 1, h); return d.toLocaleTimeString([], { hour: 'numeric' }).replace(/:00/, '').replace(/\s/g, ' '); };
+function actRender(){
+  $('#actDays').innerHTML = [7, 14, 30].map(n => `<button type="button" class="chip" data-actd="${n}" aria-pressed="${ACT.days === n}">${n} days</button>`).join('');
+  $('#actTypes').innerHTML = ACT_TYPES.map(([id, name]) => `<button type="button" class="chip" data-actt="${id}" aria-pressed="${ACT.type === id}">${name}</button>`).join('');
+  const d = ACT.data.get(ACT.days);
+  if(!d){ $('#actSum').textContent = 'Reading the alert list\u2026'; $('#actBars').innerHTML = ''; $('#actMap').innerHTML = ''; $('#actNote').textContent = ''; return; }
+  const match = ACT.type === 'all' ? null : filterMatcher(ACT.type);
+  const items = match ? d.items.filter(x => match(x.it)) : d.items;
+  // per day, stacked by type
+  const day0 = new Date(); day0.setHours(0, 0, 0, 0);
+  const days = [...Array(ACT.days).keys()].reverse().map(i => { const s0 = new Date(day0); s0.setDate(s0.getDate() - i); return { s: s0.getTime(), e: s0.getTime() + 86400000, by: {} , n: 0 }; });
+  for(const x of items){ const dd = days.find(q => x.t >= q.s && x.t < q.e); if(dd){ dd.n++; dd.by[x.cls] = (dd.by[x.cls] || 0) + 1; } }
+  const maxDay = Math.max(1, ...days.map(q => q.n)), step = ACT.days > 14 ? 5 : ACT.days > 7 ? 2 : 1;
+  $('#actBars').innerHTML = days.map((q, i) => {
+    const date = new Date(q.s), lbl = (days.length - 1 - i) % step === 0 ? (ACT.days === 7 ? date.toLocaleDateString([], { weekday: 'short' }) : `${date.getMonth() + 1}/${date.getDate()}`) : '';
+    const segs = ['motion', 'delivery', 'animal', 'vehicle', 'person'].filter(k => q.by[k]).map(k => `<i style="height:${(q.by[k] / maxDay * 100).toFixed(1)}%;background:${ACT_COLOR[k]}"></i>`).join('');
+    return `<div class="d" title="${esc(date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' }))}: ${q.n} alert${q.n === 1 ? '' : 's'}">${segs}<b>${lbl}</b></div>`;
+  }).join('');
+  // camera x hour of day
+  const byCam = new Map(), all = Array(24).fill(0);
+  for(const x of items){ const h = new Date(x.t).getHours(); if(!byCam.has(x.cam)) byCam.set(x.cam, Array(24).fill(0)); byCam.get(x.cam)[h]++; all[h]++; }
+  const rows = [...byCam.entries()].map(([cam, hrs]) => ({ cam, hrs, n: hrs.reduce((a, b) => a + b, 0) })).sort((a, b) => b.n - a.n);
+  const maxCell = Math.max(1, ...rows.flatMap(r => r.hrs)), maxAll = Math.max(1, ...all);
+  const cell = (n, max, who, h) => `<div class="c" style="--a:${n ? (0.12 + 0.88 * Math.sqrt(n / max)).toFixed(2) : 0}" title="${esc(who)}, ${hourText(h)}\u2013${hourText((h + 1) % 24)}: ${n} alert${n === 1 ? '' : 's'}"></div>`;
+  let h = '<div></div>' + [...Array(24).keys()].map(i => `<div class="h">${i % 6 === 0 ? hourText(i) : ''}</div>`).join('') + '<div></div>';
+  h += `<div class="n all" data-actcam="index">All cameras</div>` + all.map((n, i) => cell(n, maxAll, 'All cameras', i)).join('') + `<div class="t all">${items.length}</div>`;
+  h += rows.map(r => `<div class="n" data-actcam="${esc(r.cam)}" title="Show ${esc(camName(r.cam))}'s alerts">${esc(camName(r.cam))}</div>` + r.hrs.map((n, i) => cell(n, maxCell, camName(r.cam), i)).join('') + `<div class="t">${r.n}</div>`).join('');
+  $('#actMap').innerHTML = items.length ? h : '<div class="log-empty" style="grid-column:1/-1">No alerts in this period.</div>';
+  // summary
+  const busiestH = all.indexOf(Math.max(...all)), nz = all.map((n, i) => [n, i]).filter(x => x[0] > 0);
+  const quiet = all.indexOf(Math.min(...all));
+  const what = ACT.type === 'all' ? 'alerts' : ACT_TYPES.find(x => x[0] === ACT.type)[1].toLowerCase() + ' alerts';
+  $('#actSum').textContent = items.length ? `${items.length} ${what} in the last ${ACT.days} days \u00b7 busiest camera: ${camName(rows[0].cam)} (${rows[0].n}) \u00b7 busiest hour: ${hourText(busiestH)}\u2013${hourText((busiestH + 1) % 24)} \u00b7 quietest: ${hourText(quiet)}\u2013${hourText((quiet + 1) % 24)}` : `No ${what} in the last ${ACT.days} days.`;
+  $('#actNote').textContent = 'Brighter means more alerts. Tap a camera to see its alerts. Times are this device\u2019s time zone.' + (nz.length ? '' : '');
+}
+$('#actBtn').addEventListener('click', () => { $('#sheet').hidden = true; $('#actSheet').hidden = false; actLoad(); });
+$('#actSheet').addEventListener('click', e => {
+  if(e.target.id === 'actSheet' || e.target.id === 'actDone'){ $('#actSheet').hidden = true; return; }
+  const dd = e.target.closest('[data-actd]'); if(dd){ ACT.days = +dd.dataset.actd; actLoad(); return; }
+  const tt = e.target.closest('[data-actt]'); if(tt){ ACT.type = tt.dataset.actt; actRender(); return; }
+  const c = e.target.closest('[data-actcam]');
+  if(c){
+    $('#actSheet').hidden = true;
+    const sel = $('#camFilter'); A.cam = c.dataset.actcam; sel.value = [...sel.options].some(o => o.value === A.cam) ? A.cam : 'index';
+    if(ACT.type !== 'all'){ A.sel = [ACT.type]; applyFilterState(); renderFilterChips(); }
+    setTab('alerts'); loadAlerts(true);
+  }
+});
 // Settings rows show a one-line summary
 async function srvSummary(){
   try{
@@ -2131,6 +2277,102 @@ async function refreshStatus(){
 setInterval(() => { if(canRefreshTiles() && (LV.hl || LV.labels)) refreshStatus(); }, 2000);
 // Latest AI label per camera (from alerts in the last ~2 minutes), every 4 s
 const TA = {};
+/* ---- pop up cameras on detection (opt-in): while the Live grid is on screen, a new AI or camera detection of the
+   chosen kinds pops that camera up large, with live video, for 20 s. Pointing at it pauses the countdown; a click
+   opens the camera. A newer detection replaces it. Nothing happens on other screens or in the background. ---- */
+const POP_KINDS = [['person', 'People'], ['vehicle', 'Vehicles'], ['animal', 'Animals'], ['delivery', 'Deliveries']];
+const POP = { kinds: (() => {                 // which kinds pop up; empty = off (older builds stored people / pv / any)
+    const v = store.get('bis_popup') || '', old = { people: 'person', pv: 'person,vehicle', any: 'person,vehicle,animal,delivery' };
+    return new Set((old[v] || v).split(',').filter(k => POP_KINDS.some(x => x[0] === k)));
+  })(), seen: new Set(),
+  cam: '', t: 0, left: 0, total: 20000, timer: 0, hover: false, p: null, imgT: 0 };
+const popOn = () => POP.kinds.size > 0;
+function popWants(cls){ return POP.kinds.has(cls); }
+function popConsider(it, tag){
+  if(!popOn() || POP.seen.has(it.path)) return;
+  POP.seen.add(it.path);
+  const t = it.date * 1000;
+  if(Date.now() - t > 30000 || !popWants(tag.cls) || !canRefreshTiles()) return;   // only what's happening now
+  if(!$('#popBox').hidden && t < POP.t) return;                     // the list is newest first: never let an older one replace a newer
+  popShow(it.camera, tag, t);
+}
+function popShow(cam, tag, t){
+  const box = $('#popBox'), same = POP.cam === cam && !box.hidden;
+  $('#popTag').className = 'tag ' + tag.cls; $('#popTag').textContent = tag.text;
+  $('#popCam').textContent = camName(cam); $('#popTime').textContent = fmtClock(new Date(t), true);
+  box.style.setProperty('--pc', `var(--${tag.cls})`);
+  POP.left = POP.total; POP.t = t; if(!same) POP.hover = false;
+  if(same) return;
+  popStopVideo(); POP.cam = cam;
+  const img = $('#popImg'), c = S.camMap[cam] || { w: 1920, h: 1080 };
+  box.hidden = false;
+  const fw = Math.round(($('#popFrame').clientWidth || 800) * Math.min(2, devicePixelRatio || 1));
+  const snap = () => { if(POP.cam !== cam || box.hidden) return; img.src = `image/${camEnc(cam)}?w=${Math.min(1280, fw)}&q=70&${sq()}&t=${Date.now()}`; };
+  snap();
+  if(VS_OK) popVideo(cam, c, fw);
+  clearInterval(POP.imgT); POP.imgT = setInterval(() => { if(!(POP.p && POP.p.on)) snap(); }, 1000);   // snapshots until (or unless) the video plays
+  clearInterval(POP.timer);
+  POP.timer = setInterval(() => {
+    if(!canRefreshTiles()){ popClose(); return; }
+    if(!POP.hover) POP.left -= 250;
+    $('#popBar').style.width = Math.max(0, POP.left / POP.total * 100) + '%';
+    if(POP.left <= 0) popClose();
+  }, 250);
+}
+function popVideo(cam, c, fw){
+  let i = TIERS.findIndex(x => x.w >= fw); if(i < 0 || i > 2) i = 2; i = Math.max(1, i);
+  const T = TIERS[i], sc = Math.min(1, T.w / c.w, T.h / c.h, Math.max(T.w, T.h) / Math.max(c.w, c.h)), w = r8(c.w * sc), h = r8(c.h * sc);
+  const p = { ctrl: new AbortController(), vid: document.createElement('video'), jm: null, last: null, lastRaw: -1, wrap: 0, gotKey: false, fed: false, codec: 'H264', dead: false, on: false };
+  POP.p = p;
+  const v = p.vid; v.muted = true; v.playsInline = true; v.setAttribute('playsinline', '');
+  v.addEventListener('playing', () => { if(!p.dead){ p.on = true; v.classList.add('on'); } });
+  $('#popFrame').insertBefore(v, $('#popFrame .popbar'));
+  const fail = why => { if(p.dead) return; diagNote('pop-up video: ' + why); popStopVideo(); };
+  fetch(`video/${camEnc(cam)}/2.0?${sq()}&audio=0&stream=0&w=${w}&h=${h}&q=${T.q}&kbps=${T.kbps}&extend=2`, { signal: p.ctrl.signal, cache: 'no-store', credentials: 'same-origin' })
+    .then(res => {
+      if(p.dead) return;
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      return biPump(res.body.getReader(), () => !p.dead, (data, raw) => {
+        const h265 = p.codec === 'H265';
+        if(!p.gotKey){ if(!isKeyframe(data, h265)) return; p.gotKey = true; }
+        if(!p.jm) p.jm = new JMuxer({ node: v, mode: 'video', videoCodec: p.codec, flushingTime: 0, clearBuffer: true, fps: 30, maxDelay: 1500, onError: m => fail('player error: ' + m), onUnsupportedCodec: cc => fail('can\u2019t play ' + cc) });
+        let t = raw; if(p.lastRaw >= 0){ if(p.lastRaw - 1e9 > t) p.wrap += 4294967296; else if(p.lastRaw + 1e9 < t) p.wrap -= 4294967296; }
+        p.lastRaw = raw; t += p.wrap;
+        if(p.last){ p.jm.feed({ video: p.last.data, duration: Math.max(1, Math.min(1000, Math.round(t - p.last.t))) }); if(!p.fed){ p.fed = true; const pr = v.play(); if(pr && pr.catch) pr.catch(() => {}); } }
+        p.last = { data, t };
+      }, fail, cc => { p.codec = cc; });
+    })
+    .catch(e => { if(!p.dead && !(e && e.name === 'AbortError')) fail((e && e.message) || String(e)); });
+}
+function popStopVideo(){
+  const p = POP.p; POP.p = null; if(!p) return;
+  p.dead = true; try{ p.ctrl.abort(); }catch(e){} if(p.jm){ try{ p.jm.destroy(); }catch(e){} }
+  try{ p.vid.pause(); p.vid.removeAttribute('src'); p.vid.load(); }catch(e){} p.vid.remove();
+}
+function popClose(){
+  clearInterval(POP.timer); clearInterval(POP.imgT); popStopVideo();
+  POP.cam = ''; $('#popBox').hidden = true; $('#popImg').removeAttribute('src');
+}
+function popUi(){
+  $('#popModes').innerHTML = `<button type="button" class="chip" data-pop="off" aria-pressed="${!popOn()}">Off</button>` +
+    POP_KINDS.map(([k, name]) => `<button type="button" class="chip" data-pop="${k}" aria-pressed="${POP.kinds.has(k)}">${name}</button>`).join('');
+  const names = POP_KINDS.filter(x => POP.kinds.has(x[0])).map(x => x[1].toLowerCase());
+  $('#popSub').textContent = !names.length ? 'Pick what makes a camera pop up. Plain motion never does.'
+    : `A camera pops up when it sees ${names.length > 1 ? names.slice(0, -1).join(', ') + ' or ' + names[names.length - 1] : names[0]}. Only while the camera grid is on screen.`;
+}
+$('#popModes').addEventListener('click', e => {
+  const b = e.target.closest('[data-pop]'); if(!b) return;
+  const k = b.dataset.pop;
+  if(k === 'off') POP.kinds.clear(); else if(POP.kinds.has(k)) POP.kinds.delete(k); else POP.kinds.add(k);
+  store.set('bis_popup', [...POP.kinds].join(',') || null); popUi();
+  if(!popOn()) popClose();
+});
+$('#popClose').addEventListener('click', popClose);
+$('#popOpen').addEventListener('click', () => { const c = POP.cam; popClose(); if(c) openViewer(c); });
+$('#popFrame').addEventListener('click', () => { const c = POP.cam; popClose(); if(c) openViewer(c); });
+$('#popBox').addEventListener('pointermove', e => { if(e.pointerType === 'mouse') POP.hover = true; });   // a real move, not a pop-up appearing under a resting mouse
+$('#popBox').addEventListener('pointerleave', () => { POP.hover = false; });
+popUi();
 async function pollRecentAlerts(){
   if(!S.session) return;
   try{
@@ -2140,13 +2382,14 @@ async function pollRecentAlerts(){
       if(!camShown(it.camera)) continue;
       const tag = alertTags(it)[0];
       if(!tag || tag.cls === 'motion') continue;
+      popConsider(it, tag);
       const prev = TA[it.camera];
       if(!prev || it.date * 1000 > prev.at) TA[it.camera] = { tag, at: it.date * 1000 };
     }
     tileLabels();
   }catch(e){}
 }
-setInterval(() => { if(canRefreshTiles() && (LV.hl || LV.labels)) pollRecentAlerts(); }, 4000);
+setInterval(() => { if(canRefreshTiles() && (LV.hl || LV.labels || popOn())) pollRecentAlerts(); }, 4000);
 // Show what the AI saw on each tile while it's still happening (triggered, or confirmed in the last 45 s)
 function tileLabels(){
   const now = Date.now();
@@ -2703,6 +2946,7 @@ const stage = $('#stage');
 const Z = { s:1, x:0, y:0, boost:1, ptrs:new Map(), pinch:null, pan:null, moved:false, settleTimer:0 };
 const Z_MAX = 8;
 function zContent(){
+  if(RG.on) return { x: 0, y: 0, w: stage.clientWidth, h: stage.clientHeight };
   const im = stage.querySelector('img.frame');
   const d = (!vEl.hidden && vEl.videoWidth) ? { w: vEl.videoWidth, h: vEl.videoHeight }
           : (im && im.naturalWidth) ? { w: im.naturalWidth, h: im.naturalHeight } : camDims();
@@ -2795,7 +3039,7 @@ addEventListener('resize', () => { if(Z.s > 1) zApply(); });
 
 function openViewer(cam, opts = {}){
   gvStop();                                       // free the connection and the decoder for the player
-  V.open = true; V.cam = cam; V.alert = opts.alert || null; V.clip = null; V.speed = 1; V.errs = 0;
+  V.open = true; V.cam = cam; V.grp = S.camMap[cam] ? null : (groupOf(cam) || null); V.grpFrom = null; V.alert = opts.alert || null; V.clip = null; V.speed = 1; V.errs = 0;
   $('#speedBtn').textContent = '1\u00d7';
   $('#viewer').hidden = false;
   $('#viewer').classList.remove('hideui');
@@ -2819,6 +3063,7 @@ function closeViewer(fromPop){
   if(!V.open) return;
   if(V.trim) trimEnd();
   V.open = false; V.playing = false;
+  rgUpdate();
   ptzClose();
   resetFrames();
   vsStop(false);
@@ -2890,15 +3135,23 @@ addEventListener('popstate', () => {
 });
 
 function setCamTitle(){
-  $('#vCam').textContent = camName(V.cam);
+  $('#viewer').classList.toggle('grp', !!V.grp);
+  rgUpdate();
+  $('#vCam').textContent = camName(V.cam) + (V.grp ? ` \u00b7 ${RG.on ? RG.idx.length : (RG.cams.length || V.grp.cams.length)} cameras` : '');
+  const gb = $('#vGroup'), gid = groupFor(V.grpFrom || V.cam);
+  gb.hidden = clipMode() || !(V.grp || gid);
+  gb.setAttribute('aria-pressed', !!V.grp);
+  gb.title = V.grp ? `Back to ${camName(V.grpFrom || V.grp.cams[0])}` : (String(gid).toLowerCase() === 'index' ? 'Watch all cameras at the same moment' : `Watch all cameras in ${camName(gid)} at the same moment`);
   const ui3 = $('#vUi3');
   if(V.alert && V.alert.camera === V.cam){
     ui3.hidden = false;
     ui3.href = `ui3.htm?rec=@${recIdOf(V.alert.path)}-${V.alert.offset || 0}`;
   } else ui3.hidden = true;
-  $('#vDl').hidden = !(V.alert && V.alert.camera === V.cam && canExport(V.alert));
+  $('#vDl').hidden = !(dlAlert() || (!V.grp && S.camMap[V.cam]));   // an alert's download, or any stretch of this camera's recordings
+  $('#vDl').title = dlAlert() ? 'Download this alert (MP4)' : 'Download a clip (MP4)';
+  $('#vDl').setAttribute('aria-label', dlAlert() ? 'Download this alert' : 'Download a clip');
   markButton();
-  if(V.trim && (V.trim.a !== V.alert || V.alert.camera !== V.cam)) trimEnd();
+  if(V.trim && (V.trim.a.camera !== V.cam || (V.trim.a.clip && V.trim.a !== V.alert))) trimEnd();
 }
 
 /* ---- flag or protect an alert, like UI3 ----
@@ -2915,6 +3168,7 @@ const markable = it => !!(it && it.path && recIdOf(it.path));
 function markButton(){
   const b = $('#vMark'), a = V.alert && V.alert.camera === V.cam ? V.alert : null;
   b.hidden = !markable(a);
+  $('#viewer').classList.toggle('hasmark', !b.hidden);
   if(b.hidden) return;
   const f = flagsOf(a), fl = hasBit(f, MK.FLAG), pr = hasBit(f, MK.PROT);
   b.classList.toggle('flagged', fl); b.classList.toggle('prot', pr);
@@ -3219,8 +3473,17 @@ function exportName(a, t){
   const cam = String(camName(a.camera) || a.camera).replace(/[\\/:*?"<>|]+/g, '-').trim();
   return `${cam} ${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${h % 12 || 12}-${p(d.getMinutes())}-${p(d.getSeconds())} ${h < 12 ? 'AM' : 'PM'}.mp4`;
 }
+// Cancel: take the job out of Blue Iris's export queue (like UI3's Convert/Export list) and stop waiting for it
+function dlDelete(path){ if(path) api({ cmd: 'export', path, delete: true }).catch(() => {}); }
+$('#dlCancel').addEventListener('click', () => {
+  const job = DL.job; if(!job || job.cancel) return;
+  job.cancel = true; dlShow('');
+  dlDelete(job.path);                            // no path yet: deleted as soon as Blue Iris says what it is
+});
 function dlShow(text, pct){
+  if(text && DL.job && DL.job.cancel) return;   // cancelled: stays closed while the last check finishes
   const el = $('#dlStatus'); el.hidden = !text; if(!text) return;
+  $('#dlCancel').hidden = !DL.job;
   el.querySelector('.t').textContent = text;
   el.classList.toggle('indet', pct == null);
   el.querySelector('.bar i').style.width = (pct == null ? 0 : Math.max(3, Math.min(100, pct))) + '%';
@@ -3233,16 +3496,20 @@ function exportFail(r){
 const wait = ms => new Promise(r => setTimeout(r, ms));
 async function downloadAlert(a, range){
   if(DL.job){ toast('Already preparing a download'); return; }
-  const job = DL.job = { name: exportName(a, range && range.s), t0: Date.now() };
+  const job = DL.job = { name: exportName(a, range && range.s), t0: Date.now(), cancel: false, path: '' };
   dlShow('Asking Blue Iris to prepare the clip\u2026', null);
   try{
     const r = await api(exportArgs(a, range));
     if(r.result !== 'success') throw new Error(exportFail(r));
     const mine = r.data || {};
-    let uri = '', misses = 0, errs = 0;
+    job.path = mine.path || '';
+    if(job.cancel){ dlDelete(job.path); throw new Error('cancelled'); }
+    let uri = '', misses = 0, errs = 0, seen = '', moved = Date.now();
     for(;;){
       await wait(1500);
-      if(Date.now() - job.t0 > 180000) throw new Error('Blue Iris is taking too long to prepare this clip. Try again later.');
+      if(job.cancel) throw new Error('cancelled');
+      // long clips can take a while to re-encode: only give up when Blue Iris stops making progress (or after an hour)
+      if(Date.now() - moved > 180000 || Date.now() - job.t0 > 3600000) throw new Error('Blue Iris stopped making progress on this clip. Try again later, or choose "Original recording".');
       let list;
       try{
         const q = await api({ cmd:'export' });
@@ -3251,19 +3518,22 @@ async function downloadAlert(a, range){
       }catch(e){ if(e.message === 'session' || ++errs > 5) throw e; continue; }
       const it = list.find(x => (mine.path && x.path === mine.path) || (mine.uri && x.uri === mine.uri));
       if(!it){ if(++misses > 20) throw new Error('Couldn\u2019t find the clip in Blue Iris\u2019s export queue.'); continue; }
+      const now = it.status + ':' + Math.round(+it.progress || 0); if(now !== seen){ seen = now; moved = Date.now(); }
       if(it.status === 'done'){ uri = it.uri || mine.uri; break; }
       if(it.status === 'error') throw new Error('Blue Iris couldn\u2019t export this alert.');
       if(it.status === 'active') dlShow(`Preparing the clip\u2026 ${Math.round(+it.progress || 0)}%`, +it.progress || 0);
       else dlShow('Waiting in Blue Iris\u2019s export queue\u2026', null);
     }
+    if(job.cancel) throw new Error('cancelled');
     if(!uri) throw new Error('Blue Iris didn\u2019t say where the clip was saved.');
     const link = document.createElement('a');
     link.href = 'clips/' + uri + '?' + sq(); link.download = job.name;   // like UI3's export links: the browser names the file link.hidden = true;
     document.body.appendChild(link); link.click(); link.remove();
-    dlShow(''); toast('Download started: ' + job.name, 4000);
+    dlShow(''); toast('Download started: ' + job.name + (range && range.note ? ` (${range.note})` : ''), range && range.note ? 8000 : 4000);
   }catch(e){
     dlShow('');
-    if(e.message !== 'session'){ toast(e.message || 'Download failed', 6000); diagNote('download: ' + (e.message || 'failed')); }
+    if(e.message === 'cancelled') toast('Download cancelled', 2500);
+    else if(e.message !== 'session'){ toast(e.message || 'Download failed', 6000); diagNote('download: ' + (e.message || 'failed')); }
   }finally{ DL.job = null; }
 }
 const DL_RANGES = [[false, 'Whole alert', ''], [true, 'Choose start and end', 'Mark them on the timeline, then download']];
@@ -3271,7 +3541,7 @@ function renderDlSheet(){
   const o = DL.opts;
   $('#dlRanges').innerHTML = DL_RANGES.map(([v, name, sub]) => `<button class="opt" role="menuitemradio" data-g="${v ? 1 : 0}" aria-checked="${DL.pick === v}">` +
     `<span>${name}${DL.pick === v ? ' \u2713' : ''}</span><span class="sub">${v ? sub : DL.wholeText || ''}</span></button>`).join('');
-  $('#dlGo').textContent = DL.pick ? 'Choose start and end\u2026' : 'Download MP4';
+  $('#dlGo').textContent = (DL.pick || DL.free) ? 'Choose start and end\u2026' : 'Download MP4';
   $('#dlModes').innerHTML = DL_MODES.map(([v, name, sub]) => `<button class="opt" role="menuitemradio" data-r="${v ? 1 : 0}" aria-checked="${o.reencode === v}">` +
     `<span>${name}${o.reencode === v ? ' \u2713' : ''}</span><span class="sub">${sub}</span></button>`).join('');
   $('#dlProfs').innerHTML = [0, 1, 2, 3].map(n => `<button class="chip" data-p="${n}" aria-pressed="${o.profile === n}">export ${n}</button>`).join('');
@@ -3281,12 +3551,21 @@ function renderDlSheet(){
   $('#dlAudio').setAttribute('aria-checked', !!o.audio);
 }
 function saveDlOpts(){ store.set('bis_export_opts', JSON.stringify(DL.opts)); renderDlSheet(); }
+const dlAlert = () => (V.alert && V.alert.camera === V.cam && canExport(V.alert)) ? V.alert : null;
 $('#vDl').addEventListener('click', () => {
-  if(!V.alert || !canExport(V.alert)) return;
   if(DL.job){ toast('Already preparing a download'); return; }
-  const a = V.alert, d = new Date(a.date * 1000);
-  $('#dlInfo').textContent = `${camName(a.camera)} \u00b7 ${d.toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', second:'2-digit' })}`;
-  const w = wholeRange(a); DL.wholeText = `${fmtClock(new Date(w.s), true)} to ${fmtClock(new Date(w.e), true)}, about ${fmtDur(w.e - w.s)}`;
+  const a = dlAlert();
+  DL.free = !a;                                  // no alert: any stretch of this camera's recordings
+  $('#dlTitle').textContent = a ? 'Download this alert' : 'Download a clip';
+  $('#dlLenHead').hidden = $('#dlRanges').hidden = !a;
+  if(a){
+    const d = new Date(a.date * 1000);
+    $('#dlInfo').textContent = `${camName(a.camera)} \u00b7 ${d.toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', second:'2-digit' })}`;
+    const w = wholeRange(a); DL.wholeText = `${fmtClock(new Date(w.s), true)} to ${fmtClock(new Date(w.e), true)}, about ${fmtDur(w.e - w.s)}`;
+  } else {
+    if(V.grp || !S.camMap[V.cam]) return;
+    $('#dlInfo').textContent = `${camName(V.cam)} \u00b7 mark the start and end on the timeline next (up to 2 hours)`;
+  }
   renderDlSheet(); $('#dlSheet').hidden = false;
 });
 $('#dlRanges').addEventListener('click', e => { const b = e.target.closest('[data-g]'); if(b){ DL.pick = b.dataset.g === '1'; renderDlSheet(); } });
@@ -3297,21 +3576,29 @@ $('#dlOverlay').addEventListener('click', () => { DL.opts.overlay = !DL.opts.ove
 $('#dlSheet').addEventListener('click', e => { if(e.target.id === 'dlSheet') $('#dlSheet').hidden = true; });
 $('#dlGo').addEventListener('click', () => {
   $('#dlSheet').hidden = true;
-  if(!V.alert || !canExport(V.alert)) return;
-  if(DL.pick) trimStart(); else downloadAlert(V.alert);
+  if(DL.free){ if(!V.grp && S.camMap[V.cam]) trimStart(null); return; }
+  const a = dlAlert(); if(!a) return;
+  if(DL.pick) trimStart(a); else downloadAlert(a);
 });
 
 /* ---- choose the start and end of a download on the timeline ----
-   The clip comes from the alert's recording file, so it can't start before that file does. */
-const TRIM_MAX = 15 * 60000;
+   The range can be anywhere on the timeline, not just inside the alert's own recording: Blue Iris's list of recording
+   files ("cliplist") says which file holds the chosen start, and the export is cut from that file. */
+const TRIM_MAX = 2 * 3600000;                  // Sightline's own limit, to keep exports and files reasonable
 function clipStartOf(a){ return a.date * 1000 - (a.offset || 0); }
 function wholeRange(a){                          // what "Whole alert" exports
   const dur = durMs(a.filesize);
   return (a.flags & (1 << 16)) ? { s: a.date * 1000, e: a.date * 1000 + dur } : { s: clipStartOf(a), e: a.date * 1000 + dur };
 }
-function trimStart(){
-  const a = V.alert, w = wholeRange(a);
-  V.trim = { a, clipStart: clipStartOf(a), s: w.s, e: w.e };
+function trimStart(alert){
+  let a = alert, w;
+  if(a) w = wholeRange(a);
+  else {                                         // no alert: start with the minute before the playhead (or before now, live)
+    const end = Math.round(V.mode === 'rec' ? V.pos : Date.now() - KEEP_OUT);
+    w = { s: end - 60000, e: end };
+    a = { camera: V.cam, date: w.s / 1000, offset: 0, clip: '', filesize: '', free: true };
+  }
+  V.trim = { a, clipStart: a.free ? w.s : clipStartOf(a), s: w.s, e: w.e };
   if(V.mode === 'live'){ enterRec(w.s, false); }
   if(w.s < V.winStart || w.e > V.winEnd) centerWindow((w.s + w.e) / 2);
   $('#trimBar').hidden = false; trimShow(); updateUI();
@@ -3320,7 +3607,11 @@ function trimEnd(){ if(!V.trim) return; V.trim = null; $('#trimBar').hidden = tr
 function trimShow(){
   const t = V.trim; if(!t) return;
   $('#trimStart').textContent = fmtClock(new Date(t.s), true); $('#trimEnd').textContent = fmtClock(new Date(t.e), true);
-  $('#trimLen').textContent = `${fmtDur(t.e - t.s)} long`;
+  const c = S.camMap[t.a.camera], bytes = c && c.bps ? c.bps * (t.e - t.s) / 1000 : 0, long = t.e - t.s > 15 * 60000;
+  const size = bytes >= 1e9 ? (bytes / 1e9).toFixed(1) + ' GB' : bytes >= 1e6 ? Math.round(bytes / 1e6) + ' MB' : '';
+  $('#trimLen').textContent = `${fmtDur(t.e - t.s)} long` + (size ? ` \u00b7 about ${size}` : '');
+  $('#trimLen').title = long && DL.opts.reencode ? 'Re-encoding a long clip can take Blue Iris a while. "Original recording" is much faster.' : '';
+  $('#trimLen').classList.toggle('slow', long && !!DL.opts.reencode);
 }
 function trimSeek(t){
   V.pos = t; V.lastTick = 0;
@@ -3332,17 +3623,16 @@ function trimHere(){ return V.mode === 'rec' ? V.pos : Date.now() - KEEP_OUT; }
 $('#trimSetStart').addEventListener('click', () => {
   const t = V.trim; if(!t) return;
   let p = Math.round(trimHere());
-  if(p < t.clipStart){ p = t.clipStart; toast('The recording starts at ' + fmtClock(new Date(p), true)); }
   t.s = p;
   if(t.e <= t.s + 1000) t.e = Math.min(t.s + 10000, Date.now() - KEEP_OUT);
-  if(t.e - t.s > TRIM_MAX){ t.e = t.s + TRIM_MAX; toast('A download can be up to 15 minutes'); }
+  if(t.e - t.s > TRIM_MAX){ t.e = t.s + TRIM_MAX; toast('A download can be up to 2 hours'); }
   trimShow(); drawScrub();
 });
 $('#trimSetEnd').addEventListener('click', () => {
   const t = V.trim; if(!t) return;
   const p = Math.round(trimHere());
   if(p <= t.s + 1000){ toast('The end needs to be after the start'); return; }
-  if(p - t.s > TRIM_MAX){ toast('A download can be up to 15 minutes'); return; }
+  if(p - t.s > TRIM_MAX){ toast('A download can be up to 2 hours'); return; }
   t.e = p; trimShow(); drawScrub();
 });
 $('#trimStart').addEventListener('click', () => { if(V.trim) trimSeek(V.trim.s); });
@@ -3350,9 +3640,30 @@ $('#trimEnd').addEventListener('click', () => { if(V.trim) trimSeek(V.trim.e); }
 $('#trimCancel').addEventListener('click', trimEnd);
 $('#trimGo').addEventListener('click', () => {
   const t = V.trim; if(!t) return;
-  const range = { s: t.s, e: t.e, clipStart: t.clipStart };
-  trimEnd(); downloadAlert(t.a, range);
+  trimEnd(); downloadRange(t.a, { s: t.s, e: t.e, clipStart: t.clipStart });
 });
+// Find the recording file that holds the start of the range and cut the export from it (it may not be the alert's own)
+async function downloadRange(a, range){
+  if(DL.job){ toast('Already preparing a download'); return; }
+  if(!a.free && range.s >= range.clipStart && range.s <= a.date * 1000 + durMs(a.filesize)){ downloadAlert(a, range); return; }   // starts in the alert's own file, as before
+  let file = null;
+  dlShow('Finding the recording\u2026', null);
+  try{ await clEnsure(a.camera, range.s - 60000, Math.min(range.e + 60000, Date.now())); file = clFind(a.camera, range.s); }
+  catch(e){ if(e && e.message === 'session'){ dlShow(''); return; } }
+  dlShow('');
+  if(!file){
+    if(!a.free && range.s >= range.clipStart){ downloadAlert(a, range); return; }   // no list of recordings (older Blue Iris): the alert's own file
+    toast(CL.failed ? 'This Blue Iris can only download from the alert\u2019s own recording, which starts at ' + fmtClock(new Date(range.clipStart), true)
+      : 'No recording at ' + fmtClock(new Date(range.s), true), 6000);
+    return;
+  }
+  const r = { s: range.s, e: range.e, clipStart: file.start };
+  if(isFinite(file.end) && r.e > file.end){                                  // Blue Iris exports from one file at a time
+    r.e = Math.floor(file.end);
+    r.note = `it stops at ${fmtClock(new Date(r.e), true)}, where that recording file ends`;
+  }
+  downloadAlert(Object.assign({}, a, { clip: file.path }), r);
+}
 
 /* ---- frame pipeline: one request in flight, newest request wins ---- */
 const FL = { busy:false, want:null, gen:0 };
@@ -3385,7 +3696,7 @@ function pullFrame(){
 }
 function frameSize(){ const t = targetSize(), f = screenFit(); return t.w <= f.w ? t : f; }   // stills stay screen-sized
 function frameWidth(){ return frameSize().w; }
-const frameArgs = () => { const f = frameSize(); return `w=${f.w}&h=${f.h}`; };
+const frameArgs = () => { const f = frameSize(); return `w=${f.w}&h=${f.h}` + (V.grp ? GROUP_ARGS : ''); };
 
 function onFrame(ok, meta){
   if(meta.live){
@@ -3491,7 +3802,7 @@ function setPlaying(p){
 // The interval comes from the camera's frame rate in Blue Iris (10 fps if it doesn't say).
 function stepFrame(dir){
   if(!V.open) return;
-  const c = S.camMap && S.camMap[V.cam], ms = 1000 / (c && c.fps ? c.fps : 10);
+  const c = S.camMap && S.camMap[V.cam], ms = 1000 / (V.grp ? 30 : c && c.fps ? c.fps : 10);   // group playback runs at 30 fps
   if(V.mode === 'live'){ if(dir > 0) return; setPlaying(false); }      // from live: pause on the frame shown, then step back
   else if(V.playing) setPlaying(false);
   if(V.mode !== 'rec') return;
@@ -3537,7 +3848,7 @@ const TIERS = [
   { s:2160, w:3840, h:2160, q:50, kbps:8192 } ];
 const QUALITIES = [ ['auto','Auto','Matched to this screen'], ['480','480p',''], ['720','720p','HD'], ['1080','1080p','Full HD'], ['1440','1440p','2K'], ['2160','2160p','4K'] ];
 S.quality = store.get('bis_quality') || 'auto';
-function camDims(){ const c = S.camMap[V.cam]; return c ? { w:c.w, h:c.h } : { w:1920, h:1080 }; }
+function camDims(){ const c = S.camMap[V.cam]; if(c) return { w:c.w, h:c.h }; const g = V.grp; return g ? { w:g.w, h:g.h } : { w:1920, h:1080 }; }
 const r8 = n => Math.max(8, Math.round(n / 8) * 8);
 // the camera's size limited to a box; the box turns to match a portrait camera
 function fitBox(cam, bw, bh){
@@ -3561,7 +3872,7 @@ function streamTier(){
 }
 function targetSize(){ const t = streamTier(); return fitBox(camDims(), t.w, t.h); }
 function vsSize(){ return targetSize(); }
-function streamArgs(){ const t = streamTier(); return `&q=${t.q}&kbps=${t.kbps}`; }
+function streamArgs(){ const t = streamTier(); return `&q=${t.q}&kbps=${t.kbps}` + (V.grp ? GROUP_ARGS : ''); }
 const kbpsText = k => k < 1000 ? `${k} kbps` : `${Math.round(k / 1024)} Mbps`;
 function rxMbps(){
   const now = performance.now(), rx = VS.rx || [];
@@ -3665,6 +3976,7 @@ function vsStart(kind, url, speed){
       if(res.status === 403) throw new Error('session');
       if(!res.ok) throw new Error('HTTP ' + res.status);
       if(/image\//i.test(res.headers.get('Content-Type') || '')) throw new Error('server sent a still image');
+      if(V.grp) grpStreamLayout(res, url, kind);
       return vsPump(res.body.getReader(), gen);
     })
     .catch(err => {
@@ -4462,7 +4774,7 @@ async function tlLabelColors(cam, start, end, key, msecpp){
   if(!list){
     try{
       const r = await api({ cmd: 'alertlist', camera: cam, startdate: start - 60, enddate: end + 60, view: 'alerts' });
-      list = (r.data || []).filter(a => (a.camera || cam) === cam || String(a.camera).toLowerCase() === String(cam).toLowerCase())
+      list = (r.data || [])
         .map(a => ({ t: a.date * 1000, cls: (alertTags(a)[0] || {}).cls || 'motion' })).filter(a => a.cls !== 'motion');
       TLC.set(key, list); if(TLC.size > 30) TLC.delete(TLC.keys().next().value);
     }catch(e){ return; }
@@ -4495,6 +4807,7 @@ function jumpAlert(dir){
   if(dir < 0){ for(let i = V.camAlerts.length - 1; i >= 0; i--) if(V.camAlerts[i].t < ref - 1500){ target = V.camAlerts[i]; break; } }
   else { for(const x of V.camAlerts) if(x.t > ref + 1500){ target = x; break; } }
   if(!target) return;
+  if(V.grp){ if(V.mode === 'live') resetFrames(); enterRec(target.t - 2000, true); return; }   // a group: jump everyone to that moment
   V.alert = target.a;
   V.clip = { path: target.a.clip && !/^@-1\./.test(target.a.clip) ? target.a.clip : target.a.path, start: target.t - (target.a.offset || 0), end: target.t + durMs(target.a.filesize), useClip:false };
   setCamTitle();
@@ -4580,7 +4893,7 @@ function trimHit(e){
   const x = e.clientX - scrub.getBoundingClientRect().left, tol = e.pointerType === 'mouse' ? 10 : 22;
   const xs = posToX(V.trim.s), xe = posToX(V.trim.e), ds = Math.abs(x - xs), de = Math.abs(x - xe);
   if(Math.min(ds, de) > tol) return null;
-  if(Math.abs(ds - de) < 2) return x < xs ? 's' : 'e';     // handles on top of each other: go by side
+  if(Math.abs(xs - xe) < 6) return x < xs - 2 ? 's' : x > xe + 2 ? 'e' : '?';   // handles on top of each other: decided by which way you drag
   return ds < de ? 's' : 'e';
 }
 /* ---- zoom the timeline in and out of time, like UI3: wheel / trackpad pinch, or pinch with two fingers ----
@@ -4662,12 +4975,14 @@ scrub.addEventListener('pointercancel', tlUp);
 function dragTo(e){
   const r = scrub.getBoundingClientRect();
   const x = Math.max(0, Math.min(r.width, e.clientX - r.left));
+  if(dragState && dragState.trim === '?'){ if(Math.abs(e.clientX - dragState.x) < 3) return; dragState.trim = e.clientX < dragState.x ? 's' : 'e'; }
   V.pos = Math.min(xToPos(x), Date.now() - KEEP_OUT);
   const h = dragState && dragState.trim, t = V.trim;
   if(h && t){                                    // moving the start or end of the download range
-    if(h === 's') V.pos = Math.max(t.clipStart, t.e - TRIM_MAX, Math.min(V.pos, t.e - 1000));
-    else V.pos = Math.min(t.s + TRIM_MAX, Math.max(V.pos, t.s + 1000));
-    t[h] = Math.round(V.pos); trimShow();
+    const p = Math.round(V.pos);                  // the other end follows, so the range can be dragged anywhere (up to TRIM_MAX long)
+    if(h === 's'){ t.s = p; if(t.e - t.s > TRIM_MAX) t.e = t.s + TRIM_MAX; if(t.e < t.s + 1000) t.e = t.s + 1000; }
+    else { t.e = p; if(t.e - t.s > TRIM_MAX) t.s = t.e - TRIM_MAX; if(t.e < t.s + 1000) t.s = t.e - 1000; }
+    trimShow();
   }
   bubble.hidden = false;
   bubble.textContent = (h ? (h === 's' ? 'Start ' : 'End ') : '') + fmtWhen(V.pos, true);
@@ -4724,10 +5039,11 @@ let touch = null, lastTap = 0;
 const overlayCtl = () => document.body.classList.contains('isfs') || matchMedia('(orientation:landscape) and (max-height:540px)').matches;
 // A single tap or click on the picture, like UI3: a recording pauses or resumes, and a live camera closes back to
 // where you opened it. When the controls float over the picture on a touch screen, a tap shows or hides them instead.
-function stageTap(pointerType){
+function stageTap(pointerType, x, y){
   if(!V.open) return;
   const v = $('#viewer');
   if(pointerType !== 'mouse' && overlayCtl()){ v.classList.toggle('hideui'); return; }
+  if(V.grp){ const cam = groupCamAt(x, y); if(cam && S.camMap[cam]){ V.grpFrom = null; changeCam(cam); toast(camName(cam), 1200); } return; }   // a group: show the camera you tapped, same moment
   if(V.mode === 'live') closeViewer(false);
   else { setPlaying(!V.playing); v.classList.remove('hideui'); if(fsEl()) fsIdle(); }
 }
@@ -4741,8 +5057,151 @@ stage.addEventListener('pointerup', e => {
   if(Math.abs(dx) < 10 && Math.abs(dy) < 10){
     const now = Date.now();
     if(now - lastTap < 300){ if(Z.s > 1) zReset(); else { stage.classList.toggle('fill'); zReset(); } lastTap = 0; }
-    else { lastTap = now; const pt = e.pointerType; setTimeout(() => { if(lastTap === now) stageTap(pt); }, 300); }
+    else { lastTap = now; const pt = e.pointerType, cx = e.clientX, cy = e.clientY; setTimeout(() => { if(lastTap === now) stageTap(pt, cx, cy); }, 300); }
   }
+});
+// Which group to show for a camera: the Live grid's group if it holds the camera, otherwise All cameras
+function groupFor(cam){
+  const has = id => { const g = groupOf(id); return g && g.cams.some(c => String(c).toLowerCase() === String(cam).toLowerCase()); };
+  if(S.group && has(S.group)) return S.group;
+  if(groupOf('index')) return 'index';
+  const g = (S.groups || []).find(g => has(g.id)); return g ? g.id : null;
+}
+// The camera under a point on the group picture (undoing digital zoom), from the group's layout
+/* Where each camera sits in the group picture. Blue Iris says so in each group stream's X-CamList / X-RecList headers,
+   in that stream's own pixels; that can differ from the camera list's layout (a different size or shape of picture,
+   cameras added or left out, dynamic layouts), so it wins when present. */
+function grpHeaderLayout(res, url){
+  const cl = res.headers.get('X-CamList'), rl = res.headers.get('X-RecList');
+  if(!cl || !rl) return null;
+  try{
+    const utf8 = t => /[^\x00-\x7f]/.test(t) ? new TextDecoder().decode(Uint8Array.from(t, c => c.charCodeAt(0) & 255)) : t;
+    const cams = JSON.parse('[' + utf8(cl) + ']'), rects = JSON.parse('[' + rl + ']');
+    if(!cams.length || cams.length !== rects.length || !rects.every(r => Array.isArray(r) && r.length === 4)) return null;
+    const q = new URLSearchParams(url.split('?')[1] || '');
+    return { cams: cams.map(String), rects, w: +q.get('w') || 0, h: +q.get('h') || 0, hdr: true, sized: false };
+  }catch(e){ return null; }
+}
+// Each group stream brings its own layout (or none): never carry one stream's layout over to another
+function grpStreamLayout(res, url, kind){
+  const L = grpHeaderLayout(res, url), id = V.cam, gen = VS.gen;
+  if(L) Object.assign(L, { id, kind, from: kind + ' stream' });
+  RG.recHdr = kind === 'rec' ? L : null; RG.recStill = null;
+  if(kind !== 'rec'){ V.grpL = L; V.grpMiss = L ? '' : kind; V.grpMissId = id; setCamTitle(); return; }
+  // Recordings: Blue Iris lays the group out again for playback (seen: a different camera order, so every camera moves),
+  // but can still send the live layout in the video's headers. So don't trust those: show Blue Iris's whole picture unless
+  // a still picture of the same moment describes a layout of its own.
+  V.grpL = null; V.grpMiss = 'rec'; V.grpMissId = id; setCamTitle();
+  fetch(recUrl(), { cache: 'no-store', credentials: 'same-origin' }).then(async r => {
+    if(VS.gen !== gen || V.cam !== id) return;
+    const SL = r.ok && grpHeaderLayout(r, '');
+    if(SL){ const bm = await createImageBitmap(await r.blob()); Object.assign(SL, { id, kind, from: 'recording still', w: bm.width, h: bm.height, sized: true, v: 's' + Date.now() }); }
+    if(VS.gen !== gen || V.cam !== id) return;
+    RG.recStill = SL || null;
+    if(SL && !(L && grpSameLayout(SL, L))){ V.grpL = SL; V.grpMiss = ''; setCamTitle(); return; }
+    if(!RG.toldMiss){ RG.toldMiss = true; toast('Showing the whole group picture for this recording', 3500); }
+  }).catch(() => {});
+}
+function grpSameLayout(A, B){                // same cameras in the same places (relative to each picture's size)?
+  if(A.cams.length !== B.cams.length || A.cams.some((c, i) => String(c).toLowerCase() !== String(B.cams[i]).toLowerCase())) return false;
+  return A.rects.every((R, i) => R.every((v, k) => Math.abs(v / (k % 2 ? A.h : A.w) - B.rects[i][k] / (k % 2 ? B.h : B.w)) < 0.02));
+}
+function grpLayout(){
+  const g = V.grp; if(!g) return null;
+  const L = V.grpL;
+  if(!L && V.grpMiss === 'rec' && V.grpMissId === V.cam) return null;   // a recording whose layout Blue Iris didn't give: don't guess
+  if(L && String(L.id).toLowerCase() === String(V.cam).toLowerCase()){
+    if(!L.sized && VS.started && vEl.videoWidth){ L.w = vEl.videoWidth; L.h = vEl.videoHeight; L.sized = true; L.v = (L.v || 0) + 1; }   // header rects are in the video's own pixels
+    if(L.w > 0 && L.h > 0) return L;
+  }
+  return { cams: g.cams, rects: g.rects, w: g.w, h: g.h, v: 'cl' };
+}
+function groupCamAt(x, y){
+  const g = grpLayout(); if(!g) return null;
+  const sr = stage.getBoundingClientRect(), qx = (x - sr.left - Z.x) / Z.s, qy = (y - sr.top - Z.y) / Z.s, r = zContent();
+  if(RG.on){ const c = RG.cells.find(c => qx >= c.x && qx < c.x + c.w && qy >= c.y && qy < c.y + c.h); return c ? c.cam : null; }
+  const gx = (qx - r.x) / r.w * g.w, gy = (qy - r.y) / r.h * g.h;
+  const i = g.rects.findIndex(R => gx >= R[0] && gx < R[2] && gy >= R[1] && gy < R[3]);
+  return i >= 0 ? g.cams[i] : null;
+}
+/* Blue Iris's group picture includes every camera in the group, even ones Sightline hides (Hidden in Blue Iris,
+   disabled, or no web access). When the group has any of those, Sightline hides Blue Iris's picture and redraws only
+   the shown cameras, each cut out of the group picture, into its own grid that fits the screen. */
+const RG = { on: false, idx: [], cams: [], cells: [], key: '', raf: 0, dbg: /[?&]grpdebug=1\b/.test(location.search), draf: 0 };
+/* Troubleshooting (open with ?grpdebug=1): show Blue Iris's group picture as-is, with where Sightline thinks each camera is
+   outlined on top (green: shown, red: hidden / disabled / not in Sightline) and the sizes involved. */
+function rgDebug(on){
+  cancelAnimationFrame(RG.draf);
+  rgCanvas.hidden = !on; rgCanvas.style.background = on ? 'transparent' : '';
+  if(!on) return;
+  const loop = () => {
+    if(!(V.open && V.grp && RG.dbg)) return;
+    const L = grpLayout() || { cams: [], rects: [], w: 1, h: 1, none: true }, W = stage.clientWidth, H = stage.clientHeight, r = zContent(), im = stage.querySelector('img.frame');
+    if(rgCanvas.width !== W || rgCanvas.height !== H){ rgCanvas.width = W; rgCanvas.height = H; }
+    rgCtx.setTransform(1, 0, 0, 1, 0, 0); rgCtx.clearRect(0, 0, W, H); rgCtx.font = 'bold 13px system-ui, sans-serif'; rgCtx.lineWidth = 2;
+    L.rects.forEach((R, i) => {
+      const x = r.x + R[0] / L.w * r.w, y = r.y + R[1] / L.h * r.h, w = (R[2] - R[0]) / L.w * r.w, h = (R[3] - R[1]) / L.h * r.h, c = L.cams[i];
+      const ok = S.camMap[c] && camShown(c);
+      rgCtx.strokeStyle = ok ? '#3ddc84' : '#ff4d4d'; rgCtx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+      const t = `${i} ${c} [${R.join(',')}]`; rgCtx.fillStyle = 'rgba(0,0,0,.75)'; rgCtx.fillRect(x + 3, y + h - 22, rgCtx.measureText(t).width + 8, 19);
+      rgCtx.fillStyle = ok ? '#3ddc84' : '#ff6b6b'; rgCtx.fillText(t, x + 7, y + h - 8);
+    });
+    const lay = X => X ? `${X.cams.length}: ${X.cams.slice(0, 3).join(', ')}\u2026 ${X.w}x${X.h}` : 'none';
+    const info = (V.mode === 'rec' ? `rec stream headers: ${lay(RG.recHdr)} | rec still headers: ${lay(RG.recStill)} || ` : '') + `layout: ${L.none ? 'none (whole picture shown)' : L.hdr ? 'from ' + L.from : 'camera list'} ${L.w}x${L.h} (${L.cams.length} cams) | group in camera list ${V.grp.w}x${V.grp.h} (${V.grp.cams.length}) | video ${VS.started ? vEl.videoWidth + 'x' + vEl.videoHeight : '-'} | still ${im && im.naturalWidth ? im.naturalWidth + 'x' + im.naturalHeight : '-'} | ${V.mode}`;
+    info.split(' || ').forEach((t, n) => { rgCtx.fillStyle = 'rgba(0,0,0,.8)'; rgCtx.fillRect(4, 4 + n * 22, rgCtx.measureText(t).width + 12, 22); rgCtx.fillStyle = '#fff'; rgCtx.fillText(t, 10, 20 + n * 22); });
+    RG.draf = requestAnimationFrame(loop);
+  };
+  RG.draf = requestAnimationFrame(loop);
+}
+const rgCanvas = $('#grpCanvas'), rgCtx = rgCanvas.getContext('2d');
+function rgUpdate(){
+  const g = V.open && grpLayout(), idx = g ? g.cams.map((c, i) => (S.camMap[c] && camShown(c)) ? i : -1).filter(i => i >= 0) : [];
+  RG.cams = g ? g.cams : [];
+  const on = !RG.dbg && !!g && idx.length > 0 && idx.length < g.cams.length;   // no layout known: Blue Iris's picture as it is
+  RG.idx = idx; RG.key = '';
+  if(RG.dbg) rgDebug(!!(V.open && V.grp));
+  if(on === RG.on) return;
+  RG.on = on; stage.classList.toggle('rg', on); rgCanvas.hidden = !on;
+  cancelAnimationFrame(RG.raf);
+  if(on){ const loop = () => { if(!RG.on) return; rgDraw(); RG.raf = requestAnimationFrame(loop); }; RG.raf = requestAnimationFrame(loop); }
+  zApply();
+}
+function rgLayout(W, H){                     // the column count that shows the cameras biggest, packed together and centred
+  const g = grpLayout(), gap = 2, n = RG.idx.length, asp = i => { const R = g.rects[i]; return (R[2] - R[0]) / Math.max(1, R[3] - R[1]); };
+  const A = RG.idx.map(asp).sort((x, y) => x - y)[Math.floor(n / 2)] || 16 / 9;   // a typical camera's shape sets the cell shape
+  let best = null;
+  for(let cols = 1; cols <= n; cols++){
+    const rows = Math.ceil(n / cols), bw = Math.min((W - gap * (cols - 1)) / cols, (H - gap * (rows - 1)) / rows * A), bh = bw / A;
+    let area = 0;
+    const y0 = (H - rows * bh - gap * (rows - 1)) / 2;
+    const cells = RG.idx.map((i, k) => {
+      const a = asp(i), sc = Math.min(bw / a, bh), w = sc * a, h = sc;
+      const row = Math.floor(k / cols), inRow = Math.min(cols, n - row * cols), x0 = (W - inRow * bw - gap * (inRow - 1)) / 2;   // centre a short last row
+      area += w * h;
+      const R = g.rects[i];
+      return { cam: g.cams[i], R, x: x0 + (k % cols) * (bw + gap) + (bw - w) / 2, y: y0 + row * (bh + gap) + (bh - h) / 2, w, h };
+    });
+    if(!best || area > best.area + 1) best = { area, cells };
+  }
+  return best ? best.cells : [];
+}
+function rgDraw(){
+  const src = mbSource(), g = grpLayout(); if(!src || !g) return;
+  const W = stage.clientWidth, H = stage.clientHeight, dpr = Math.min(2, devicePixelRatio || 1);
+  const key = src.key + '|' + W + 'x' + H + '|' + RG.idx.join(',') + '|' + g.v;
+  if(key === RG.key) return;                 // nothing new to draw
+  if(RG.cams !== g.cams){ rgUpdate(); if(!RG.on) return; }
+  RG.key = key;
+  if(rgCanvas.width !== Math.round(W * dpr) || rgCanvas.height !== Math.round(H * dpr)){ rgCanvas.width = Math.round(W * dpr); rgCanvas.height = Math.round(H * dpr); }
+  RG.cells = rgLayout(W, H);
+  const fx = src.w / g.w, fy = src.h / g.h;
+  rgCtx.setTransform(dpr, 0, 0, dpr, 0, 0); rgCtx.clearRect(0, 0, W, H);
+  for(const c of RG.cells){ try{ rgCtx.drawImage(src.el, c.R[0] * fx, c.R[1] * fy, (c.R[2] - c.R[0]) * fx, (c.R[3] - c.R[1]) * fy, c.x, c.y, c.w, c.h); }catch(e){} }
+}
+$('#vGroup').addEventListener('click', () => {
+  if(V.grp){ changeCam(V.grpFrom && S.camMap[V.grpFrom] ? V.grpFrom : V.grp.cams[0]); return; }
+  const gid = groupFor(V.cam); if(!gid) return;
+  const from = V.cam; changeCam(gid); V.grpFrom = from; setCamTitle();
 });
 $('#camPrev').addEventListener('click', () => switchCam(-1));
 $('#camNext').addEventListener('click', () => switchCam(1));
@@ -4866,11 +5325,21 @@ pad.addEventListener('click', e => {
   }
 });
 function switchCam(dir){
+  if(V.grp){                                             // a group: swipe between groups that have a layout
+    const gl = shownGroups().map(g => g.id).filter(id => groupOf(id));
+    if(gl.length < 2) return;
+    const gi = gl.findIndex(id => id.toLowerCase() === V.cam.toLowerCase());
+    return changeCam(gl[(gi + dir + gl.length) % gl.length]);
+  }
   let list = visibleCams();
   if(!list.some(c => c.id === V.cam)) list = S.cams;
   if(list.length < 2) return;
   const i = list.findIndex(c => c.id === V.cam);
-  V.cam = list[(i + dir + list.length) % list.length].id;
+  changeCam(list[(i + dir + list.length) % list.length].id);
+}
+// Show another camera, or a whole group, at the same moment (live stays live; a recording keeps its time and play state)
+function changeCam(id){
+  V.cam = id; V.grp = S.camMap[id] ? null : (groupOf(id) || null);
   V.tlKey = ''; V.tl = {alerts:[], clips:[]};
   Z.boost = 1; zReset();
   ptzStop(); PTZ.presetsFor = ''; if(!$('#ptzPad').hidden) setTimeout(() => { if(camIsPtz(V.cam)) ptzLoadPresets(); }, 0);
@@ -4894,7 +5363,8 @@ function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&l
 document.addEventListener('keydown', e => {
   if((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '')){ toggleFs(V.open); return; }
   if(e.key === 'Escape' && !$('#markSheet').hidden){ $('#markSheet').hidden = true; return; }
-  for(const id of ['#srvSheet', '#logSheet']) if(e.key === 'Escape' && !$(id).hidden){ $(id).hidden = true; return; }
+  for(const id of ['#srvSheet', '#logSheet', '#actSheet']) if(e.key === 'Escape' && !$(id).hidden){ $(id).hidden = true; return; }
+  if(e.key === 'Escape' && !$('#popBox').hidden){ popClose(); return; }
   if(!V.open) return;
   if(e.key === 'Escape' && !$('#dlSheet').hidden){ $('#dlSheet').hidden = true; return; }
   if(e.key === 'Escape') closeViewer(false);

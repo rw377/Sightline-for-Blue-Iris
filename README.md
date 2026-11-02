@@ -42,6 +42,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **Hidden and disabled cameras stay out of the way.** Cameras marked Hidden in Blue Iris, and disabled cameras, don't appear in the grid or the alerts. A setting lets you show hidden cameras if you want them.
 - **Activity at a glance.** A tile's border lights up when Blue Iris sees motion (white) or a trigger, colored by what the AI found (person, vehicle, animal, delivery), with a label such as **"Dog 88%"**.
 - **Optional motion boxes on the tiles** show *where* something is moving, so you can follow the dog around the house without opening each camera.
+- **Pop up cameras on detection** (optional): pick People, Vehicles, Animals and/or Deliveries, and while the grid is on screen a camera that detects one pops up large with live video for 20 seconds. Click it to open the camera.
 
 ### Alerts
 - **AI-aware filter buttons:** People, Vehicles, Animals, plus any label your AI model reports, such as Dogs, UPS or Amazon.
@@ -51,10 +52,11 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **Labels picked from real data.** Sightline scans the last 3 weeks of alerts and lists every label your cameras have actually reported, with counts. You can also type your own. Capitalization and plurals don't matter.
 - **Date and time ranges:** last hour, today, yesterday, last night (8 PM–6 AM), or any custom day and time window.
 - **Filter by camera or group.**
+- **Activity overview** (Settings → Activity): alerts per day for the last week or two, and a camera × hour-of-day heat map of when each camera is busiest. Tap a camera to see its alerts.
 - **Preview alerts on a computer.** Point at an alert and a large panel beside the list plays it as a quick flip-book of 8 frames, like UI3's mouse-over preview but bigger. Click the picture to open it. **Smooth** mode plays real sped-up video instead (more work for Blue Iris, so best on a capable server); or turn it off. Phones are unchanged.
 - **Flag or protect alerts, like UI3.** Flag one to come back to (the Flagged filter shows just those), or protect it so Blue Iris keeps it when clearing out old alerts and recordings. Use the flag button in the player (the "⋯" button on a phone, which also holds the download), or right-click an alert in the list (long-press on Android). It's saved in Blue Iris, so UI3 shows it too, and flagged and protected alerts are marked in the list.
 - **Tap an alert to play it** from the moment it happened. Alerts play straight from their recording file, as in UI3's Clips list.
-- **Download an alert as an MP4** with the download button in the player. Blue Iris prepares the clip (the same export UI3 uses) and your browser saves it with a readable name such as `Driveway 2026-10-18 4-39-56 PM.mp4`. By default it's re-encoded to H.264, which plays smoothly in any player, with the camera's overlay and audio; you can choose the Blue Iris encoder profile, or the original recording instead (fastest, nothing lost, but some players show it choppy). Download the whole alert, or choose the start and end: drag the blue handles on the timeline or set them at the playhead (up to 15 minutes, within the alert's recording).
+- **Download an alert as an MP4** with the download button in the player. Blue Iris prepares the clip (the same export UI3 uses) and your browser saves it with a readable name such as `Driveway 2026-10-18 4-39-56 PM.mp4`. By default it's re-encoded to H.264, which plays smoothly in any player, with the camera's overlay and audio; you can choose the Blue Iris encoder profile, or the original recording instead (fastest, nothing lost, but some players show it choppy). Download the whole alert, or choose the start and end: drag the blue handles on the timeline or set them at the playhead, anywhere on the timeline, up to 2 hours (from one recording file). Cancel while Blue Iris prepares it if you change your mind.
 
 ### Player
 - **Smooth video with audio**, both live and recorded. It falls back to still frames on browsers that can't play the stream.
@@ -62,6 +64,8 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **Go to any date and time:** the calendar button next to 48h opens quick choices (last night, this time yesterday, this time last week…) or a calendar with from / to times. Days with no recordings for that camera are greyed out and days with alerts are marked. The timeline shows exactly that window and plays from its start.
 - **Quick controls:** previous / next alert, ±10 seconds, playback up to 16× speed, and a one-tap jump to live. On a computer they fit in one row under a slim timeline, leaving more room for the video.
 - **Swipe between cameras.**
+- **Watch all cameras at once,** live or while scrubbing back through recordings: the group button shows the whole group at the same moment, and tapping a camera jumps to it at that moment.
+- **Download a clip from any camera** without finding an alert first: the download button in the player lets you mark a start and end anywhere on the timeline.
 - **Click or tap the video, like UI3:** it pauses or resumes a recording, and closes a live camera back to the camera grid. Double-click to switch between fit and fill. When the controls float over the video (phone sideways, or full screen on a touch screen), a tap shows or hides them instead.
 - **Full screen** for the player or the whole camera grid (handy on a wall display). The player's controls float over the picture and fade out while you watch. Not available on iPhone, where Safari doesn't support it.
 - **Digital zoom up to 8×:** pinch or use the mouse wheel, then drag to pan. In Auto quality, Sightline asks Blue Iris for a sharper picture while you're zoomed in.
