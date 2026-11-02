@@ -2324,11 +2324,13 @@ function popWants(it, tag){
   const k = normLabel(hit), t = alertTags(it).find(t => normLabel(String(t.text).replace(/\s*\d+%$/, '')) === k);
   return t || { cls: classify(hit), text: labelTitle(hit) };
 }
+const popOnGrid = cam => tiles.has(cam) || [...tiles.keys()].some(k => String(k).toLowerCase() === String(cam).toLowerCase());
 function popConsider(it, tag0){
   if(!popOn() || POP.seen.has(it.path)) return;
   POP.seen.add(it.path);
   const t = it.date * 1000, tag = popWants(it, tag0);
   if(Date.now() - t > 30000 || !tag || !canRefreshTiles()) return;   // only what's happening now
+  if(!popOnGrid(it.camera)) return;                                  // only cameras in the group on screen
   if(!$('#popBox').hidden && t < POP.t) return;                     // the list is newest first: never let an older one replace a newer
   popShow(it.camera, tag, t);
 }
@@ -2396,7 +2398,7 @@ function popUi(){
     `<button type="button" class="chip" data-pop="custom" aria-pressed="${nl > 0}">${nl ? `Custom (${nl})` : 'Custom\u2026'}</button>`;
   const names = POP_KINDS.filter(x => POP.kinds.has(x[0])).map(x => x[1].toLowerCase()).concat(POP.labels.map(l => labelChip(l)));
   $('#popSub').textContent = !names.length ? 'Pick what makes a camera pop up. Custom picks labels from your recent alerts or ones you type. Plain motion never does.'
-    : `A camera pops up when it sees ${names.length > 1 ? names.slice(0, -1).join(', ') + ' or ' + names[names.length - 1] : names[0]}. Only while the camera grid is on screen.`;
+    : `A camera pops up when it sees ${names.length > 1 ? names.slice(0, -1).join(', ') + ' or ' + names[names.length - 1] : names[0]}. Only for cameras in the group on screen, while the camera grid is showing.`;
 }
 function popSaveLabels(){ store.set('bis_poplabels', POP.labels.length ? JSON.stringify(POP.labels) : null); popUi(); popLblRender(); }
 // The label picker: labels your cameras reported in the last 3 weeks (the same scan as Alert filters) plus your own
