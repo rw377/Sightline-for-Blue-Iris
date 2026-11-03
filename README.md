@@ -52,7 +52,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - **Labels picked from real data.** Sightline scans the last 3 weeks of alerts and lists every label your cameras have actually reported, with counts. You can also type your own. Capitalization and plurals don't matter.
 - **Date and time ranges:** last hour, today, yesterday, last night (8 PM–6 AM), or any custom day and time window.
 - **Filter by camera or group.**
-- **Activity overview** (Settings → Activity): alerts per day for the last week or two, and a camera × hour-of-day heat map of when each camera is busiest. Tap a camera to see its alerts.
+- **Activity overview** (Settings → Activity): alerts per day for the last 7, 14 or 30 days, and a camera × hour-of-day heat map of when each camera is busiest. Tap a camera to see its alerts.
 - **Preview alerts on a computer.** Point at an alert and a large panel beside the list plays it as a quick flip-book of 8 frames, like UI3's mouse-over preview but bigger. Click the picture to open it. **Smooth** mode plays real sped-up video instead (more work for Blue Iris, so best on a capable server); or turn it off. Phones are unchanged.
 - **Flag or protect alerts, like UI3.** Flag one to come back to (the Flagged filter shows just those), or protect it so Blue Iris keeps it when clearing out old alerts and recordings. Use the flag button in the player (the "⋯" button on a phone, which also holds the download), or right-click an alert in the list (long-press on Android). It's saved in Blue Iris, so UI3 shows it too, and flagged and protected alerts are marked in the list.
 - **Tap an alert to play it** from the moment it happened. Alerts play straight from their recording file, as in UI3's Clips list.
@@ -103,7 +103,15 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 
 ![Live view on desktop with motion boxes](docs/screenshots/desktop-live.png)
 
+Optional pop-ups bring a camera up large when it detects what you pick (here a dog):
+
+![A camera popping up on a dog detection on desktop](docs/screenshots/desktop-popup.png)
+
 ![Playback on desktop](docs/screenshots/desktop-player.png)
+
+Watch every camera in the group at the same moment, live or while scrubbing back through recordings; tap one to jump to it:
+
+![All cameras at the same moment in playback on desktop](docs/screenshots/desktop-group.png)
 
 Go to any date and time: days with no recordings for the camera are greyed out, and days with alerts are marked:
 
@@ -112,6 +120,10 @@ Go to any date and time: days with no recordings for the camera are greyed out, 
 Point at an alert to preview it beside the list:
 
 ![Alert preview panel on desktop](docs/screenshots/desktop-alerts.png)
+
+The Activity overview shows when and where your cameras are busiest:
+
+![Activity overview: alerts per day and a camera-by-hour heat map](docs/screenshots/desktop-activity.png)
 
 Search the system log, for example for "signal":
 
