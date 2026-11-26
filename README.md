@@ -2,7 +2,7 @@
 
 **A simple, phone-first viewer for [Blue Iris](https://blueirissoftware.com/) live cameras, alerts and playback.**
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE) [![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/rw377)
 
 Sightline is a single web page you drop into Blue Iris's own `www` folder. There is nothing to install and no extra server, container or cloud account: Blue Iris serves the page and handles sign-in, so it works anywhere you can already reach Blue Iris, whether on your home network, over a VPN or through Tailscale.
 
@@ -27,6 +27,7 @@ It's built for the two things you do most: **glancing at your cameras** and **fi
 - [Limitations](#limitations)
 - [Troubleshooting](#troubleshooting)
 - [Development](#development)
+- [Support the project](#support-the-project)
 - [Credits and license](#credits-and-license)
 
 ---
@@ -258,6 +259,10 @@ Sightline is deliberately simple: **one HTML file with inline CSS and JavaScript
 Small fixes bump the last number (0.12.1), new features the middle one (0.13.0).
 
 **Blue Iris API used:** the JSON API (`login`, `camlist`, `alertlist`, `timeline`, `status`, `ptz`, `export`, `update` for flag / protect, `log` for the system log, `logout`), plus `/image/`, `/thumbs/`, `/file/clips/`, `/time/` and `/video/` for pictures and streams, and `/clips/` for downloads.
+
+## Support the project
+
+Sightline is free and always will be. If it's useful to you and you'd like to say thanks, you can [buy me a coffee](https://buymeacoffee.com/rw377). Bug reports and ideas in [Issues](https://github.com/rw377/Sightline-for-Blue-Iris/issues) help just as much.
 
 ## Credits and license
 
